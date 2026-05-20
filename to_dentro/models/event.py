@@ -46,8 +46,8 @@ class Event(db.Model):
         "EventRecurrence", back_populates="event", cascade="all, delete-orphan"
     )
 
-    tags: Mapped[List["EventCategories"]] = relationship(
-        "EventTag", back_populates="event", cascade="all, delete-orphan"
+    categories: Mapped[List["EventCategories"]] = relationship(
+        "EventCategories", back_populates="event", cascade="all, delete-orphan"
     )
 
     def __repr__(self) -> str:

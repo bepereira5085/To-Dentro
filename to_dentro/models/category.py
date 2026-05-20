@@ -74,8 +74,8 @@ class Category(db.Model):
         "UserCategory", back_populates="category", cascade="all, delete-orphan"
     )
     event_categories: Mapped[List["EventCategories"]] = relationship(
-        "EventCategory", back_populates="category", cascade="all, delete-orphan"
+        "EventCategories", back_populates="category", cascade="all, delete-orphan"
     )
 
     def __repr__(self) -> str:
-        return f"<Category {self.name}>"
+        return f"<Category {self.type.value}>"
