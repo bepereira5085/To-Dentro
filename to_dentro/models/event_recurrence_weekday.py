@@ -23,7 +23,7 @@ class EventRecurrenceWeekday(db.Model):
     recurrence_id: Mapped[int] = mapped_column(
         ForeignKey("event_recurrences.id", ondelete="CASCADE"), primary_key=True
     )
-    weekday: Mapped[int] = mapped_column(db.Enum(WeekDays), primary_key=True)
+    weekday: Mapped[WeekDays] = mapped_column(db.Enum(WeekDays), primary_key=True)
 
     recurrence: Mapped["EventRecurrence"] = relationship(
         "EventRecurrence", back_populates="weekdays"
