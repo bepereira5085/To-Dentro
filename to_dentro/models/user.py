@@ -1,7 +1,7 @@
 import enum
 import re
 from typing import List, Optional, TYPE_CHECKING
-from datetime import datetime
+from datetime import date, datetime
 from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 from sqlalchemy import func, Integer
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -33,6 +33,7 @@ class User(db.Model):
         db.String(11), unique=True, index=True, nullable=True
     )
     phone: Mapped[str] = mapped_column(db.String(11))
+    birth_date: Mapped[date] = mapped_column(db.Date)
 
     type: Mapped[UserType] = mapped_column(db.Enum(UserType), default=UserType.REGULAR)
 

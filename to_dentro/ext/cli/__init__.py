@@ -64,21 +64,21 @@ def init_app(app):
             db.session.commit()
 
             users_seed = [
-                ("Alice Souza", "alice@email.com", "11111111111", "27999990001", UserType.REGULAR),
-                ("Bruno Costa", "bruno@email.com", "22222222222", "27999990002", UserType.REGULAR),
-                ("Carla Mendes", "carla@email.com", "33333333333", "27999990003", UserType.ORGANIZER),
-                ("Diego Alves", "diego@email.com", "44444444444", "27999990004", UserType.ORGANIZER),
-                ("Elisa Nogueira", "elisa@email.com", "55555555555", "27999990005", UserType.REGULAR),
-                ("Felipe Lima", "felipe@email.com", "66666666666", "27999990006", UserType.REGULAR),
-                ("Gabriela Rocha", "gabi@email.com", "77777777777", "27999990007", UserType.ORGANIZER),
-                ("Henrique Dias", "henrique@email.com", "88888888888", "27999990008", UserType.ORGANIZER),
-                ("Isabela Castro", "isabela@email.com", "99999999999", "27999990009", UserType.ORGANIZER),
-                ("João Farias", "joao.f@email.com", "10101010101", "27999990010", UserType.REGULAR),
+                ("Alice Souza", "alice@email.com", "11111111111", "27999990001", UserType.REGULAR, date(1995, 3, 15)),
+                ("Bruno Costa", "bruno@email.com", "22222222222", "27999990002", UserType.REGULAR, date(1992, 7, 22)),
+                ("Carla Mendes", "carla@email.com", "33333333333", "27999990003", UserType.ORGANIZER, date(1988, 11, 5)),
+                ("Diego Alves", "diego@email.com", "44444444444", "27999990004", UserType.ORGANIZER, date(1990, 1, 30)),
+                ("Elisa Nogueira", "elisa@email.com", "55555555555", "27999990005", UserType.REGULAR, date(1998, 6, 18)),
+                ("Felipe Lima", "felipe@email.com", "66666666666", "27999990006", UserType.REGULAR, date(1993, 9, 12)),
+                ("Gabriela Rocha", "gabi@email.com", "77777777777", "27999990007", UserType.ORGANIZER, date(1991, 4, 25)),
+                ("Henrique Dias", "henrique@email.com", "88888888888", "27999990008", UserType.ORGANIZER, date(1987, 12, 3)),
+                ("Isabela Castro", "isabela@email.com", "99999999999", "27999990009", UserType.ORGANIZER, date(1996, 2, 14)),
+                ("João Farias", "joao.f@email.com", "10101010101", "27999990010", UserType.REGULAR, date(1994, 8, 7)),
             ]
 
             users_seed_db_pattern = []
-            for _name, _email, _cpf, _phone, _type in users_seed:
-                _user = User(name=_name, email=_email, cpf=_cpf, phone=_phone, type=_type)
+            for _name, _email, _cpf, _phone, _type, _birth_date in users_seed:
+                _user = User(name=_name, email=_email, cpf=_cpf, phone=_phone, type=_type, birth_date=_birth_date)
                 _user.set_password("12345678")
                 users_seed_db_pattern.append(_user)
 

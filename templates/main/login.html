@@ -5,143 +5,143 @@
 {% block body_class %}login-page{% endblock %}
 
 {% block content %}
-<div class="login-split">
-    <div class="login-left">
-        <div class="login-left__logo">
-            <div class="logo-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10" />
-                    <polyline points="12 8 16 12 12 16" />
-                    <line x1="8" y1="12" x2="16" y2="12" />
-                </svg>
+<div class="columns is-gapless login-split">
+
+    <div class="column is-5 login-left is-hidden-mobile">
+        <div class="is-flex is-flex-direction-column is-justify-content-space-between" style="height:100%;">
+
+            <div class="is-flex is-align-items-center">
+                <span class="icon logo-icon mr-2">
+                    <span class="material-symbols-outlined" style="color:#fff;font-size:20px;">arrow_circle_right</span>
+                </span>
+                <span class="has-text-white has-text-weight-bold is-size-6">Tô Dentro</span>
             </div>
-            <span class="logo-text">Tô Dentro</span>
-        </div>
 
-        <div class="login-left__hero">
-            <div class="hero-accent"></div>
-            <h1 class="hero-title">
-                Você sente quando um evento é do seu
-                <span class="hero-highlight">jeito.</span>
-            </h1>
-            <p class="hero-subtitle">
-                Milhares experiências ao seu redor esperando por você.
-            </p>
-        </div>
+            <div class="my-auto py-6">
+                <div class="hero-accent mb-4"></div>
+                <h1 class="title has-text-white hero-title mb-3">
+                    Você sente quando um evento é do seu
+                    <span class="has-text-danger">jeito.</span>
+                </h1>
+                <p class="is-size-6 has-text-grey hero-subtitle">
+                    Milhares experiências ao seu redor esperando por você.
+                </p>
+            </div>
 
-        <div class="login-left__footer">
-            <p>Não tem conta?
-                <a href="#" class="register-link">Cadastre-se grátis</a>
+            <p class="is-size-7 has-text-grey">
+                Não tem conta?
+                <a href="{{ url_for('main.register') }}" class="has-text-danger has-text-weight-semibold">Cadastre-se grátis</a>
             </p>
         </div>
     </div>
 
-    <!-- ── Lado Direito (Formulário) ── -->
-    <div class="login-right">
+    <div class="column is-flex is-align-items-center is-justify-content-center login-right">
         <div class="login-form-wrapper">
 
-            <div class="login-form-header">
-                <h2 class="form-title">Bem-vindo de volta</h2>
-                <p class="form-subtitle">Entre na sua conta para continuar</p>
+            <div class="mb-5">
+                <h2 class="title is-3 has-text-weight-bold mb-2">Bem-vindo de volta</h2>
+                <p class="is-size-6 has-text-grey">Entre na sua conta para continuar</p>
             </div>
 
-            <!-- Flash messages -->
             {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
             {% for category, message in messages %}
-            <div class="flash-message flash-{{ category }}">
-                <span>{{ message }}</span>
+            <div class="notification {{ category }} is-light">
+                <button class="delete"></button>
+                {{ message }}
             </div>
             {% endfor %}
             {% endif %}
             {% endwith %}
 
-            <div class="social-buttons">
-                <button type="button" class="social-btn social-btn--google">
-                    <svg width="18" height="18" viewBox="0 0 24 24">
-                        <path fill="#EA4335"
-                            d="M5.266 9.765A7.077 7.077 0 0 1 12 4.909c1.69 0 3.218.6 4.418 1.582L19.91 3C17.782 1.145 15.055 0 12 0 7.27 0 3.198 2.698 1.24 6.65l4.026 3.115Z" />
-                        <path fill="#34A853"
-                            d="M16.04 18.013c-1.09.703-2.474 1.078-4.04 1.078a7.077 7.077 0 0 1-6.723-4.823l-4.04 3.067A11.965 11.965 0 0 0 12 24c2.933 0 5.735-1.043 7.834-3l-3.793-2.987Z" />
-                        <path fill="#4A90D9"
-                            d="M19.834 21c2.195-2.048 3.62-5.096 3.62-9 0-.71-.109-1.473-.272-2.182H12v4.637h6.436c-.317 1.559-1.17 2.766-2.395 3.558L19.834 21Z" />
-                        <path fill="#FBBC05"
-                            d="M5.277 14.268A7.12 7.12 0 0 1 4.909 12c0-.782.125-1.533.357-2.235L1.24 6.65A11.934 11.934 0 0 0 0 12c0 1.92.445 3.73 1.237 5.335l4.04-3.067Z" />
-                    </svg>
-                    Google
+            <div class="is-flex mb-4" style="gap:0.75rem;">
+                <button type="button" class="button is-fullwidth social-btn">
+                    <span class="icon is-small">
+                        <svg width="18" height="18" viewBox="0 0 24 24">
+                            <path fill="#EA4335"
+                                d="M5.266 9.765A7.077 7.077 0 0 1 12 4.909c1.69 0 3.218.6 4.418 1.582L19.91 3C17.782 1.145 15.055 0 12 0 7.27 0 3.198 2.698 1.24 6.65l4.026 3.115Z" />
+                            <path fill="#34A853"
+                                d="M16.04 18.013c-1.09.703-2.474 1.078-4.04 1.078a7.077 7.077 0 0 1-6.723-4.823l-4.04 3.067A11.965 11.965 0 0 0 12 24c2.933 0 5.735-1.043 7.834-3l-3.793-2.987Z" />
+                            <path fill="#4A90D9"
+                                d="M19.834 21c2.195-2.048 3.62-5.096 3.62-9 0-.71-.109-1.473-.272-2.182H12v4.637h6.436c-.317 1.559-1.17 2.766-2.395 3.558L19.834 21Z" />
+                            <path fill="#FBBC05"
+                                d="M5.277 14.268A7.12 7.12 0 0 1 4.909 12c0-.782.125-1.533.357-2.235L1.24 6.65A11.934 11.934 0 0 0 0 12c0 1.92.445 3.73 1.237 5.335l4.04-3.067Z" />
+                        </svg>
+                    </span>
+                    <span>Google</span>
                 </button>
-                <button type="button" class="social-btn social-btn--facebook">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="#1877F2">
-                        <path
-                            d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-                    </svg>
-                    Facebook
+                <button type="button" class="button is-fullwidth social-btn">
+                    <span class="icon is-small">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="#1877F2">
+                            <path
+                                d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                        </svg>
+                    </span>
+                    <span>Facebook</span>
                 </button>
             </div>
 
-            <div class="divider">
-                <span>ou com email</span>
+            <div class="is-flex is-align-items-center mb-5 divider">
+                <span class="divider-line"></span>
+                <span class="px-3 is-size-7 has-text-grey">ou com email</span>
+                <span class="divider-line"></span>
             </div>
 
-            <!-- Login form -->
-            <form method="POST" action="{{ url_for('main.login') }}" novalidate class="login-form">
+            <form method="POST" action="{{ url_for('main.login') }}" novalidate>
                 {{ form.csrf_token }}
 
-                <div class="form-field {% if form.email.errors %}has-error{% endif %}">
-                    <label class="form-label" for="{{ form.email.id }}">Email</label>
-                    <div class="input-wrapper">
-                        <span class="input-icon">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-                                <polyline points="22,6 12,13 2,6" />
-                            </svg>
-                        </span>
+                <div class="field mb-4">
+                    <label class="label is-small" for="{{ form.email.id }}">Email</label>
+                    <div class="control has-icons-left">
                         {{ form.email(
-                        id="email",
-                        class="form-input",
-                        placeholder="voce@email.com",
-                        autocomplete="email"
+                            id="email",
+                            class="input" + (" is-danger" if form.email.errors else ""),
+                            placeholder="voce@email.com",
+                            autocomplete="email"
                         ) }}
+                        <span class="icon is-small is-left">
+                            <span class="material-symbols-outlined" style="font-size:18px;">mail</span>
+                        </span>
                     </div>
                     {% if form.email.errors %}
                     {% for error in form.email.errors %}
-                    <p class="field-error">{{ error }}</p>
+                    <p class="help is-danger">{{ error }}</p>
                     {% endfor %}
                     {% endif %}
                 </div>
 
-                <div class="form-field {% if form.password.errors %}has-error{% endif %}">
-                    <label class="form-label" for="{{ form.password.id }}">Senha</label>
-                    <div class="input-wrapper">
-                        <span class="input-icon">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                            </svg>
-                        </span>
+                <div class="field mb-5">
+                    <label class="label is-small" for="{{ form.password.id }}">Senha</label>
+                    <div class="control has-icons-left">
                         {{ form.password(
-                        id="password",
-                        class="form-input",
-                        placeholder="••••••••",
-                        autocomplete="current-password"
+                            id="password",
+                            class="input" + (" is-danger" if form.password.errors else ""),
+                            placeholder="••••••••",
+                            autocomplete="current-password"
                         ) }}
+                        <span class="icon is-small is-left">
+                            <span class="material-symbols-outlined" style="font-size:18px;">lock</span>
+                        </span>
                     </div>
                     {% if form.password.errors %}
                     {% for error in form.password.errors %}
-                    <p class="field-error">{{ error }}</p>
+                    <p class="help is-danger">{{ error }}</p>
                     {% endfor %}
                     {% endif %}
                 </div>
 
-                <button type="submit" class="btn-entrar">Entrar</button>
+                <div class="field">
+                    <div class="control">
+                        <button type="submit" class="button is-fullwidth has-text-weight-bold btn-entrar">
+                            Entrar
+                        </button>
+                    </div>
+                </div>
             </form>
 
-            <p class="register-cta">
+            <p class="has-text-centered mt-5 is-size-7 has-text-grey">
                 Não tem uma conta?
-                <a href="#" class="register-cta__link">Cadastre-se grátis</a>
+                <a href="{{ url_for('main.register') }}" class="has-text-danger has-text-weight-semibold">Cadastre-se grátis</a>
             </p>
 
         </div>
@@ -150,7 +150,7 @@
 </div>
 
 <style>
-    /* ── Reset e Layout ── */
+
     .login-page {
         margin: 0;
         padding: 0;
@@ -159,18 +159,13 @@
     }
 
     .login-split {
-        display: flex;
         min-height: 100vh;
-        font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+        margin-bottom: 0 !important;
+        margin-top: 0 !important;
     }
 
-    /* ── Lado Esquerdo ── */
     .login-left {
-        flex: 0 0 42%;
         background-color: #0a0a0a;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
         padding: 2.5rem 3rem;
         position: relative;
         overflow: hidden;
@@ -184,36 +179,14 @@
         pointer-events: none;
     }
 
-    .login-left__logo {
-        display: flex;
-        align-items: center;
-        gap: 0.6rem;
-    }
-
     .logo-icon {
         width: 36px;
         height: 36px;
         background: #c81e1e;
         border-radius: 8px;
-        display: flex;
+        display: inline-flex;
         align-items: center;
         justify-content: center;
-        flex-shrink: 0;
-    }
-
-    .logo-text {
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: #ffffff;
-        letter-spacing: -0.01em;
-    }
-
-    .login-left__hero {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        padding: 3rem 0;
     }
 
     .hero-accent {
@@ -221,53 +194,22 @@
         height: 3px;
         background: #c81e1e;
         border-radius: 2px;
-        margin-bottom: 1.8rem;
     }
 
     .hero-title {
-        font-size: clamp(1.6rem, 3vw, 2.2rem);
-        font-weight: 800;
-        color: #ffffff;
-        line-height: 1.25;
+        font-size: clamp(1.6rem, 3vw, 2.2rem) !important;
+        line-height: 1.25 !important;
         letter-spacing: -0.02em;
-        margin: 0 0 1rem 0;
-    }
-
-    .hero-highlight {
-        color: #c81e1e;
     }
 
     .hero-subtitle {
-        font-size: 0.95rem;
-        color: #888;
         line-height: 1.6;
-        margin: 0;
         max-width: 28ch;
     }
 
-    .login-left__footer {
-        font-size: 0.82rem;
-        color: #555;
-    }
-
-    .login-left__footer .register-link {
-        color: #c81e1e;
-        text-decoration: none;
-        font-weight: 600;
-        transition: opacity 0.2s;
-    }
-
-    .login-left__footer .register-link:hover {
-        opacity: 0.8;
-    }
-
-    /* ── Lado Direito ── */
+    /* Lado direito */
     .login-right {
-        flex: 1;
         background: #ffffff;
-        display: flex;
-        align-items: center;
-        justify-content: center;
         padding: 3rem 2rem;
     }
 
@@ -276,223 +218,64 @@
         max-width: 380px;
     }
 
-    .login-form-header {
-        margin-bottom: 2rem;
-    }
-
-    .form-title {
-        font-size: 1.75rem;
-        font-weight: 800;
-        color: #111;
-        letter-spacing: -0.02em;
-        margin: 0 0 0.4rem 0;
-    }
-
-    .form-subtitle {
-        font-size: 0.9rem;
-        color: #888;
-        margin: 0;
-    }
-
-    /* ── Flash Messages ── */
-    .flash-message {
-        padding: 0.75rem 1rem;
-        border-radius: 8px;
-        font-size: 0.875rem;
-        margin-bottom: 1.25rem;
-        border: 1px solid transparent;
-    }
-
-    .flash-is-success {
-        background: #f0fdf4;
-        color: #166534;
-        border-color: #bbf7d0;
-    }
-
-    .flash-is-danger {
-        background: #fff1f2;
-        color: #9f1239;
-        border-color: #fecdd3;
-    }
-
-    /* ── Social Buttons ── */
-    .social-buttons {
-        display: flex;
-        gap: 0.75rem;
-        margin-bottom: 1.5rem;
-    }
-
+    /* Social buttons — borda cinza sutil, sem cor primary do Bulma */
     .social-btn {
-        flex: 1;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-        padding: 0.65rem 1rem;
-        border: 1.5px solid #e5e7eb;
-        border-radius: 8px;
-        background: white;
-        font-size: 0.875rem;
-        font-weight: 500;
-        color: #374151;
-        cursor: pointer;
-        transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
-        font-family: inherit;
+        border: 1.5px solid #e5e7eb !important;
+        background: #fff !important;
+        color: #374151 !important;
+        font-weight: 500 !important;
+        border-radius: 8px !important;
+        transition: border-color 0.2s, box-shadow 0.2s !important;
     }
 
     .social-btn:hover {
-        border-color: #d1d5db;
-        background: #f9fafb;
-        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+        border-color: #d1d5db !important;
+        background: #f9fafb !important;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06) !important;
+        color: #374151 !important;
     }
 
-    /* ── Divider ── */
-    .divider {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        margin-bottom: 1.5rem;
-        color: #9ca3af;
-        font-size: 0.8rem;
-    }
-
-    .divider::before,
-    .divider::after {
-        content: '';
+    /* Divider — linhas laterais */
+    .divider-line {
         flex: 1;
         height: 1px;
         background: #e5e7eb;
     }
 
-    /* ── Form Fields ── */
-    .form-field {
-        margin-bottom: 1.1rem;
+    .input {
+        border-radius: 8px !important;
     }
 
-    .form-label {
-        display: block;
-        font-size: 0.875rem;
-        font-weight: 600;
-        color: #374151;
-        margin-bottom: 0.4rem;
+    .input:focus {
+        border-color: #c81e1e !important;
+        box-shadow: 0 0 0 3px rgba(200, 30, 30, 0.08) !important;
     }
 
-    .input-wrapper {
-        position: relative;
+    .input.is-danger:focus {
+        box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.15) !important;
     }
 
-    .input-icon {
-        position: absolute;
-        left: 0.85rem;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #9ca3af;
-        display: flex;
-        pointer-events: none;
-    }
-
-    .form-input {
-        width: 100%;
-        padding: 0.65rem 0.9rem 0.65rem 2.5rem;
-        border: 1.5px solid #e5e7eb;
-        border-radius: 8px;
-        font-size: 0.9rem;
-        color: #111;
-        background: white;
-        transition: border-color 0.2s, box-shadow 0.2s;
-        font-family: inherit;
-        box-sizing: border-box;
-        outline: none;
-    }
-
-    .form-input::placeholder {
-        color: #c0c4cc;
-    }
-
-    .form-input:focus {
-        border-color: #c81e1e;
-        box-shadow: 0 0 0 3px rgba(200, 30, 30, 0.08);
-    }
-
-    .has-error .form-input {
-        border-color: #f87171;
-    }
-
-    .has-error .form-input:focus {
-        box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.15);
-    }
-
-    .field-error {
-        font-size: 0.78rem;
-        color: #ef4444;
-        margin: 0.35rem 0 0 0;
-    }
-
-    /* ── Submit Button ── */
     .btn-entrar {
-        width: 100%;
-        padding: 0.75rem;
-        background: #c81e1e;
-        color: white;
-        border: none;
-        border-radius: 8px;
-        font-size: 0.95rem;
-        font-weight: 700;
-        cursor: pointer;
-        font-family: inherit;
+        background-color: #c81e1e !important;
+        color: #fff !important;
+        border: none !important;
+        border-radius: 8px !important;
+        font-size: 0.95rem !important;
         letter-spacing: 0.01em;
-        transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
-        margin-top: 0.5rem;
+        transition: background 0.2s, transform 0.1s, box-shadow 0.2s !important;
     }
 
     .btn-entrar:hover {
-        background: #a81818;
-        box-shadow: 0 4px 14px rgba(200, 30, 30, 0.3);
+        background-color: #a81818 !important;
+        box-shadow: 0 4px 14px rgba(200, 30, 30, 0.3) !important;
+        color: #fff !important;
     }
 
     .btn-entrar:active {
         transform: scale(0.98);
     }
 
-    /* ── Register CTA ── */
-    .register-cta {
-        text-align: center;
-        margin-top: 1.5rem;
-        font-size: 0.875rem;
-        color: #6b7280;
-    }
-
-    .register-cta__link {
-        color: #c81e1e;
-        font-weight: 600;
-        text-decoration: none;
-        transition: opacity 0.2s;
-    }
-
-    .register-cta__link:hover {
-        opacity: 0.75;
-    }
-
-    /* ── Responsivo ── */
     @media (max-width: 768px) {
-        .login-split {
-            flex-direction: column;
-        }
-
-        .login-left {
-            flex: none;
-            min-height: 220px;
-            padding: 1.75rem 1.5rem;
-        }
-
-        .login-left__footer {
-            display: none;
-        }
-
-        .hero-subtitle {
-            display: none;
-        }
-
         .login-right {
             padding: 2rem 1.25rem;
         }

@@ -1,0 +1,457 @@
+{% extends "main/base.html" %}
+
+{% block title %}Cadastre-se — Tô Dentro{% endblock %}
+
+{% block body_class %}register-page{% endblock %}
+
+{% block content %}
+<div class="columns is-gapless register-split">
+    <div class="column is-5 register-left is-hidden-mobile">
+        <div class="is-flex is-flex-direction-column is-justify-content-space-between" style="height:100%;">
+            <div class="is-flex is-align-items-center">
+                <span class="icon logo-icon mr-2">
+                    <span class="material-symbols-outlined" style="color:#fff;font-size:20px;">arrow_circle_right</span>
+                </span>
+                <span class="has-text-white has-text-weight-bold is-size-6">Tô Dentro</span>
+            </div>
+            <div class="my-auto py-6">
+                <div class="hero-accent mb-4"></div>
+                <h1 class="title has-text-white hero-title mb-3">
+                    Sua próxima experiência
+                    <span class="has-text-danger">inesquecível</span> começa aqui.
+                </h1>
+                <p class="is-size-6 has-text-grey hero-subtitle">
+                    Cadastre-se gratuitamente para explorar ou publicar eventos incríveis na sua cidade.
+                </p>
+            </div>
+            <p class="is-size-7 has-text-grey">
+                Já possui uma conta?
+                <a href="{{ url_for('main.login') }}" class="has-text-danger has-text-weight-semibold">Entrar agora</a>
+            </p>
+        </div>
+    </div>
+
+    <div class="column is-flex is-align-items-center is-justify-content-center register-right">
+        <div class="register-form-wrapper py-5">
+            <div class="mb-4">
+                <h2 class="title is-3 has-text-weight-bold mb-1">Criar conta grátis</h2>
+                <p class="is-size-6 has-text-grey mb-3">Escolha como deseja participar</p>
+            </div>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="notification {{ category }} is-light py-3 px-4 mb-4">
+                <button class="delete"></button>
+                {{ message }}
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            <form method="POST" action="{{ url_for('main.register') }}" novalidate>
+                {{ form.csrf_token }}
+                {{ form.user_type(id="user_type") }}
+
+                <div class="columns is-mobile mb-4" style="gap:0.75rem; margin-left:0; margin-right:0;">
+                    <div id="role-regular" class="column role-card is-active is-flex is-flex-direction-column is-align-items-center is-justify-content-center py-3">
+                        <span class="material-symbols-outlined mb-1">celebration</span>
+                        <span class="has-text-weight-bold">Quero curtir</span>
+                    </div>
+                    <div id="role-organizer" class="column role-card is-flex is-flex-direction-column is-align-items-center is-justify-content-center py-3">
+                        <span class="material-symbols-outlined mb-1">dashboard</span>
+                        <span class="has-text-weight-bold">Quero produzir</span>
+                    </div>
+                </div>
+
+                <!-- Nome -->
+                <div class="field mb-3">
+                    <label class="label is-small" for="{{ form.name.id }}">Nome completo</label>
+                    <div class="control has-icons-left">
+                        {{ form.name(
+                            id="name",
+                            class="input" + (" is-danger" if form.name.errors else ""),
+                            placeholder="Seu nome completo"
+                        ) }}
+                        <span class="icon is-small is-left">
+                            <span class="material-symbols-outlined" style="font-size:18px;">person</span>
+                        </span>
+                    </div>
+                    {% if form.name.errors %}
+                    {% for error in form.name.errors %}
+                    <p class="help is-danger">{{ error }}</p>
+                    {% endfor %}
+                    {% endif %}
+                </div>
+                <div class="field mb-3">
+                    <label class="label is-small" for="{{ form.email.id }}">Email</label>
+                    <div class="control has-icons-left">
+                        {{ form.email(
+                            id="email",
+                            class="input" + (" is-danger" if form.email.errors else ""),
+                            placeholder="voce@email.com",
+                            autocomplete="email"
+                        ) }}
+                        <span class="icon is-small is-left">
+                            <span class="material-symbols-outlined" style="font-size:18px;">mail</span>
+                        </span>
+                    </div>
+                    {% if form.email.errors %}
+                    {% for error in form.email.errors %}
+                    <p class="help is-danger">{{ error }}</p>
+                    {% endfor %}
+                    {% endif %}
+                </div>
+                <div class="columns mb-0 py-0" style="margin-left: -0.375rem; margin-right: -0.375rem;">
+                    <div class="column py-0 px-2">
+                        <div class="field mb-3">
+                            <label class="label is-small" for="{{ form.phone.id }}">Telefone</label>
+                            <div class="control has-icons-left">
+                                {{ form.phone(
+                                    id="phone",
+                                    class="input" + (" is-danger" if form.phone.errors else ""),
+                                    placeholder="(27) 99999-9999",
+                                    maxlength="15"
+                                ) }}
+                                <span class="icon is-small is-left">
+                                    <span class="material-symbols-outlined" style="font-size:18px;">call</span>
+                                </span>
+                            </div>
+                            {% if form.phone.errors %}
+                            {% for error in form.phone.errors %}
+                            <p class="help is-danger">{{ error }}</p>
+                            {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="column py-0 px-2">
+                        <div class="field mb-3">
+                            <label class="label is-small" for="{{ form.cep.id }}">CEP</label>
+                            <div class="control has-icons-left">
+                                {{ form.cep(
+                                    id="cep",
+                                    class="input" + (" is-danger" if form.cep.errors else ""),
+                                    placeholder="00000-000",
+                                    maxlength="9"
+                                ) }}
+                                <span class="icon is-small is-left">
+                                    <span class="material-symbols-outlined" style="font-size:18px;">markunread_mailbox</span>
+                                </span>
+                            </div>
+                            {% if form.cep.errors %}
+                            {% for error in form.cep.errors %}
+                            <p class="help is-danger">{{ error }}</p>
+                            {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="columns mb-0 py-0" style="margin-left: -0.375rem; margin-right: -0.375rem;">
+                    <div class="column py-0 px-2">
+                        <div class="field mb-3">
+                            <label class="label is-small" for="{{ form.birth_date.id }}">Nascimento</label>
+                            <div class="control has-icons-left">
+                                {{ form.birth_date(
+                                    id="birth_date",
+                                    class="input" + (" is-danger" if form.birth_date.errors else ""),
+                                    type="date"
+                                ) }}
+                                <span class="icon is-small is-left">
+                                    <span class="material-symbols-outlined" style="font-size:18px;">cake</span>
+                                </span>
+                            </div>
+                            {% if form.birth_date.errors %}
+                            {% for error in form.birth_date.errors %}
+                            <p class="help is-danger">{{ error }}</p>
+                            {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="column py-0 px-2">
+                        <div class="field mb-3">
+                            <label class="label is-small" for="{{ form.password.id }}">Senha</label>
+                            <div class="control has-icons-left">
+                                {{ form.password(
+                                    id="password",
+                                    class="input" + (" is-danger" if form.password.errors else ""),
+                                    placeholder="Min. 8 caracteres",
+                                    autocomplete="new-password"
+                                ) }}
+                                <span class="icon is-small is-left">
+                                    <span class="material-symbols-outlined" style="font-size:18px;">lock</span>
+                                </span>
+                            </div>
+                            {% if form.password.errors %}
+                            {% for error in form.password.errors %}
+                            <p class="help is-danger">{{ error }}</p>
+                            {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div id="cpf-field-wrapper" class="field mb-4" style="display: none;">
+                    <label class="label is-small" for="{{ form.cpf.id }}">CPF (Obrigatório para produtores)</label>
+                    <div class="control has-icons-left">
+                        {{ form.cpf(
+                            id="cpf",
+                            class="input" + (" is-danger" if form.cpf.errors else ""),
+                            placeholder="000.000.000-00",
+                            maxlength="14"
+                        ) }}
+                        <span class="icon is-small is-left">
+                            <span class="material-symbols-outlined" style="font-size:18px;">badge</span>
+                        </span>
+                    </div>
+                    {% if form.cpf.errors %}
+                    {% for error in form.cpf.errors %}
+                    <p class="help is-danger">{{ error }}</p>
+                    {% endfor %}
+                    {% endif %}
+                </div>
+                <div class="field mt-5">
+                    <div class="control">
+                        <button type="submit" class="button is-fullwidth has-text-weight-bold btn-cadastrar">
+                            Criar conta grátis
+                        </button>
+                    </div>
+                </div>
+            </form>
+            <p class="has-text-centered mt-4 is-size-7 has-text-grey">
+                Já tem uma conta?
+                <a href="{{ url_for('main.login') }}" class="has-text-danger has-text-weight-semibold">Entrar</a>
+            </p>
+        </div>
+    </div>
+
+</div>
+
+<style>
+    .register-page {
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        background-color: #ffffff;
+    }
+
+    .register-split {
+        min-height: 100vh;
+        margin-bottom: 0 !important;
+        margin-top: 0 !important;
+    }
+
+    .register-left {
+        background-color: #0a0a0a;
+        padding: 2.5rem 3rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .register-left::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(ellipse at 20% 80%, rgba(200, 30, 30, 0.08) 0%, transparent 60%);
+        pointer-events: none;
+    }
+
+    .logo-icon {
+        width: 36px;
+        height: 36px;
+        background: #c81e1e;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .hero-accent {
+        width: 2.5rem;
+        height: 3px;
+        background: #c81e1e;
+        border-radius: 2px;
+    }
+
+    .hero-title {
+        font-size: clamp(1.6rem, 3vw, 2.2rem) !important;
+        line-height: 1.25 !important;
+        letter-spacing: -0.02em;
+    }
+
+    .hero-subtitle {
+        line-height: 1.6;
+        max-width: 28ch;
+    }
+
+    .register-right {
+        background: #ffffff;
+        padding: 2rem;
+        overflow-y: auto;
+        max-height: 100vh;
+    }
+
+    .register-form-wrapper {
+        width: 100%;
+        max-width: 440px;
+    }
+
+    .role-card {
+        border: 1.5px solid #e5e7eb !important;
+        background: #fff !important;
+        color: #4b5563 !important;
+        border-radius: 8px !important;
+        text-align: center;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .role-card:hover {
+        border-color: #c81e1e !important;
+        color: #c81e1e !important;
+    }
+
+    .role-card.is-active {
+        border-color: #c81e1e !important;
+        background-color: #fff8f8 !important;
+        color: #c81e1e !important;
+        box-shadow: 0 4px 10px rgba(200, 30, 30, 0.05);
+    }
+
+    .role-card span.material-symbols-outlined {
+        font-size: 24px;
+        transition: transform 0.2s ease;
+    }
+
+    .role-card:hover span.material-symbols-outlined {
+        transform: scale(1.1);
+    }
+
+    .input {
+        border-radius: 8px !important;
+    }
+
+    .input:focus {
+        border-color: #c81e1e !important;
+        box-shadow: 0 0 0 3px rgba(200, 30, 30, 0.08) !important;
+    }
+
+    .input.is-danger:focus {
+        box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.15) !important;
+    }
+
+    .btn-cadastrar {
+        background-color: #c81e1e !important;
+        color: #fff !important;
+        border: none !important;
+        border-radius: 8px !important;
+        font-size: 0.95rem !important;
+        letter-spacing: 0.01em;
+        padding-top: 0.6rem !important;
+        padding-bottom: 0.6rem !important;
+        height: auto !important;
+        transition: background 0.2s, transform 0.1s, box-shadow 0.2s !important;
+    }
+
+    .btn-cadastrar:hover {
+        background-color: #a81818 !important;
+        box-shadow: 0 4px 14px rgba(200, 30, 30, 0.3) !important;
+        color: #fff !important;
+    }
+
+    .btn-cadastrar:active {
+        transform: scale(0.98);
+    }
+
+    @media (max-width: 768px) {
+        .register-right {
+            padding: 1.5rem 1rem;
+            max-height: none;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const form = document.querySelector('form');
+        form.reset();
+
+        const roleRegular = document.getElementById('role-regular');
+        const roleOrganizer = document.getElementById('role-organizer');
+        const userTypeInput = document.getElementById('user_type');
+        const cpfFieldWrapper = document.getElementById('cpf-field-wrapper');
+        const cpfInput = document.getElementById('cpf');
+
+        function setRole(role) {
+            if (role === 'ORGANIZER') {
+                roleOrganizer.classList.add('is-active');
+                roleRegular.classList.remove('is-active');
+                userTypeInput.value = 'ORGANIZER';
+                cpfFieldWrapper.style.display = 'block';
+            } else {
+                roleRegular.classList.add('is-active');
+                roleOrganizer.classList.remove('is-active');
+                userTypeInput.value = 'REGULAR';
+                cpfFieldWrapper.style.display = 'none';
+                cpfInput.value = '';
+            }
+        }
+
+        roleRegular.addEventListener('click', () => setRole('REGULAR'));
+        roleOrganizer.addEventListener('click', () => setRole('ORGANIZER'));
+        setRole(userTypeInput.value);
+        const deleteButtons = document.querySelectorAll('.notification .delete');
+        deleteButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                btn.parentElement.remove();
+            });
+        });
+
+        cpfInput.addEventListener('input', (e) => {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 11) value = value.slice(0, 11);
+            if (value.length > 9) {
+                value = `${value.slice(0, 3)}.${value.slice(3, 6)}.${value.slice(6, 9)}-${value.slice(9)}`;
+            } else if (value.length > 6) {
+                value = `${value.slice(0, 3)}.${value.slice(3, 6)}.${value.slice(6)}`;
+            } else if (value.length > 3) {
+                value = `${value.slice(0, 3)}.${value.slice(3)}`;
+            }
+            e.target.value = value;
+        });
+        const phoneInput = document.getElementById('phone');
+        phoneInput.addEventListener('input', (e) => {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 11) value = value.slice(0, 11);
+            if (value.length === 11) {
+                value = `(${value.slice(0, 2)}) ${value.slice(2, 7)}-${value.slice(7)}`;
+            } else if (value.length > 2) {
+                value = `(${value.slice(0, 2)}) ${value.slice(2, 6)}-${value.slice(6)}`;
+            } else if (value.length > 0) {
+                value = `(${value}`;
+            }
+            e.target.value = value;
+        });
+
+        const cepInput = document.getElementById('cep');
+        if (cepInput) {
+            cepInput.addEventListener('input', (e) => {
+                let value = e.target.value.replace(/\D/g, '');
+                if (value.length > 8) value = value.slice(0, 8);
+                if (value.length > 5) {
+                    value = `${value.slice(0, 5)}-${value.slice(5)}`;
+                }
+                e.target.value = value;
+            });
+        }
+
+        if (cpfInput.value) cpfInput.dispatchEvent(new Event('input'));
+        if (phoneInput.value) phoneInput.dispatchEvent(new Event('input'));
+        if (cepInput && cepInput.value) cepInput.dispatchEvent(new Event('input'));
+
+        form.addEventListener('submit', () => {
+            if (cpfInput.value) cpfInput.value = cpfInput.value.replace(/\D/g, '');
+            if (phoneInput.value) phoneInput.value = phoneInput.value.replace(/\D/g, '');
+            if (cepInput && cepInput.value) cepInput.value = cepInput.value.replace(/\D/g, '');
+        });
+    });
+</script>
+{% endblock %}
