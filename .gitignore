@@ -4,3 +4,4 @@ venv/
 .env*
 .vscode/
 *.db
+db_test.py
