@@ -1,8 +1,8 @@
 import enum
 from typing import Optional, TYPE_CHECKING
 from datetime import datetime
-from sqlalchemy import ForeignKey, String, Integer, Boolean, func
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import ForeignKey, Integer, Boolean, func
+from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 from to_dentro.ext.db import db
 
 if TYPE_CHECKING:
@@ -60,3 +60,12 @@ class Notification(db.Model):
     event_occurrence: Mapped[Optional["EventOccurrence"]] = relationship(
         "EventOccurrence"
     )
+
+    @validates('type')
+    def validate_type(self, key, value):
+        if isinstance(value, str):
+            try:
+                return NotificationType[value]
+            except KeyError:
+                raise ValueError(f"'{value}' não é um valor válido para NotificationType")
+        return value

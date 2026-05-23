@@ -1,7 +1,7 @@
 import enum
 from typing import TYPE_CHECKING
-from sqlalchemy import ForeignKey, Integer
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import ForeignKey
+from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 from to_dentro.ext.db import db
 
 if TYPE_CHECKING:
@@ -28,3 +28,12 @@ class EventRecurrenceWeekday(db.Model):
     recurrence: Mapped["EventRecurrence"] = relationship(
         "EventRecurrence", back_populates="weekdays"
     )
+
+    @validates('weekday')
+    def validate_weekday(self, key, value):
+        if isinstance(value, str):
+            try:
+                return WeekDays[value]
+            except KeyError:
+                raise ValueError(f"'{value}' não é um valor válido para WeekDays")
+        return value

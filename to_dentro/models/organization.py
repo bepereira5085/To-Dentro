@@ -1,5 +1,5 @@
 from typing import List, TYPE_CHECKING
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 from sqlalchemy import String, Integer
 from to_dentro.ext.db import db
 
@@ -27,6 +27,12 @@ class Organization(db.Model):
         back_populates="organization",
         cascade="all, delete-orphan"
     )
+
+    @validates('cnpj')
+    def validate_cnpj(self, key, value):
+        if value is not None and len(value) != 14:
+            raise ValueError("O CNPJ deve ter exatamente 14 caracteres")
+        return value
 
     def __repr__(self) -> str:
         return f"<Organization {self.name} - {self.cnpj}>"

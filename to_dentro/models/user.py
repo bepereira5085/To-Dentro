@@ -1,7 +1,7 @@
 import enum
 from typing import List, Optional, TYPE_CHECKING
 from datetime import datetime
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 from sqlalchemy import func, Integer
 from to_dentro.ext.db import db
 
@@ -32,63 +32,69 @@ class User (db.Model):
     type: Mapped[UserType] = mapped_column(db.Enum(UserType), default=UserType.REGULAR)
 
     created_at: Mapped[datetime] = mapped_column(
-        db.DateTime(timezone=True),
-        server_default=func.now()
+        db.DateTime(timezone=True), server_default=func.now()
     )
     verified_at: Mapped[Optional[datetime]] = mapped_column(
-        db.DateTime(timezone=True),
-        nullable=True
+        db.DateTime(timezone=True), nullable=True
     )
 
-    organizations: Mapped[List["OrganizationUser"]] = relationship(
-        "OrganizationUser",
-        back_populates="user",
-        cascade="all, delete-orphan"
+    organizations: Mapped[List['OrganizationUser']] = relationship(
+        'OrganizationUser', back_populates='user', cascade='all, delete-orphan'
     )
-    interested_events: Mapped[List["InterestedUser"]] = relationship(
-        "InterestedUser",
-        back_populates="user",
-        cascade="all, delete-orphan"
+    interested_events: Mapped[List['InterestedUser']] = relationship(
+        'InterestedUser', back_populates='user', cascade='all, delete-orphan'
     )
-    following: Mapped[List["Follow"]] = relationship(
-        "Follow",
-        foreign_keys="[Follow.follower_id]",
-        back_populates="follower",
-        cascade="all, delete-orphan"
+    following: Mapped[List['Follow']] = relationship(
+        'Follow',
+        foreign_keys='[Follow.follower_id]',
+        back_populates='follower',
+        cascade='all, delete-orphan',
     )
-
-    followers: Mapped[List["Follow"]] = relationship(
-        "Follow",
-        foreign_keys="[Follow.following_id]",
-        back_populates="following",
-        cascade="all, delete-orphan"
+    followers: Mapped[List['Follow']] = relationship(
+        'Follow',
+        foreign_keys='[Follow.following_id]',
+        back_populates='following',
+        cascade='all, delete-orphan',
     )
-
-    categories: Mapped[List["UserCategory"]] = relationship(
-        "UserCategory",
-        back_populates="user",
-        cascade="all, delete-orphan"
+    categories: Mapped[List['UserCategory']] = relationship(
+        'UserCategory', back_populates='user', cascade='all, delete-orphan'
     )
-
-    addresses: Mapped[List["UserAddress"]] = relationship(
-        "UserAddress",
-        back_populates="user",
-        cascade="all, delete-orphan"
+    addresses: Mapped[List['UserAddress']] = relationship(
+        'UserAddress', back_populates='user', cascade='all, delete-orphan'
     )
-
-    notifications_sent: Mapped[List["Notification"]] = relationship(
-        "Notification",
-        foreign_keys="[Notification.actor_user_id]",
-        back_populates="actor",
-        cascade="all, delete-orphan"
+    notifications_sent: Mapped[List['Notification']] = relationship(
+        'Notification',
+        foreign_keys='[Notification.actor_user_id]',
+        back_populates='actor',
+        cascade='all, delete-orphan',
+    )
+    notifications_received: Mapped[List['Notification']] = relationship(
+        'Notification',
+        foreign_keys='[Notification.recipient_user_id]',
+        back_populates='recipient',
+        cascade='all, delete-orphan',
     )
 
-    notifications_received: Mapped[List["Notification"]] = relationship(
-        "Notification",
-        foreign_keys="[Notification.recipient_user_id]",
-        back_populates="recipient",
-        cascade="all, delete-orphan"
-    )
+    @validates('cpf')
+    def validate_cpf(self, key, cpf):
+        if cpf is not None and len(cpf) != 11:
+            raise ValueError('O CPF deve conter exatamente 11 dígitos.')
+        return cpf
+
+    @validates('phone')
+    def validate_phone(self, key, phone):
+        if not phone or len(phone) < 10:
+            raise ValueError('O telefone deve conter pelo menos 10 dígitos.')
+        return phone
+
+    @validates('type')
+    def validate_type(self, key, user_type):
+        if isinstance(user_type, str):
+            try:
+                return UserType[user_type]
+            except KeyError:
+                raise ValueError(f"'{user_type}' não é um tipo de utilizador válido.")
+        return user_type
 
     def __repr__(self) -> str:
-        return f"<User {self.name} - {self.email} [{self.type.value}]>"
+        return f"<User {self.name} - {self.email} [{self.type.value if hasattr(self.type, 'value') else self.type}]>"

@@ -2,7 +2,7 @@ import enum
 from typing import List, TYPE_CHECKING
 from datetime import date
 from sqlalchemy import ForeignKey, Integer, Date, CheckConstraint
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 from to_dentro.ext.db import db
 
 if TYPE_CHECKING:
@@ -43,3 +43,29 @@ class EventRecurrence(db.Model):
     weekdays: Mapped[List["EventRecurrenceWeekday"]] = relationship(
         "EventRecurrenceWeekday", back_populates="recurrence", cascade="all, delete-orphan"
     )
+
+    @validates('type')
+    def validate_type(self, key, value):
+        if isinstance(value, str):
+            try:
+                return RecurrenceTypes[value]
+            except KeyError:
+                raise ValueError(f"'{value}' não é um valor válido para RecurrenceTypes")
+        return value
+
+    @validates('weeks_interval')
+    def validate_weeks_interval(self, key, value):
+        if value is not None:
+            if isinstance(value, str):
+                try:
+                    return WeeksInterval[value]
+                except KeyError:
+                    raise ValueError(f"'{value}' não é um valor válido para WeeksInterval")
+        return value
+
+    @validates('day_of_month')
+    def validate_day_of_month(self, key, value):
+        if value is not None:
+            if not (1 <= value <= 31):
+                raise ValueError("O dia do mês deve estar entre 1 e 31")
+        return value

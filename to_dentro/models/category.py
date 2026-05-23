@@ -1,8 +1,8 @@
 import enum
 from typing import TYPE_CHECKING, List
 
-from sqlalchemy import Integer, String
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import Integer
+from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 
 from to_dentro.ext.db import db
 
@@ -76,6 +76,15 @@ class Category(db.Model):
     event_categories: Mapped[List["EventCategories"]] = relationship(
         "EventCategories", back_populates="category", cascade="all, delete-orphan"
     )
+
+    @validates('type')
+    def validate_type(self, key, value):
+        if isinstance(value, str):
+            try:
+                return Categories[value]
+            except KeyError:
+                raise ValueError(f"'{value}' não é um valor válido para Categories")
+        return value
 
     def __repr__(self) -> str:
         return f"<Category {self.type.value}>"

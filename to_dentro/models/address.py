@@ -1,6 +1,6 @@
 from typing import List, TYPE_CHECKING
 from sqlalchemy import String, Integer
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 from to_dentro.ext.db import db
 
 if TYPE_CHECKING:
@@ -26,6 +26,12 @@ class Address(db.Model):
     event_addresses: Mapped[List["EventAddress"]] = relationship(
         "EventAddress", back_populates="address", cascade="all, delete-orphan"
     )
+
+    @validates('cep')
+    def validate_cep(self, key, value):
+        if value is not None and len(value) != 8:
+            raise ValueError("O CEP deve ter exatamente 8 caracteres")
+        return value
 
     def __repr__(self) -> str:
         return f"<Address {self.street}, {self.number} - {self.city}>"
