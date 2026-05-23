@@ -1,7 +1,7 @@
 from flask import Flask
 
 from to_dentro import models
-from to_dentro.ext import config, db, debugtoolbar, wtf
+from to_dentro.ext import config, db, debugtoolbar, wtf, cli
 from to_dentro.views import main
 
 
@@ -11,6 +11,7 @@ def create_app():
     config.init_app(app)
 
     db.init_app(app)
+    cli.init_app(app)
     wtf.init_app(app)
     debugtoolbar.init_app(app)
 
