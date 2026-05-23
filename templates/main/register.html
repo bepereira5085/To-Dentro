@@ -5,15 +5,15 @@
 {% block body_class %}register-page{% endblock %}
 
 {% block content %}
-<div class="columns is-gapless register-split">
+<div class="columns register-split">
     <div class="column is-5 register-left is-hidden-mobile">
         <div class="is-flex is-flex-direction-column is-justify-content-space-between" style="height:100%;">
-            <div class="is-flex is-align-items-center">
+            <a href="{{ url_for('main.index') }}" class="is-flex is-align-items-center">
                 <span class="icon logo-icon mr-2">
-                    <span class="material-symbols-outlined" style="color:#fff;font-size:20px;">arrow_circle_right</span>
+                    <span class="material-symbols-outlined" style="color:#fff; font-size:17px;">distance</span>
                 </span>
                 <span class="has-text-white has-text-weight-bold is-size-6">Tô Dentro</span>
-            </div>
+            </a>
             <div class="my-auto py-6">
                 <div class="hero-accent mb-4"></div>
                 <h1 class="title has-text-white hero-title mb-3">
@@ -240,7 +240,7 @@
 
     .register-left {
         background-color: #0a0a0a;
-        padding: 2.5rem 3rem;
+        padding: 3.5rem 4rem !important;
         position: relative;
         overflow: hidden;
     }

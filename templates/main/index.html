@@ -1,40 +1,347 @@
 {% extends "main/base.html" %}
 
-{% block title %}{{ titulo_app }} — Tô Dentro{% endblock %}
+{% block title %}Tô Dentro! — Descubra eventos na sua cidade{% endblock %}
+
+{% block extra_head %}
+<style>
+  .td-hero {
+    background-color: #0d0d0d;
+    min-height: 480px;
+    display: flex;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .td-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 70% 50%, rgba(200,30,30,0.12) 0%, transparent 65%),
+                radial-gradient(ellipse at 20% 80%, rgba(200,30,30,0.07) 0%, transparent 55%);
+    pointer-events: none;
+  }
+  .td-hero-title {
+    font-size: clamp(2rem, 5vw, 3.4rem);
+    font-weight: 800;
+    color: #ffffff;
+    line-height: 1.15;
+    letter-spacing: -0.03em;
+  }
+  .td-hero-title .accent { color: #e83232; }
+  .td-hero-subtitle {
+    color: #a0a0a0;
+    font-size: clamp(0.95rem, 2vw, 1.1rem);
+    line-height: 1.7;
+    max-width: 520px;
+    margin-top: 1rem;
+  }
+  .td-hero-actions { margin-top: 2rem; display: flex; flex-wrap: wrap; gap: 0.75rem; }
+  .td-hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 999px;
+    padding: 0.3rem 0.9rem;
+    color: #ccc;
+    font-size: 0.8rem;
+    font-weight: 500;
+    margin-bottom: 1.25rem;
+  }
+  .td-hero-badge .dot { width: 7px; height: 7px; border-radius: 50%; background: #e83232; display: inline-block; }
+
+  .td-section { padding: 4rem 1.5rem; }
+  .td-section-title {
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    font-weight: 800;
+    color: #0d0d0d;
+    letter-spacing: -0.02em;
+    text-align: center;
+  }
+  .td-section-subtitle {
+    text-align: center;
+    color: #6b7280;
+    font-size: 0.95rem;
+    margin-top: 0.4rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .td-categories { background: #f4f4f5; }
+  .cat-grid {
+    display: flex;
+    gap: 0.75rem;
+    overflow-x: auto;
+    padding: 0.5rem;
+    scrollbar-width: none;
+  }
+  .cat-grid::-webkit-scrollbar { display: none; }
+  .cat-card {
+    flex: 0 0 auto;
+    width: 140px;
+    height: 110px;
+    border-radius: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #fff;
+    transition: transform 0.18s, box-shadow 0.18s;
+    text-decoration: none;
+  }
+  .cat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 5px rgba(0,0,0, 0.2);
+  }
+  .cat-card .cat-icon { font-size: 1.6rem; }
+  .cat-red      { background: #c81e1e; }
+  .cat-dark-red { background: #7a1212; }
+  .cat-gray     { background: #5a5a5a; }
+  .cat-black    { background: #1a1a1a; }
+  .cat-crimson  { background: #a01818; }
+
+  @media(min-width: 769px) {
+    .cat-grid { justify-content: center; flex-wrap: wrap; }
+    .cat-card { width: 150px; height: 120px; }
+  }
+
+  .steps-section { background: #fff; }
+  .step-card {
+    text-align: center;
+    padding: 2rem 1.5rem;
+    border-radius: 16px;
+    background: #fafafa;
+    border: 1.5px solid #f0f0f0;
+    height: 100%;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .step-card:hover { border-color: #e83232; box-shadow: 0 6px 20px rgba(200,30,30,0.07); }
+  .step-icon-wrap {
+    width: 64px; height: 64px;
+    border-radius: 16px;
+    background: #fff0f0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    font-size: 1.8rem;
+  }
+  .step-number {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #e83232;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.4rem;
+  }
+  .step-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #0d0d0d;
+    margin-bottom: 0.5rem;
+  }
+  .step-desc { font-size: 0.88rem; color: #6b7280; line-height: 1.6; }
+
+  .profiles-section { background: #f4f4f5; }
+  .profile-card {
+    border-radius: 18px;
+    padding: 2.5rem 2rem;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    border: 1.5px solid #fcdada;
+    background: #fff8f8;
+    transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+  }
+  .profile-card:hover { border-color: #c81e1e; box-shadow: 0 8px 24px rgba(200,30,30,0.1); transform: translateY(-3px); }
+  .profile-icon-wrap {
+    width: 60px; height: 60px;
+    border-radius: 14px;
+    background: #c81e1e;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.25rem;
+    font-size: 1.6rem;
+  }
+  .profile-card.dark { background: #1a1a1a; border-color: #1a1a1a; }
+  .profile-card.dark .profile-icon-wrap { background: #7a1212; }
+  .profile-card.dark .profile-title { color: #fff; }
+  .profile-card.dark .profile-desc { color: #9ca3af; }
+  .profile-title { font-size: 1.25rem; font-weight: 800; color: #0d0d0d; margin-bottom: 0.6rem; }
+  .profile-desc { font-size: 0.9rem; color: #6b7280; line-height: 1.6; margin-bottom: 1.5rem; flex:1; }
+
+  .organizer-section {
+    background: linear-gradient(135deg, #0d0d0d 0%, #1f0808 100%);
+    position: relative;
+    overflow: hidden;
+  }
+  .organizer-section::after {
+    content: '';
+    position: absolute;
+    right: -100px; top: -100px;
+    width: 350px; height: 350px;
+    background: radial-gradient(circle, rgba(200,30,30,0.18) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .organizer-section .td-section-title { color: #fff; text-align: left; }
+  .organizer-section p { color: #9ca3af; line-height: 1.7; font-size: 0.95rem; text-align: left; }
+
+  .td-footer {
+    background: #0d0d0d;
+    color: #6b7280;
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+    font-size: 0.85rem;
+  }
+  .td-footer a { color: #9ca3af; text-decoration: none; transition: color 0.2s; }
+  .td-footer a:hover { color: #e83232; }
+  .td-footer .footer-links { display: flex; justify-content: center; gap: 1.5rem; margin-top: 0.75rem; flex-wrap: wrap; }
+</style>
+{% endblock %}
 
 {% block content %}
-<section class="section">
-  <div class="container">
-    <div class="box has-text-centered has-background-light">
-      <h1 class="title is-1 has-text-primary">👋 {{ titulo_app }}</h1>
-      <p class="subtitle is-4 mt-3">{{ mensagem }}</p>
 
-      <div class="columns is-centered mt-5">
-        <div class="column is-half">
-          <div class="card">
-            <header class="card-header has-background-primary">
-              <p class="card-header-title has-text-white">
-                O que teremos por aqui?
-              </p>
-            </header>
-            <div class="card-content">
-              <div class="content">
-                <ul class="has-text-left">
-                  {% for recurso in recursos %}
-                  <li class="py-1">📌 {{ recurso }}</li>
-                  {% endfor %}
-                </ul>
-              </div>
-            </div>
-            <footer class="card-footer">
-              <a href="#" class="card-footer-item button is-success is-light">
-                Botão "Tô Dentro!" (Em breve)
-              </a>
-            </footer>
-          </div>
+<section class="td-hero">
+  <div class="container" style="position:relative; z-index:1; padding: 4rem 1.5rem;">
+    <div class="columns is-vcentered">
+      <div class="column is-7">
+        <div class="td-hero-badge">
+          <span class="dot"></span>
+          Descubra o que acontece perto de você
+        </div>
+        <h1 class="td-hero-title">
+          O que tem pra fazer <span class="accent">hoje?</span>
+        </h1>
+        <p class="td-hero-subtitle">
+          A plataforma colaborativa e 100% gratuita que conecta você a shows locais, esportes, feiras e visitas técnicas. Encontre sua galera e participe da comunidade!
+        </p>
+        <div class="td-hero-actions">
+          <a href="{{ url_for('main.register') }}" class="button is-medium btn-ghost-td" style="color:#fff!important; border-color:rgba(255,255,255,0.25)!important; background:transparent!important; padding-left:1.5rem;padding-right:1.5rem;">
+            Criar conta grátis
+          </a>
         </div>
       </div>
     </div>
   </div>
 </section>
+
+<section class="td-section td-categories" id="explorar">
+  <div class="container">
+    <h2 class="td-section-title">Explore ao máximo</h2>
+    <p class="td-section-subtitle">Encontre o evento que é a sua cara!</p>
+    <div class="cat-grid">
+      <div class="cat-card cat-red">
+        <span class="material-symbols-outlined">celebration</span>
+        <span>Festas</span>
+      </div>
+      <div class="cat-card cat-dark-red">
+        <span class="material-symbols-outlined">mic_external_on</span>
+        <span>Shows</span>
+      </div>
+      <div class="cat-card cat-gray">
+        <span class="material-symbols-outlined">comedy_mask</span>
+        <span>Teatro</span>
+      </div>
+      <div class="cat-card cat-black">
+        <span class="material-symbols-outlined">exercise</span>
+        <span>Acadêmicos</span>
+      </div>
+      <div class="cat-card cat-gray">
+        <span class="material-symbols-outlined">sports_and_outdoors</span>
+        <span>Esportes</span>
+      </div>
+      <div class="cat-card cat-dark-red">
+        <span class="material-symbols-outlined">festival</span>
+        <span>Feiras</span>
+      </div>
+      <div class="cat-card cat-red">
+        <span class="material-symbols-outlined">content_paste_search</span>
+        <span>Visitas Técnicas</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="td-section steps-section">
+  <div class="container">
+    <h2 class="td-section-title">Como funciona?</h2>
+    <p class="td-section-subtitle">Três passos simples para você começar a aproveitar</p>
+    <div class="columns is-multiline is-centered">
+      <div class="column is-4-desktop is-6-tablet">
+        <div class="step-card">
+          <div class="step-icon-wrap material-symbols-outlined">mobile_hand</div>
+          <p class="step-number">Passo 1</p>
+          <p class="step-title">Encontre o seu rolê</p>
+          <p class="step-desc">De corridas de rua a shows de bandas locais — explore tudo que está acontecendo perto de você.</p>
+        </div>
+      </div>
+      <div class="column is-4-desktop is-6-tablet">
+        <div class="step-card">
+          <div class="step-icon-wrap material-symbols-outlined">person_raised_hand</div>
+          <p class="step-number">Passo 2</p>
+          <p class="step-title">Marque "Tô Dentro!"</p>
+          <p class="step-desc">Mostre aos seus amigos que você vai participar e crie uma lista dos eventos que não quer perder.</p>
+        </div>
+      </div>
+      <div class="column is-4-desktop is-6-tablet">
+        <div class="step-card">
+          <div class="step-icon-wrap material-symbols-outlined">diversity_2</div>
+          <p class="step-number">Passo 3</p>
+          <p class="step-title">Viva a experiência</p>
+          <p class="step-desc">Junte a galera, crie memórias incríveis e apoie as iniciativas culturais da sua região.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="td-section profiles-section">
+  <div class="container">
+    <h2 class="td-section-title">Como você quer participar?</h2>
+    <p class="td-section-subtitle">Você pode só curtir os rolês ou criar oferecer seus próprios eventos</p>
+    <div class="columns is-centered">
+      <div class="column is-5-desktop is-6-tablet">
+        <div class="profile-card">
+          <div class="profile-icon-wrap">
+            <span class="material-symbols-outlined" style="font-size:1.6rem; color: white;">reminder</span>
+          </div>
+          <p class="profile-title">Quer curtir?</p>
+          <p class="profile-desc">Descubra eventos perto de você, salve os que mais gosta e nunca perca o que importa.</p>
+          <a href="{{ url_for('main.register') }}" class="button is-fullwidth btn-primary-td">
+            Quero descobrir eventos
+          </a>
+        </div>
+      </div>
+      <div class="column is-5-desktop is-6-tablet">
+        <div class="profile-card">
+          <div class="profile-icon-wrap">
+            <span class="material-symbols-outlined" style="font-size:1.6rem; color: white;">calendar_add_on</span>
+          </div>
+          <p class="profile-title">Quer produzir?</p>
+          <p class="profile-desc">Cadastre seus eventos, acompanhe métricas e alcance o público certo da sua cidade.</p>
+          <a href="{{ url_for('main.register') }}" class="button is-fullwidth" style="background:#c81e1e!important; color:#fff!important; border:none!important; border-radius:8px!important; font-weight:600!important;">
+            Quero gerenciar eventos
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="td-footer">
+  <p>Feito com ❤️ pela comunidade, para a comunidade.</p>
+  <!-- <div class="footer-links">
+    <a href="#">Termos de Uso</a>
+    <a href="#">Política de Privacidade</a>
+    <a href="#">Contato</a>
+  </div> -->
+</footer>
+
 {% endblock %}

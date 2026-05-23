@@ -27,7 +27,6 @@ def login():
 
             if usuario and usuario.check_password(senha_digitada):
                 login_user(usuario)
-                flash("Login realizado com sucesso! Bem-vindo ao Tô Dentro!", "is-success")
                 return redirect(url_for('main.index'))
             else:
                 session['login_form_data'] = request.form.to_dict()
@@ -132,7 +131,6 @@ def register():
 @login_required
 def logout():
     logout_user()
-    flash("Sessão encerrada com sucesso.", "is-info")
     return redirect(url_for('main.index'))
 
 
