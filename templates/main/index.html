@@ -1,0 +1,40 @@
+{% extends "main/base.html" %}
+
+{% block title %}{{ titulo_app }} — Tô Dentro{% endblock %}
+
+{% block content %}
+<section class="section">
+  <div class="container">
+    <div class="box has-text-centered has-background-light">
+      <h1 class="title is-1 has-text-primary">👋 {{ titulo_app }}</h1>
+      <p class="subtitle is-4 mt-3">{{ mensagem }}</p>
+
+      <div class="columns is-centered mt-5">
+        <div class="column is-half">
+          <div class="card">
+            <header class="card-header has-background-primary">
+              <p class="card-header-title has-text-white">
+                O que teremos por aqui?
+              </p>
+            </header>
+            <div class="card-content">
+              <div class="content">
+                <ul class="has-text-left">
+                  {% for recurso in recursos %}
+                  <li class="py-1">📌 {{ recurso }}</li>
+                  {% endfor %}
+                </ul>
+              </div>
+            </div>
+            <footer class="card-footer">
+              <a href="#" class="card-footer-item button is-success is-light">
+                Botão "Tô Dentro!" (Em breve)
+              </a>
+            </footer>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

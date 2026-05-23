@@ -1,20 +1,27 @@
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, redirect, url_for, flash
+from to_dentro.forms.main import LoginForm
+from to_dentro.models.user import User
 
-bp = Blueprint('main', __name__)
+main_bp = Blueprint('main', __name__)
 
-@bp.route('/')
-def index ():
-    contexto = {
-        'titulo_app': 'Tô Dentro!',
-        'mensagem': 'Bem-vindo ao aplicativo de eventos',
-        'recursos': [
-            'Divulgação de eventos',
-            'Divulgação de atividades',
-            'Saiba em que evento seus amigos estão dentro'
-        ]
-    }
+@main_bp.route('/')
+def index():
+    return render_template('main/index.html')
 
-    return render_template('index.html', **contexto)
+@main_bp.route('/login', methods=['GET', 'POST'])
+def login():
+    form = LoginForm()
 
-def init_app (app):
-    app.register_blueprint(bp)
+    if form.validate_on_submit():
+        email_digitado = form.email.data
+        senha_digitada = form.password.data
+
+        usuario = User.query.filter_by(email=email_digitado).first()
+
+        if usuario and usuario.check_password(senha_digitada):
+            flash("Login realizado com sucesso! Bem-vindo ao Tô Dentro!", "is-success")
+            return redirect(url_for('main.index'))
+        else:
+            flash("E-mail ou senha incorretos. Tente novamente.", "is-danger")
+
+    return render_template('main/login.html', form=form)

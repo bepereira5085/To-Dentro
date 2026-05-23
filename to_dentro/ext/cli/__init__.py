@@ -78,7 +78,8 @@ def init_app(app):
 
             users_seed_db_pattern = []
             for _name, _email, _cpf, _phone, _type in users_seed:
-                _user = User(name=_name, email=_email, password="12345678", cpf=_cpf, phone=_phone, type=_type)
+                _user = User(name=_name, email=_email, cpf=_cpf, phone=_phone, type=_type)
+                _user.set_password("12345678")
                 users_seed_db_pattern.append(_user)
 
             db.session.add_all(users_seed_db_pattern)
