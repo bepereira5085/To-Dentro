@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, session
 from werkzeug.datastructures import MultiDict
+from flask_login import login_user, logout_user, login_required, current_user
 from to_dentro.forms.main import LoginForm
 from to_dentro.forms.register import RegisterForm
 from to_dentro.models.user import User, UserType
@@ -25,6 +26,7 @@ def login():
             usuario = User.query.filter_by(email=email_digitado).first()
 
             if usuario and usuario.check_password(senha_digitada):
+                login_user(usuario)
                 flash("Login realizado com sucesso! Bem-vindo ao Tô Dentro!", "is-success")
                 return redirect(url_for('main.index'))
             else:
@@ -97,6 +99,7 @@ def register():
                     db.session.add(user_address)
 
                 db.session.commit()
+                login_user(user)
                 flash("Conta criada com sucesso! Bem-vindo ao Tô Dentro!", "is-success")
                 return redirect(url_for('main.index'))
             except Exception:
@@ -123,3 +126,25 @@ def register():
         form = RegisterForm()
 
     return render_template('main/register.html', form=form)
+
+
+@main_bp.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    flash("Sessão encerrada com sucesso.", "is-info")
+    return redirect(url_for('main.index'))
+
+
+@main_bp.app_context_processor
+def inject_global_variables():
+    return {
+        'titulo_app': 'Tô Dentro',
+        'mensagem': 'A plataforma de eventos comunitários e gratuitos',
+        'recursos': [
+            'Encontre eventos perto de você',
+            'Crie e divulgue seus próprios eventos',
+            'Acompanhe seus produtores favoritos',
+            'Receba notificações personalizadas'
+        ]
+    }

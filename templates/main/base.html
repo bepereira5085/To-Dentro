@@ -15,10 +15,118 @@
     />
     <style>
       *, *::before, *::after { box-sizing: border-box; }
-      body { margin: 0; padding: 0; font-family: 'Inter', 'Segoe UI', system-ui, sans-serif; }
+      body { margin: 0; padding: 0; font-family: 'Inter', 'Segoe UI', system-ui, sans-serif; background-color: #f7f9fa; }
+      .navbar {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      }
+      .navbar-item img {
+        max-height: 2rem;
+      }
+      .navbar-burger {
+        color: #fff !important;
+      }
+      @media screen and (max-width: 1023px) {
+        .navbar-menu {
+          background-color: #0a0a0a !important;
+          border-bottom: 1px solid #1a1a1a;
+        }
+        .navbar-item {
+          color: #fff !important;
+        }
+      }
     </style>
   </head>
   <body class="{% block body_class %}{% endblock %}">
+    {% if not (request.path == url_for('main.login') or request.path == url_for('main.register')) %}
+    <nav class="navbar is-dark py-2" role="navigation" aria-label="main navigation" style="background-color: #0a0a0a; border-bottom: 1px solid #1a1a1a;">
+      <div class="container">
+        <div class="navbar-brand">
+          <a class="navbar-item" href="{{ url_for('main.index') }}" style="font-weight: 800; font-size: 1.25rem; color: #fff; display: flex; align-items: center; gap: 0.5rem;">
+            <span class="icon" style="background-color: #c81e1e; border-radius: 6px; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center;">
+              <span class="material-symbols-outlined" style="color: #fff; font-size: 16px;">arrow_circle_right</span>
+            </span>
+            <span>Tô Dentro</span>
+          </a>
+
+          <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="navbarMainMenu">
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+          </a>
+        </div>
+
+        <div id="navbarMainMenu" class="navbar-menu">
+          <div class="navbar-start">
+            <a class="navbar-item has-text-white" href="{{ url_for('main.index') }}">
+              Início
+            </a>
+          </div>
+
+          <div class="navbar-end">
+            {% if current_user.is_authenticated %}
+            <div class="navbar-item has-text-grey-light" style="font-size: 0.95rem;">
+              <span class="material-symbols-outlined mr-1" style="font-size: 20px; vertical-align: middle;">account_circle</span>
+              Olá, <strong class="has-text-white ml-1">{{ current_user.name.split(' ')[0] }}</strong>
+            </div>
+            <div class="navbar-item">
+              <a href="{{ url_for('main.logout') }}" class="button is-small is-danger is-outlined" style="border-radius: 6px; border-color: #c81e1e; color: #c81e1e; font-weight: 600; transition: all 0.2s;">
+                Sair
+              </a>
+            </div>
+            {% else %}
+            <div class="navbar-item">
+              <a href="{{ url_for('main.login') }}" class="button is-small is-light is-outlined" style="border-radius: 6px; font-weight: 600; color: #fff; background: transparent; border-color: rgba(255,255,255,0.3);">
+                Entrar
+              </a>
+            </div>
+            <div class="navbar-item">
+              <a href="{{ url_for('main.register') }}" class="button is-small is-danger" style="background-color: #c81e1e; border-radius: 6px; font-weight: 600; transition: all 0.2s;">
+                Criar conta
+              </a>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="container mt-4 px-3">
+          {% for category, message in messages %}
+            <div class="notification {{ category }} is-light" style="border-radius: 8px;">
+              <button class="delete"></button>
+              {{ message }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+    {% endif %}
+
     {% block content %}{% endblock %}
+
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const $navbarBurgers = Array.prototype.slice.call(document.querySelectorAll('.navbar-burger'), 0);
+        if ($navbarBurgers.length > 0) {
+          $navbarBurgers.forEach( el => {
+            el.addEventListener('click', () => {
+              const target = el.dataset.target;
+              const $target = document.getElementById(target);
+              el.classList.toggle('is-active');
+              $target.classList.toggle('is-active');
+            });
+          });
+        }
+
+        (document.querySelectorAll('.notification .delete') || []).forEach(($delete) => {
+          const $notification = $delete.parentNode;
+          $delete.addEventListener('click', () => {
+            $notification.parentNode.removeChild($notification);
+          });
+        });
+      });
+    </script>
   </body>
 </html>

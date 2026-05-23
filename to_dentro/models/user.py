@@ -1,5 +1,6 @@
 import enum
 import re
+from flask_login import UserMixin
 from typing import List, Optional, TYPE_CHECKING
 from datetime import date, datetime
 from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
@@ -21,7 +22,7 @@ class UserType(enum.Enum):
     ORGANIZER = "Organizer"
 
 
-class User(db.Model):
+class User(db.Model, UserMixin):
     __tablename__ = "users"
     __table_args__ = {"extend_existing": True}
 
