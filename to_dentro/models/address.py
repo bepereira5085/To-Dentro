@@ -7,9 +7,10 @@ if TYPE_CHECKING:
     from .user_address import UserAddress
     from .event_address import EventAddress
 
+
 class Address(db.Model):
-    __tablename__ = 'addresses'
-    __table_args__ = {'extend_existing': True}
+    __tablename__ = "addresses"
+    __table_args__ = {"extend_existing": True}
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     street: Mapped[str] = mapped_column(String(200))
@@ -27,10 +28,13 @@ class Address(db.Model):
         "EventAddress", back_populates="address", cascade="all, delete-orphan"
     )
 
-    @validates('cep')
+    @validates("cep")
     def validate_cep(self, key, value):
-        if value is not None and len(value) != 8:
-            raise ValueError("O CEP deve ter exatamente 8 caracteres")
+        if value is not None:
+            if len(value) != 8:
+                raise ValueError("O CEP deve ter exatamente 8 caracteres")
+            if not value.isdigit():
+                raise ValueError("O CEP deve conter apenas números")
         return value
 
     def __repr__(self) -> str:
