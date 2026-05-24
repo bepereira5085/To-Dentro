@@ -244,6 +244,41 @@
         color: #bbb;
         font-size: 0.82rem;
       }
+      .td-custom-select-wrapper { position: relative; width: 100%; display: block; }
+      .td-custom-select-trigger {
+        width: 100%; height: 44px; border: 1.5px solid #e5e7eb; border-radius: 10px;
+        padding: 0 14px; font-size: 0.88rem; font-family: 'Inter', sans-serif;
+        color: #1a1a1a; background: #fff; cursor: pointer; display: flex;
+        align-items: center; justify-content: space-between;
+        transition: border-color 0.2s, box-shadow 0.2s, background 0.2s; user-select: none;
+      }
+      .td-custom-select-trigger:hover { background: #fdfdfd; }
+      .td-custom-select-trigger.is-open { border-color: #c81e1e; box-shadow: 0 0 0 3px rgba(200, 30, 30, 0.06); }
+      .td-custom-select-trigger .material-symbols-outlined { font-size: 18px; color: #9ca3af; transition: transform 0.2s; }
+      .td-custom-select-trigger.is-open .material-symbols-outlined { transform: rotate(180deg); }
+      
+      .td-custom-select-dropdown {
+        position: absolute; top: calc(100% + 4px); left: 0; width: 100%; max-height: 220px;
+        overflow-y: auto; background: #fff; border: 1px solid #f0f0f0; border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12); z-index: 9999; display: none;
+        animation: td-dropdown-fade 0.15s cubic-bezier(.4,0,.2,1); scrollbar-width: thin;
+      }
+      .td-custom-select-dropdown::-webkit-scrollbar { width: 6px; }
+      .td-custom-select-dropdown::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+      .td-custom-select-dropdown.is-open { display: block; }
+      
+      @keyframes td-dropdown-fade {
+        from { opacity: 0; transform: translateY(-4px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      
+      .td-custom-select-item {
+        padding: 10px 14px; font-size: 0.88rem; color: #374151; cursor: pointer;
+        transition: background 0.15s, color 0.15s;
+      }
+      .td-custom-select-item:hover { background: #f3f4f6; }
+      .td-custom-select-item.is-selected { background: #c81e1e; color: #fff; font-weight: 600; }
+      .td-custom-select-item.is-selected:hover { background: #a81818; }
     </style>
     {% block extra_head %}{% endblock %}
   </head>
@@ -314,12 +349,19 @@
               </div>
             </div>
             <div class="navbar-item">
-              <div style="width:38px; height:38px; border-radius:50%; background:#1a1a1a;
-                          color:#fff; display:flex; align-items:center; justify-content:center;
-                          font-weight:700; font-size:0.78rem; cursor:default; letter-spacing:0.03em;"
-                   title="{{ current_user.name }}">
-                {{ (current_user.name[:2])|upper }}
-              </div>
+              <a href="{{ url_for('main.profile') }}" style="display: flex; align-items: center; border-radius: 50%; outline: none;" title="{{ current_user.name }}">
+                <div style="width:38px; height:38px; border-radius:50%; background: linear-gradient(135deg, #1a1a1a 0%, #2d0a0a 60%, #c81e1e 100%);
+                            color:#fff; display:flex; align-items:center; justify-content:center;
+                            font-weight:700; font-size:0.78rem; cursor:pointer; letter-spacing:0.03em; overflow: hidden; transition: box-shadow 0.2s;"
+                     onmouseover="this.style.boxShadow='0 4px 12px rgba(200,30,30,0.3)'"
+                     onmouseout="this.style.boxShadow='none'">
+                  {% if current_user.photo_url %}
+                    <img src="{{ current_user.photo_url }}" alt="{{ current_user.name }}" style="width:38px; height:38px; min-width:38px; min-height:38px; object-fit:cover; border-radius:50%; display:block;" />
+                  {% else %}
+                    {{ (current_user.name[:2])|upper }}
+                  {% endif %}
+                </div>
+              </a>
             </div>
             <div class="navbar-item">
               <a href="{{ url_for('main.logout') }}" class="button is-small btn-ghost-td">Sair</a>
@@ -493,6 +535,124 @@
         fetchNotifs();
 
         setInterval(fetchNotifs, 60000);
+      });
+    </script>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const selects = document.querySelectorAll('select:not([multiple])');
+        
+        selects.forEach(select => {
+          select.style.display = 'none';
+          
+          const wrapper = document.createElement('div');
+          wrapper.className = 'td-custom-select-wrapper';
+          
+          if (select.parentElement) {
+            select.parentElement.insertBefore(wrapper, select);
+            wrapper.appendChild(select);
+          }
+          
+          const trigger = document.createElement('div');
+          trigger.className = 'td-custom-select-trigger';
+          
+          // Adapt styling if it was a small search bar input
+          if (select.classList.contains('city-search-input')) {
+            trigger.style.background = '#fafafa';
+            trigger.style.border = '1.5px solid #e5e7eb';
+            trigger.style.height = '36px';
+            trigger.style.borderRadius = '8px';
+            trigger.style.paddingRight = '12px';
+            trigger.style.fontSize = '0.85rem';
+          }
+          
+          const label = document.createElement('span');
+          label.className = 'td-custom-select-label';
+          
+          const getSelectedText = () => {
+            const selectedOpt = select.options[select.selectedIndex];
+            return selectedOpt ? selectedOpt.text : 'Selecione...';
+          };
+          
+          label.textContent = getSelectedText();
+          label.style.overflow = 'hidden';
+          label.style.textOverflow = 'ellipsis';
+          label.style.whiteSpace = 'nowrap';
+          label.style.flex = '1';
+          
+          const icon = document.createElement('span');
+          icon.className = 'material-symbols-outlined';
+          icon.textContent = 'expand_more';
+          
+          trigger.appendChild(label);
+          trigger.appendChild(icon);
+          wrapper.appendChild(trigger);
+          
+          const dropdown = document.createElement('div');
+          dropdown.className = 'td-custom-select-dropdown';
+          wrapper.appendChild(dropdown);
+          
+          const renderOptions = () => {
+            dropdown.innerHTML = '';
+            Array.from(select.options).forEach((opt, index) => {
+              if (opt.style.display === 'none') return;
+              
+              const item = document.createElement('div');
+              item.className = 'td-custom-select-item';
+              if (select.selectedIndex === index) item.classList.add('is-selected');
+              item.textContent = opt.text;
+              
+              item.addEventListener('click', (e) => {
+                e.stopPropagation();
+                select.selectedIndex = index;
+                label.textContent = opt.text;
+                dropdown.classList.remove('is-open');
+                trigger.classList.remove('is-open');
+                renderOptions();
+                select.dispatchEvent(new Event('change', { bubbles: true }));
+              });
+              dropdown.appendChild(item);
+            });
+          };
+          
+          renderOptions();
+          
+          select.addEventListener('change', () => {
+            label.textContent = getSelectedText();
+            renderOptions();
+          });
+          
+          // Watch for options added/removed dynamically
+          const observer = new MutationObserver(() => {
+             label.textContent = getSelectedText();
+             renderOptions();
+          });
+          observer.observe(select, { childList: true });
+          
+          trigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isOpen = dropdown.classList.contains('is-open');
+            document.querySelectorAll('.td-custom-select-dropdown.is-open').forEach(d => d.classList.remove('is-open'));
+            document.querySelectorAll('.td-custom-select-trigger.is-open').forEach(t => t.classList.remove('is-open'));
+            
+            if (!isOpen) {
+              dropdown.classList.add('is-open');
+              trigger.classList.add('is-open');
+              
+              const selectedItem = dropdown.querySelector('.is-selected');
+              if (selectedItem) {
+                dropdown.scrollTop = selectedItem.offsetTop - dropdown.offsetTop - 10;
+              }
+            }
+          });
+          
+          document.addEventListener('click', (e) => {
+            if (!wrapper.contains(e.target)) {
+              dropdown.classList.remove('is-open');
+              trigger.classList.remove('is-open');
+            }
+          });
+        });
       });
     </script>
   </body>

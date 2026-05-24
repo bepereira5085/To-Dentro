@@ -1,0 +1,495 @@
+{% extends "main/base.html" %}
+
+{% block title %}Meu Perfil — Tô Dentro{% endblock %}
+
+{% block extra_head %}
+<style>
+  .profile-page {
+    background: #f7f7f8;
+    min-height: 100vh;
+    padding: 3rem 1.5rem 5rem;
+  }
+
+  .form-container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+    border: 1px solid #ebebeb;
+    overflow: hidden;
+  }
+
+  .form-header {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d0a0a 60%, #c81e1e 100%);
+    padding: 2.2rem;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+  }
+
+  .avatar-upload-wrapper {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    margin-bottom: 1.5rem;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    border: 4px solid rgba(255,255,255,0.25);
+    background: rgba(255,255,255,0.15);
+  }
+
+  .avatar-preview {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+    overflow: hidden;
+  }
+
+  .avatar-initials {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 0.05em;
+  }
+
+  .avatar-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s;
+    color: #fff;
+  }
+
+  .avatar-upload-wrapper:hover .avatar-overlay {
+    opacity: 1;
+  }
+
+  .avatar-overlay .material-symbols-outlined {
+    font-size: 28px;
+    margin-bottom: 4px;
+  }
+  
+  .avatar-overlay span {
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  .form-header h1 {
+    font-size: 1.6rem;
+    font-weight: 800;
+    margin-bottom: 0.4rem;
+    letter-spacing: -0.02em;
+    text-align: center;
+  }
+
+  .form-header p {
+    font-size: 0.88rem;
+    opacity: 0.9;
+    font-weight: 500;
+    text-align: center;
+  }
+
+  .form-section {
+    padding: 2.2rem;
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  .form-section:last-child {
+    border-bottom: none;
+  }
+
+  .section-title {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #1a1a1a;
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    letter-spacing: -0.01em;
+  }
+
+  .section-title .material-symbols-outlined {
+    color: #c81e1e;
+    font-size: 22px;
+  }
+
+  .input-label {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #4b5563;
+    margin-bottom: 0.4rem;
+    display: block;
+  }
+
+  .input-field {
+    width: 100%;
+    height: 44px;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 0 14px;
+    font-size: 0.88rem;
+    font-family: 'Inter', sans-serif;
+    color: #1a1a1a;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    background: #fafafa;
+  }
+
+  .input-field:focus {
+    border-color: #c81e1e;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(200, 30, 30, 0.06);
+  }
+
+  /* Seletor Multi-Tags de Categorias */
+  .categories-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 0.5rem;
+    max-height: 250px;
+    overflow-y: auto;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 10px;
+    background: #fafafa;
+    scrollbar-width: thin;
+  }
+
+  .category-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #4b5563;
+    cursor: pointer;
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1.5px solid transparent;
+    transition: all 0.15s;
+    background: #fff;
+    user-select: none;
+  }
+
+  .category-checkbox-label:hover {
+    border-color: #e5e7eb;
+    background: #f9fafb;
+  }
+
+  .category-checkbox-label.is-checked {
+    background: #fff5f5;
+    border-color: #c81e1e;
+    color: #c81e1e;
+  }
+
+  .category-checkbox-label input {
+    display: none;
+  }
+  
+  .category-limit-msg {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-top: 0.5rem;
+  }
+
+  .category-limit-msg.is-danger {
+    color: #c81e1e;
+    font-weight: 700;
+  }
+
+  /* Ações do Formulário */
+  .form-actions {
+    padding: 2.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 1rem;
+    background: #fafafa;
+  }
+
+  .submit-btn {
+    height: 48px;
+    background: #c81e1e;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 0 2rem;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 4px 14px rgba(200, 30, 30, 0.2);
+  }
+
+  .submit-btn:hover {
+    background: #a81818;
+    box-shadow: 0 6px 20px rgba(200, 30, 30, 0.3);
+  }
+
+  .submit-btn:active {
+    transform: scale(0.98);
+  }
+
+  .cancel-btn {
+    height: 48px;
+    background: transparent;
+    color: #4b5563;
+    border: 1.5px solid #d1d5db;
+    border-radius: 10px;
+    padding: 0 1.5rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .cancel-btn:hover {
+    border-color: #4b5563;
+    background: #f3f4f6;
+  }
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="profile-page">
+
+  <div class="form-container">
+    <form method="POST" enctype="multipart/form-data" id="profileForm">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <div class="form-header">
+        <label class="avatar-upload-wrapper" title="Clique para alterar a foto">
+          {% if current_user.photo_url %}
+            <img src="{{ current_user.photo_url }}" alt="Foto de {{ current_user.name }}" class="avatar-preview" id="avatarPreviewImg" />
+          {% else %}
+            <div class="avatar-initials" id="avatarInitials">{{ (current_user.name[:2])|upper }}</div>
+            <img src="" alt="Preview" class="avatar-preview" id="avatarPreviewImg" style="display: none;" />
+          {% endif %}
+          <div class="avatar-overlay">
+            <span class="material-symbols-outlined">photo_camera</span>
+            <span>Alterar</span>
+          </div>
+          <input type="file" name="photo" id="photoInput" accept="image/png, image/jpeg, image/jpg" style="display: none;" />
+        </label>
+
+        <h1>Detalhes do Perfil</h1>
+        <p>Mantenha suas informações atualizadas para melhorar sua experiência no Tô Dentro.</p>
+      </div>
+
+      <section class="form-section">
+        <h2 class="section-title">
+          <span class="material-symbols-outlined">person</span>
+          Informações Básicas
+        </h2>
+
+        <div class="columns is-multiline">
+          <div class="column is-6 pb-3">
+            <label class="input-label" for="userName">Nome Completo</label>
+            <input type="text" name="name" id="userName" class="input-field" value="{{ current_user.name }}" required />
+          </div>
+
+          <div class="column is-6 pb-3">
+            <label class="input-label" for="userEmail">E-mail</label>
+            <input type="email" name="email" id="userEmail" class="input-field" value="{{ current_user.email }}" required />
+          </div>
+
+          <div class="column is-4 pb-3">
+            <label class="input-label" for="userPhone">Telefone</label>
+            <input type="text" name="phone" id="userPhone" class="input-field" value="{{ current_user.phone }}" required />
+          </div>
+
+          <div class="column is-4 pb-3">
+            <label class="input-label" for="userBirthDate">Data de Nascimento</label>
+            <input type="date" name="birth_date" id="userBirthDate" class="input-field" value="{{ current_user.birth_date.isoformat() if current_user.birth_date else '' }}" required />
+          </div>
+
+          <div class="column is-4 pb-3">
+            <label class="input-label" for="userCep">CEP (Sua Região)</label>
+            <input type="text" name="cep" id="userCep" class="input-field" value="{{ user_cep }}" placeholder="00000000" maxlength="9" />
+          </div>
+
+          {% if current_user.type == UserType.ORGANIZER %}
+          <div class="column is-6 pb-3">
+            <label class="input-label" for="userCpf">CPF (Produtor)</label>
+            <input type="text" name="cpf" id="userCpf" class="input-field" value="{{ current_user.cpf or '' }}" required />
+          </div>
+          {% endif %}
+        </div>
+      </section>
+
+      <section class="form-section">
+        <h2 class="section-title">
+          <span class="material-symbols-outlined">favorite</span>
+          Categorias Favoritas
+        </h2>
+        <p style="font-size: 0.85rem; color: #4b5563; margin-bottom: 1rem;">
+          Selecione os tipos de evento que você mais curte. Nós usaremos isso para recomendar os melhores rolês para você.
+        </p>
+
+        <div class="categories-grid">
+          {% for cat in categories %}
+          {% set is_selected = cat.id in selected_category_ids %}
+          <label class="category-checkbox-label {% if is_selected %}is-checked{% endif %}" id="catLabel-{{ cat.id }}">
+            <input type="checkbox" name="categories" value="{{ cat.id }}" class="cat-checkbox" {% if is_selected %}checked{% endif %} />
+            {{ cat.type.value }}
+          </label>
+          {% endfor %}
+        </div>
+        <div class="category-limit-msg" id="catLimitMsg">
+          Você selecionou <span id="catCount">{{ selected_category_ids|length }}</span> de 10 categorias possíveis.
+        </div>
+      </section>
+
+      <div class="form-actions">
+        <a href="{{ url_for('main.home') }}" class="cancel-btn">Voltar</a>
+        <button type="submit" class="submit-btn" id="submitBtn">
+          <span class="material-symbols-outlined">save</span>
+          Salvar Alterações
+        </button>
+      </div>
+
+    </form>
+  </div>
+
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // ---- Preview de Foto ----
+    const photoInput = document.getElementById('photoInput');
+    const avatarPreviewImg = document.getElementById('avatarPreviewImg');
+    const avatarInitials = document.getElementById('avatarInitials');
+
+    photoInput.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files[0]) {
+        const file = e.target.files[0];
+        
+        // Verifica tamanho básico (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+          alert("A imagem é muito grande. O tamanho máximo permitido é 5MB.");
+          photoInput.value = "";
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          avatarPreviewImg.src = event.target.result;
+          avatarPreviewImg.style.display = 'block';
+          if (avatarInitials) avatarInitials.style.display = 'none';
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // ---- Máscaras e Validação Básica ----
+    const inputCep = document.getElementById('userCep');
+    if (inputCep) {
+      inputCep.addEventListener('input', (e) => {
+        let val = e.target.value.replace(/\D/g, '');
+        if (val.length > 5) {
+          val = val.substring(0, 5) + '-' + val.substring(5, 8);
+        }
+        e.target.value = val;
+      });
+    }
+
+    const inputPhone = document.getElementById('userPhone');
+    if (inputPhone) {
+      inputPhone.addEventListener('input', (e) => {
+        let val = e.target.value.replace(/\D/g, '');
+        if (val.length > 11) val = val.substring(0, 11);
+        
+        if (val.length > 2) {
+          val = '(' + val.substring(0, 2) + ') ' + val.substring(2);
+        }
+        if (val.length > 9) {
+          val = val.substring(0, 10) + '-' + val.substring(10);
+        }
+        e.target.value = val;
+      });
+      // Inicializar formatação se existir
+      inputPhone.dispatchEvent(new Event('input'));
+    }
+
+    const inputCpf = document.getElementById('userCpf');
+    if (inputCpf) {
+      inputCpf.addEventListener('input', (e) => {
+        let val = e.target.value.replace(/\D/g, '');
+        if (val.length > 11) val = val.substring(0, 11);
+        
+        if (val.length > 3) val = val.substring(0, 3) + '.' + val.substring(3);
+        if (val.length > 7) val = val.substring(0, 7) + '.' + val.substring(7);
+        if (val.length > 11) val = val.substring(0, 11) + '-' + val.substring(11);
+        
+        e.target.value = val;
+      });
+      inputCpf.dispatchEvent(new Event('input'));
+    }
+
+    // ---- Lógica de Limite de Categorias (Máx 10) ----
+    const checkboxes = document.querySelectorAll('.cat-checkbox');
+    const catCountSpan = document.getElementById('catCount');
+    const catLimitMsg = document.getElementById('catLimitMsg');
+    const maxCategories = 10;
+
+    function updateCategoryState() {
+      let checkedCount = 0;
+      checkboxes.forEach(cb => {
+        if (cb.checked) checkedCount++;
+        const label = document.getElementById('catLabel-' + cb.value);
+        if (label) {
+          label.classList.toggle('is-checked', cb.checked);
+        }
+      });
+      
+      catCountSpan.textContent = checkedCount;
+
+      if (checkedCount >= maxCategories) {
+        catLimitMsg.classList.add('is-danger');
+        catLimitMsg.innerHTML = `Você atingiu o limite máximo de <strong>${maxCategories} categorias</strong>.`;
+        checkboxes.forEach(cb => {
+          if (!cb.checked) cb.disabled = true;
+        });
+      } else {
+        catLimitMsg.classList.remove('is-danger');
+        catLimitMsg.innerHTML = `Você selecionou <span id="catCount">${checkedCount}</span> de ${maxCategories} categorias possíveis.`;
+        checkboxes.forEach(cb => {
+          cb.disabled = false;
+        });
+      }
+    }
+
+    checkboxes.forEach(cb => {
+      cb.addEventListener('change', updateCategoryState);
+    });
+
+    // Inicializar estado
+    updateCategoryState();
+  });
+</script>
+{% endblock %}

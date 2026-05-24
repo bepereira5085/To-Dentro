@@ -1705,6 +1705,132 @@ def delete_event(event_id):
     return redirect(url_for("main.my_events"))
 
 
+def _strip_non_digits(value):
+    import re
+    if value:
+        return re.sub(r"\D", "", value)
+    return value
+
+@main_bp.route("/perfil", methods=["GET", "POST"])
+@login_required
+def profile():
+    if request.method == "POST":
+        name = request.form.get("name", "").strip()
+        email = request.form.get("email", "").strip().lower()
+        phone = _strip_non_digits(request.form.get("phone", ""))
+        birth_date_str = request.form.get("birth_date", "")
+        cep = _strip_non_digits(request.form.get("cep", ""))
+        cpf = _strip_non_digits(request.form.get("cpf", "")) if current_user.type == UserType.ORGANIZER else None
+        selected_cats = request.form.getlist("categories")
+
+        try:
+            if not name:
+                raise ValueError("O nome é obrigatório.")
+            if not email:
+                raise ValueError("O e-mail é obrigatório.")
+            if not phone or len(phone) < 10 or len(phone) > 11:
+                raise ValueError("O telefone deve ter entre 10 e 11 dígitos.")
+            if not birth_date_str:
+                raise ValueError("A data de nascimento é obrigatória.")
+            
+            birth_date_val = date.fromisoformat(birth_date_str)
+            today = date.today()
+            if birth_date_val >= today:
+                raise ValueError("A data de nascimento deve ser anterior à data atual.")
+            
+            age = today.year - birth_date_val.year - ((today.month, today.day) < (birth_date_val.month, birth_date_val.day))
+            if age < 16:
+                raise ValueError("Você precisa ter pelo menos 16 anos para usar o Tô Dentro!.")
+
+            existing_user = User.query.filter_by(email=email).first()
+            if existing_user and existing_user.id != current_user.id:
+                raise ValueError("Este e-mail já está sendo utilizado por outra conta.")
+
+            if current_user.type == UserType.ORGANIZER:
+                if not cpf:
+                    raise ValueError("O CPF é obrigatório para produtores.")
+                if len(cpf) != 11:
+                    raise ValueError("O CPF deve conter exatamente 11 dígitos.")
+                existing_cpf = User.query.filter_by(cpf=cpf).first()
+                if existing_cpf and existing_cpf.id != current_user.id:
+                    raise ValueError("Este CPF já está sendo utilizado por outra conta.")
+
+            dados_cep = None
+            if cep:
+                if len(cep) != 8:
+                    raise ValueError("O CEP deve conter exatamente 8 dígitos.")
+                dados_cep = buscar_endereco_por_cep(cep)
+                if not dados_cep:
+                    raise ValueError("CEP inválido ou não encontrado.")
+
+            if len(selected_cats) > 10:
+                raise ValueError("Você pode selecionar no máximo 10 categorias favoritas.")
+
+            current_user.name = name
+            current_user.email = email
+            current_user.phone = phone
+            current_user.birth_date = birth_date_val
+            if current_user.type == UserType.ORGANIZER:
+                current_user.cpf = cpf
+
+            photo_file = request.files.get("photo")
+            if photo_file and photo_file.filename != "":
+                new_photo_url = upload_image(photo_file)
+                if new_photo_url:
+                    if current_user.photo_url:
+                        delete_image_by_url(current_user.photo_url)
+                    current_user.photo_url = new_photo_url
+
+            if cep and dados_cep:
+                user_addr = current_user.addresses[0] if current_user.addresses else None
+                if user_addr and user_addr.address:
+                    addr = user_addr.address
+                    addr.cep = cep
+                    addr.street = dados_cep["logradouro"]
+                    addr.city = dados_cep["cidade"]
+                    addr.state = dados_cep["uf"]
+                else:
+                    addr = Address(
+                        street=dados_cep["logradouro"],
+                        number="",
+                        city=dados_cep["cidade"],
+                        state=dados_cep["uf"],
+                        cep=cep,
+                        country="Brasil"
+                    )
+                    db.session.add(addr)
+                    db.session.flush()
+                    db.session.add(UserAddress(user_id=current_user.id, address_id=addr.id))
+
+            UserCategory.query.filter_by(user_id=current_user.id).delete()
+            db.session.flush()
+            
+            for cid in selected_cats:
+                if cid.isdigit():
+                    db.session.add(UserCategory(user_id=current_user.id, category_id=int(cid)))
+
+            db.session.commit()
+            flash("Perfil atualizado com sucesso!", "is-success")
+            return redirect(url_for("main.profile"))
+
+        except ValueError as e:
+            db.session.rollback()
+            flash(str(e), "is-danger")
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Ocorreu um erro ao atualizar o perfil: {e}", "is-danger")
+
+    categories = Category.query.order_by(Category.id).all()
+    user_cep = obter_cep_usuario(current_user) or ""
+    selected_category_ids = [uc.category_id for uc in current_user.categories]
+
+    return render_template(
+        "main/profile.html",
+        categories=categories,
+        user_cep=user_cep,
+        selected_category_ids=selected_category_ids
+    )
+
 @main_bp.app_context_processor
 def inject_global_variables():
     return {
