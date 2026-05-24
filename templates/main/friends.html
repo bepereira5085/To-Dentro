@@ -80,10 +80,17 @@
     white-space: nowrap;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 6px;
     transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
     box-shadow: 0 3px 10px rgba(200,30,30,0.22);
     flex-shrink: 0;
+  }
+
+  .btn-find-friends .material-symbols-outlined {
+    display: flex;
+    align-items: center;
+    margin-top: 1px;
   }
 
   .btn-find-friends:hover {
@@ -185,7 +192,6 @@
   .friends-empty .material-symbols-outlined {
     font-size: 3.5rem;
     display: block;
-    margin-bottom: 1rem;
     color: #d1d5db;
   }
 
@@ -1159,9 +1165,14 @@
       btn.dataset.userId = userId;
       btn.type = 'button';
       btn.setAttribute('aria-label', `Ver perfil de ${data.name}`);
+      const avatarHtml = data.photo_url
+        ? `<img src="${escHtml(data.photo_url)}" alt="${escHtml(data.name)}" />`
+        : escHtml(data.initials);
+      const ageStr = data.age ? `, ${data.age}` : '';
+
       btn.innerHTML = `
-        <div class="friend-avatar">${escHtml(data.initials)}</div>
-        <div class="friend-name">${escHtml(data.name)}</div>`;
+        <div class="friend-avatar">${avatarHtml}</div>
+        <div class="friend-name">${escHtml(data.name)}${ageStr}</div>`;
       btn.addEventListener('click', () => openUserDetailsModal(userId));
 
       const $emptyState = document.getElementById('searchEmptyState');

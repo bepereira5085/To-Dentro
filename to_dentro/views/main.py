@@ -821,6 +821,133 @@ def api_unfollow(user_id):
     return jsonify({"status": "unfollowed"}), 200
 
 
+@main_bp.route("/api/evento/<int:event_id>/toggle-interest", methods=["POST"])
+@login_required
+def api_toggle_interest(event_id):
+    event = Event.query.get_or_404(event_id)
+
+    ocorrencia = (
+        EventOccurrence.query.filter_by(event_id=event.id)
+        .filter(EventOccurrence.start_date >= date.today())
+        .order_by(EventOccurrence.start_date.asc())
+        .first()
+    )
+    if not ocorrencia:
+        ocorrencia = (
+            EventOccurrence.query.filter_by(event_id=event.id)
+            .order_by(EventOccurrence.start_date.desc())
+            .first()
+        )
+
+    interest = InterestedUser.query.filter_by(
+        user_id=current_user.id, event_id=event.id
+    ).first()
+
+    if interest:
+        db.session.delete(interest)
+        if ocorrencia:
+            ocorrencia.interested_count = max(0, ocorrencia.interested_count - 1)
+
+            Notification.query.filter_by(
+                actor_user_id=current_user.id,
+                event_occurrence_id=ocorrencia.id,
+                type=NotificationType.FRIEND_JOINED_EVENT,
+            ).delete()
+
+        db.session.commit()
+        return jsonify({
+            "status": "removed",
+            "interested_count": ocorrencia.interested_count if ocorrencia else 0
+        }), 200
+    else:
+        interest = InterestedUser(user_id=current_user.id, event_id=event.id)
+        db.session.add(interest)
+        if ocorrencia:
+            ocorrencia.interested_count += 1
+
+            event_cat_ids = {ec.category_id for ec in event.categories}
+
+            for follow_obj in current_user.followers:
+                follower = follow_obj.follower
+                recipient_fav_cat_ids = {uc.category_id for uc in follower.categories}
+
+                if event_cat_ids.intersection(recipient_fav_cat_ids):
+                    notificacao = Notification(
+                        actor_user_id=current_user.id,
+                        recipient_user_id=follower.id,
+                        event_occurrence_id=ocorrencia.id,
+                        type=NotificationType.FRIEND_JOINED_EVENT,
+                    )
+                    db.session.add(notificacao)
+
+        db.session.commit()
+        return jsonify({
+            "status": "added",
+            "interested_count": ocorrencia.interested_count if ocorrencia else 0
+        }), 200
+
+
+@main_bp.route("/api/notificacoes")
+@login_required
+def api_notificacoes():
+    """Retorna as notificações não lidas do usuário logado."""
+    _event_notif_types = [
+        NotificationType.EVENT_INTERESTED,
+        NotificationType.FRIEND_JOINED_EVENT,
+    ]
+
+    notificacoes = (
+        Notification.query
+        .filter_by(recipient_user_id=current_user.id, is_read=False)
+        .order_by(Notification.created_at.desc())
+        .limit(50)
+        .all()
+    )
+
+    resultado = []
+    for n in notificacoes:
+        actor_name = n.actor.name if n.actor else "Alguém"
+        evento_nome = None
+        evento_id = None
+
+        if n.type == NotificationType.FOLLOW:
+            mensagem = f"{actor_name} falou que você tá sempre junto no rolê!"
+        elif n.type in _event_notif_types:
+            if n.event_occurrence and n.event_occurrence.event:
+                evento_nome = n.event_occurrence.event.name
+                evento_id = n.event_occurrence.event.id
+            mensagem = f"{actor_name} tá dentro desse rolê: {evento_nome or 'Evento desconhecido'}"
+        else:
+            continue
+
+        resultado.append({
+            "id": n.id,
+            "tipo": n.type.value,
+            "mensagem": mensagem,
+            "evento_nome": evento_nome,
+            "evento_id": evento_id,
+            "actor_id": n.actor_user_id,
+            "actor_name": actor_name,
+            "created_at": n.created_at.isoformat() if n.created_at else None,
+        })
+
+    return jsonify({"notificacoes": resultado, "total": len(resultado)})
+
+
+@main_bp.route("/api/notificacoes/<int:notif_id>/marcar-lida", methods=["POST"])
+@login_required
+def api_marcar_notificacao_lida(notif_id):
+    """Marca uma notificação como lida (apenas se pertencer ao usuário logado)."""
+    notif = Notification.query.get_or_404(notif_id)
+
+    if notif.recipient_user_id != current_user.id:
+        return jsonify({"error": "Sem permissão."}), 403
+
+    notif.is_read = True
+    db.session.commit()
+    return jsonify({"status": "ok"}), 200
+
+
 @main_bp.app_context_processor
 def inject_global_variables():
     return {
