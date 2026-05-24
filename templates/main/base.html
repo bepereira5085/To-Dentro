@@ -18,6 +18,9 @@
         background: #ffffff !important;
         border-bottom: 1px solid #ebebeb;
         box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+        position: sticky;
+        top: 0;
+        z-index: 1000;
       }
       .site-navbar .navbar-item,
       .site-navbar .navbar-link {
@@ -100,13 +103,34 @@
         </div>
 
         <div id="navbarMainMenu" class="navbar-menu">
-          <div class="navbar-start">
+          <div class="navbar-start" style="align-items:center;">
+            {% if current_user.is_authenticated %}
+            <div class="navbar-item">
+              <a href="{{ url_for('main.home') }}"
+                 class="button is-small btn-primary-td"
+                 style="border-radius:20px; padding:6px 20px; font-size:0.85rem; font-weight:600;">
+                Explorar
+              </a>
+            </div>
+            {% if current_user.type.value == 'Organizer' %}
+            <div class="navbar-item">
+              <a href="#" class="navbar-item" style="font-size:0.9rem; font-weight:500; color:#1a1a1a;">
+                Meus Eventos
+              </a>
+            </div>
+            {% endif %}
+            {% endif %}
+          </div>
 
           <div class="navbar-end" style="align-items:center;">
             {% if current_user.is_authenticated %}
-            <div class="navbar-item" style="font-size:0.9rem; color:#555; display:flex; align-items:center; gap:0.4rem;">
-              <span class="material-symbols-outlined" style="font-size:20px; color:#c81e1e;">account_circle</span>
-              Olá, <strong style="color:#1a1a1a; margin-left:2px;">{{ current_user.name.split(' ')[0] }}</strong>
+            <div class="navbar-item">
+              <div style="width:38px; height:38px; border-radius:50%; background:#1a1a1a;
+                          color:#fff; display:flex; align-items:center; justify-content:center;
+                          font-weight:700; font-size:0.78rem; cursor:default; letter-spacing:0.03em;"
+                   title="{{ current_user.name }}">
+                {{ (current_user.name[:2])|upper }}
+              </div>
             </div>
             <div class="navbar-item">
               <a href="{{ url_for('main.logout') }}" class="button is-small btn-ghost-td">Sair</a>

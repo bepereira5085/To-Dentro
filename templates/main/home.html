@@ -1,0 +1,1413 @@
+{% extends "main/base.html" %}
+
+{% block title %}Explorar Eventos — Tô Dentro{% endblock %}
+
+{% block extra_head %}
+<style>
+  .home-page {
+    background: #f7f7f8;
+    min-height: 100vh;
+  }
+
+  .search-bar-wrap {
+    background: #fff;
+    border-bottom: 1px solid #ebebeb;
+    padding: 1rem 0 0;
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+  }
+
+  .search-bar-inner {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    padding: 0 1.5rem 0.9rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .search-input-wrap {
+    flex: 1;
+    position: relative;
+    min-width: 0;
+  }
+
+  .search-input-wrap .search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 20px;
+    color: #9ca3af;
+    pointer-events: none;
+  }
+
+  .search-input {
+    width: 100%;
+    height: 46px;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 0 14px 0 44px;
+    font-size: 0.9rem;
+    font-family: 'Inter', sans-serif;
+    color: #1a1a1a;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    background: #fafafa;
+  }
+
+  .search-input:focus {
+    border-color: #c81e1e;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(200, 30, 30, 0.08);
+  }
+
+  .search-input::placeholder {
+    color: #b0b7c3;
+  }
+
+  .city-select-wrap {
+    position: relative;
+    min-width: 200px;
+    max-width: 260px;
+  }
+
+  .city-select-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 18px;
+    color: #9ca3af;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .city-search-input {
+    width: 100%;
+    height: 46px;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 0 14px 0 38px;
+    font-size: 0.88rem;
+    font-family: 'Inter', sans-serif;
+    color: #1a1a1a;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    background: #fafafa;
+    cursor: text;
+  }
+
+  .city-search-input:focus {
+    border-color: #c81e1e;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(200, 30, 30, 0.08);
+  }
+
+  .city-search-input:disabled {
+    background: #f3f4f6;
+    cursor: not-allowed;
+    opacity: 0.8;
+  }
+
+  .city-search-input::placeholder {
+    color: #b0b7c3;
+  }
+
+  .city-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    z-index: 100;
+    max-height: 260px;
+    overflow-y: auto;
+  }
+
+  .city-dropdown.is-open {
+    display: block;
+  }
+
+  .city-dropdown-item {
+    padding: 10px 14px;
+    font-size: 0.88rem;
+    color: #374151;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .city-dropdown-item:hover {
+    background: #f3f4f6;
+  }
+
+  .city-dropdown-item.is-pinned {
+    font-weight: 700;
+    color: #c81e1e;
+    border-bottom: 1px solid #f0f0f0;
+    background: #fff8f8;
+  }
+
+  .city-dropdown-item.is-pinned:hover {
+    background: #fff0f0;
+  }
+
+  .city-dropdown-empty {
+    padding: 10px 14px;
+    font-size: 0.85rem;
+    color: #9ca3af;
+    text-align: center;
+  }
+
+  .date-filter-row {
+    display: none;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0 1.5rem 0.75rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .date-filter-row.is-visible {
+    display: flex;
+  }
+
+  .date-filter-row label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #6b7280;
+    white-space: nowrap;
+  }
+
+  .date-input {
+    height: 36px;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 0 10px;
+    font-size: 0.85rem;
+    font-family: 'Inter', sans-serif;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .date-input:focus {
+    border-color: #c81e1e;
+  }
+
+  .date-filter-toggle {
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 14px;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 8px;
+    background: #fff;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #6b7280;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s;
+    margin-left: auto;
+  }
+
+  .date-filter-toggle:hover {
+    border-color: #c81e1e;
+    color: #c81e1e;
+  }
+
+  .date-filter-toggle.is-active {
+    border-color: #c81e1e;
+    color: #c81e1e;
+    background: #fff5f5;
+  }
+
+  .categories-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0 1.5rem 0.85rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .categories-strip {
+    flex: 1;
+    display: flex;
+    padding-top: 1.5rem;
+    gap: 0.5rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .categories-strip::-webkit-scrollbar {
+    display: none;
+  }
+
+  .cat-tag {
+    flex-shrink: 0;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    height: 34px;
+    padding: 0 16px;
+    border-radius: 999px;
+    border: 1.5px solid #e5e7eb;
+    background: #fff;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #4b5563;
+    cursor: pointer;
+    transition: border-color 0.18s, background 0.18s, color 0.18s, transform 0.15s;
+    white-space: nowrap;
+    user-select: none;
+    gap: 5px;
+  }
+
+  .cat-tag:hover {
+    border-color: #c81e1e;
+    color: #c81e1e;
+    transform: translateY(-1px);
+  }
+
+  .cat-tag.is-active {
+    background: #c81e1e;
+    border-color: #c81e1e;
+    color: #fff;
+    padding-right: 10px;
+  }
+
+  .cat-tag.is-active:hover {
+    background: #a81818;
+    border-color: #a81818;
+    color: #fff;
+  }
+
+  .cat-tag-dismiss {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.28);
+    font-size: 11px;
+    line-height: 1;
+    flex-shrink: 0;
+    transition: background 0.15s;
+    margin-left: 1px;
+  }
+
+  .cat-tag.is-active:hover .cat-tag-dismiss {
+    background: rgba(255, 255, 255, 0.45);
+  }
+
+  .clear-filters-btn {
+    flex-shrink: 0;
+    display: none;
+    align-items: center;
+    gap: 6px;
+    height: 34px;
+    padding: 0 16px;
+    border-radius: 999px;
+    border: 1.5px solid #c81e1e;
+    background: #c81e1e;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.18s, border-color 0.18s, transform 0.15s, box-shadow 0.18s;
+    white-space: nowrap;
+    box-shadow: 0 2px 6px rgba(200, 30, 30, 0.15);
+  }
+
+  .clear-filters-btn.is-visible {
+    display: inline-flex;
+  }
+
+  .clear-filters-btn:hover {
+    background: #a81818;
+    border-color: #a81818;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(200, 30, 30, 0.25);
+  }
+
+  .clear-filters-btn:active {
+    transform: translateY(0);
+  }
+
+  .clear-filters-btn .material-symbols-outlined {
+    font-size: 16px;
+  }
+
+  .events-section {
+    padding: 2rem 0 2.5rem;
+  }
+
+  .events-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1.5rem;
+    max-width: 1200px;
+    margin: 0 auto 1.2rem;
+  }
+
+  .events-section-title {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #1a1a1a;
+    letter-spacing: -0.02em;
+  }
+
+  .carousel-nav {
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+  }
+
+  .carousel-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1.5px solid #e5e7eb;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s, transform 0.15s;
+    color: #4b5563;
+  }
+
+  .carousel-btn:hover:not(:disabled) {
+    border-color: #c81e1e;
+    color: #c81e1e;
+    transform: scale(1.08);
+  }
+
+  .carousel-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  .carousel-btn .material-symbols-outlined {
+    font-size: 18px;
+  }
+
+  .carousel-page-info {
+    font-size: 0.78rem;
+    color: #9ca3af;
+    font-weight: 600;
+    min-width: 40px;
+    text-align: center;
+  }
+
+  .carousel-track-wrap {
+    overflow: hidden;
+    padding: 0.25rem 1.5rem 0.5rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .carousel-track {
+    display: flex;
+    gap: 1rem;
+    transition: transform 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
+    will-change: transform;
+  }
+
+  .carousel-empty {
+    text-align: center;
+    color: #9ca3af;
+    font-size: 0.9rem;
+    padding: 2rem 0;
+  }
+
+  .event-card {
+    flex-shrink: 0;
+    width: 248px;
+    border-radius: 16px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    border: 1px solid #f0f0f0;
+  }
+
+  .event-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.12);
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .event-card-img-wrap {
+    position: relative;
+    width: 100%;
+    height: 170px;
+    overflow: hidden;
+    background: #1a1a1a;
+  }
+
+  .event-card-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s;
+  }
+
+  .event-card:hover .event-card-img {
+    transform: scale(1.04);
+  }
+
+  .event-card-img-placeholder {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #1a1a1a 0%, #3d1a1a 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .event-card-img-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.65) 0%, transparent 55%);
+  }
+
+  .event-card-badge {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    background: #c81e1e;
+    color: #fff;
+    padding: 3px 11px;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    z-index: 2;
+    letter-spacing: 0.02em;
+  }
+
+  .event-card-body {
+    padding: 13px 14px 15px;
+  }
+
+  .event-card-title {
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #1a1a1a;
+    margin-bottom: 8px;
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .event-card-meta {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.78rem;
+    color: #6b7280;
+    margin-bottom: 4px;
+  }
+
+  .event-card-meta .material-symbols-outlined {
+    font-size: 14px;
+    color: #9ca3af;
+  }
+
+  .results-section {
+    display: none;
+    padding: 2rem 1.5rem 3rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .results-section.is-visible {
+    display: block;
+  }
+
+  .results-header {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #1a1a1a;
+    margin-bottom: 1.25rem;
+    letter-spacing: -0.02em;
+  }
+
+  .results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 1.1rem;
+  }
+
+  .results-grid .event-card {
+    width: 100%;
+  }
+
+  .results-empty {
+    text-align: center;
+    color: #9ca3af;
+    padding: 3rem 0;
+    font-size: 0.95rem;
+  }
+
+  .results-loading {
+    text-align: center;
+    padding: 2rem 0;
+    color: #9ca3af;
+    font-size: 0.88rem;
+  }
+
+  .section-divider {
+    height: 1px;
+    background: #ebebeb;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .galera-empty {
+    padding: 1.25rem 1.5rem 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    text-align: center;
+    color: #9ca3af;
+    font-size: 0.88rem;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .spinner {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    border: 2px solid #e5e7eb;
+    border-top-color: #c81e1e;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+    margin-right: 6px;
+  }
+
+  @media (max-width: 768px) {
+    .search-bar-inner {
+      flex-wrap: wrap;
+    }
+
+    .city-select-wrap {
+      min-width: 100%;
+      max-width: 100%;
+    }
+
+    .event-card {
+      width: 210px;
+    }
+
+    .events-section-title {
+      font-size: 1.1rem;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="home-page">
+
+  <div class="search-bar-wrap">
+    <div class="search-bar-inner">
+
+      <div class="search-input-wrap">
+        <span class="material-symbols-outlined search-icon">search</span>
+        <input type="text" id="searchInput" class="search-input" placeholder="Buscar eventos..." autocomplete="off"
+          aria-label="Buscar eventos" />
+      </div>
+
+      <div class="state-select-wrap" id="stateSelectWrap" style="position: relative; min-width: 140px; max-width: 160px;">
+        <span class="material-symbols-outlined city-select-icon">map</span>
+        <input type="text" id="stateInput" class="city-search-input" placeholder="Estado..." autocomplete="off"
+          aria-label="Filtrar por estado" value="" />
+        <div class="city-dropdown" id="stateDropdown" role="listbox"></div>
+        <input type="hidden" id="stateValue" value="" />
+      </div>
+
+      <div class="city-select-wrap" id="citySelectWrap">
+        <span class="material-symbols-outlined city-select-icon">location_on</span>
+        <input type="text" id="cityInput" class="city-search-input" placeholder="Selecione um estado..." autocomplete="off"
+          aria-label="Filtrar por cidade" value="" disabled />
+        <div class="city-dropdown" id="cityDropdown" role="listbox"></div>
+        <input type="hidden" id="cityValue" value="" />
+      </div>
+
+      <button class="date-filter-toggle" id="dateFilterToggle" type="button" title="Filtrar por data">
+        <span class="material-symbols-outlined" style="font-size:16px;">date_range</span>
+        Data
+      </button>
+    </div>
+
+    <div class="date-filter-row" id="dateFilterRow">
+      <label for="dateFrom">De:</label>
+      <input type="date" id="dateFrom" class="date-input" aria-label="Data inicial" />
+      <label for="dateTo">Até:</label>
+      <input type="date" id="dateTo" class="date-input" aria-label="Data final" />
+      <button class="cat-tag" id="clearDateBtn" type="button" style="font-size:0.78rem; padding:0 12px; height:32px;">
+        Limpar datas
+      </button>
+    </div>
+
+    <div class="categories-row">
+      <div class="categories-strip" id="categoriesStrip" role="group" aria-label="Filtrar por categoria">
+        <button class="cat-tag is-active" data-category-id="" id="catAll">Todos</button>
+        {% for cat in categories %}
+        <button class="cat-tag" data-category-id="{{ cat.id }}" id="cat-{{ cat.id }}">{{ cat.type.value }}</button>
+        {% endfor %}
+      </div>
+
+      <div style="padding-top: 1.5rem;">
+        <button class="clear-filters-btn" id="clearFiltersBtn" type="button" aria-label="Limpar todos os filtros">
+        <span class="material-symbols-outlined">filter_alt_off</span>
+        Limpar Filtros
+      </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="defaultSections">
+
+    <section class="events-section" aria-label="Próximos de você">
+      <div class="events-section-header">
+        <h2 class="events-section-title">Perto de você</h2>
+        <div class="carousel-nav" aria-label="Navegação do carrossel">
+          <button class="carousel-btn" id="proximosPrev" title="Anterior" disabled>
+            <span class="material-symbols-outlined">chevron_left</span>
+          </button>
+          <span class="carousel-page-info" id="proximosPageInfo">1 / 1</span>
+          <button class="carousel-btn" id="proximosNext" title="Próximo">
+            <span class="material-symbols-outlined">chevron_right</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="carousel-track-wrap">
+        <div class="carousel-track" id="proximosTrack">
+          {% if eventos_proximos %}
+          {% for ev in eventos_proximos %}
+          <a class="event-card" href="{{ url_for('main.event_details', event_id=ev.id) }}" id="prox-card-{{ ev.id }}"
+            data-event-id="{{ ev.id }}">
+            <div class="event-card-img-wrap">
+              {% if ev.image_url %}
+              <img src="{{ ev.image_url }}" alt="{{ ev.name }}" class="event-card-img" loading="lazy" />
+              {% else %}
+              <div class="event-card-img-placeholder">
+                <span class="material-symbols-outlined"
+                  style="font-size:2.5rem; color:rgba(255,255,255,0.15);">event</span>
+              </div>
+              {% endif %}
+              <div class="event-card-img-overlay"></div>
+              {% if ev.category %}
+              <span class="event-card-badge">{{ ev.category }}</span>
+              {% endif %}
+            </div>
+            <div class="event-card-body">
+              <div class="event-card-title">{{ ev.name }}</div>
+              {% if ev.start_date_fmt %}
+              <div class="event-card-meta">
+                <span class="material-symbols-outlined">calendar_today</span>
+                {{ ev.start_date_fmt }}{% if ev.start_time %} • {{ ev.start_time }}{% endif %}
+              </div>
+              {% endif %}
+              {% if ev.city %}
+              <div class="event-card-meta">
+                <span class="material-symbols-outlined">location_on</span>
+                {{ ev.city }}{% if ev.state %}, {{ ev.state }}{% endif %}
+              </div>
+              {% endif %}
+            </div>
+          </a>
+          {% endfor %}
+          {% else %}
+          <div class="carousel-empty">
+            <span class="material-symbols-outlined"
+              style="font-size:2rem; display:block; margin-bottom:8px;">search_off</span>
+            Nenhum evento encontrado perto de você por enquanto.
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <section class="events-section" aria-label="Eventos da galera">
+      <div class="events-section-header">
+        <h2 class="events-section-title">A galera falou que tá dentro! 🎉</h2>
+        <div class="carousel-nav">
+          <button class="carousel-btn" id="galeraPrev" title="Anterior" disabled>
+            <span class="material-symbols-outlined">chevron_left</span>
+          </button>
+          <span class="carousel-page-info" id="galeraPageInfo">1 / 1</span>
+          <button class="carousel-btn" id="galeraNext" title="Próximo">
+            <span class="material-symbols-outlined">chevron_right</span>
+          </button>
+        </div>
+      </div>
+
+      {% if eventos_galera %}
+      <div class="carousel-track-wrap">
+        <div class="carousel-track" id="galeraTrack">
+          {% for ev in eventos_galera %}
+          <a class="event-card" href="{{ url_for('main.event_details', event_id=ev.id) }}" id="galera-card-{{ ev.id }}"
+            data-event-id="{{ ev.id }}">
+            <div class="event-card-img-wrap">
+              {% if ev.image_url %}
+              <img src="{{ ev.image_url }}" alt="{{ ev.name }}" class="event-card-img" loading="lazy" />
+              {% else %}
+              <div class="event-card-img-placeholder">
+                <span class="material-symbols-outlined"
+                  style="font-size:2.5rem; color:rgba(255,255,255,0.15);">event</span>
+              </div>
+              {% endif %}
+              <div class="event-card-img-overlay"></div>
+              {% if ev.category %}
+              <span class="event-card-badge">{{ ev.category }}</span>
+              {% endif %}
+            </div>
+            <div class="event-card-body">
+              <div class="event-card-title">{{ ev.name }}</div>
+              {% if ev.start_date_fmt %}
+              <div class="event-card-meta">
+                <span class="material-symbols-outlined">calendar_today</span>
+                {{ ev.start_date_fmt }}{% if ev.start_time %} • {{ ev.start_time }}{% endif %}
+              </div>
+              {% endif %}
+              {% if ev.city %}
+              <div class="event-card-meta">
+                <span class="material-symbols-outlined">location_on</span>
+                {{ ev.city }}{% if ev.state %}, {{ ev.state }}{% endif %}
+              </div>
+              {% endif %}
+            </div>
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+      {% else %}
+      <div class="galera-empty">
+        <span class="material-symbols-outlined"
+          style="font-size:2rem; display:block; margin-bottom:8px; color:#d1d5db;">group</span>
+        {% if current_user.following %}
+        As pessoas que você segue ainda não marcaram interesse em eventos.
+        {% else %}
+        Siga outros usuários para ver os eventos que eles estão interessados!
+        {% endif %}
+      </div>
+      {% endif %}
+    </section>
+
+  </div>
+
+  <div class="results-section" id="resultsSection">
+    <div class="results-header" id="resultsHeader">Resultados</div>
+    <div class="results-grid" id="resultsGrid"></div>
+  </div>
+
+</div>
+
+<script id="flask-user-data" type="application/json">
+  {
+    "cidade_usuario": {{ cidade_usuario | tojson }},
+    "uf_usuario": {{ uf_usuario | tojson }},
+    "cep_usuario": {{ (cep_usuario or '') | tojson }},
+    "page_size": {{ page_size }}
+  }
+</script>
+<script id="flask-municipios-data" type="application/json">
+  {{ municipios | tojson }}
+</script>
+
+<script>
+  (function () {
+    'use strict';
+
+    const userData = JSON.parse(document.getElementById('flask-user-data').textContent);
+    const USER_CITY = userData.cidade_usuario;
+    const USER_UF = userData.uf_usuario;
+    const USER_CEP = userData.cep_usuario;
+    const PAGE_SIZE = userData.page_size;
+
+    const ALL_MUNICIPIOS = JSON.parse(document.getElementById('flask-municipios-data').textContent);
+
+    let activeCategories = new Set();
+    let searchQuery = '';
+    let stateFilter = '';
+    let cityFilter = '';
+  let dateFrom = '';
+  let dateTo = '';
+  let isSearchActive = false;
+
+  const carousels = {};
+
+  const $clearFiltersBtn = document.getElementById('clearFiltersBtn');
+
+  const $searchInput = document.getElementById('searchInput');
+  const $stateInput = document.getElementById('stateInput');
+  const $stateValue = document.getElementById('stateValue');
+  const $stateDropdown = document.getElementById('stateDropdown');
+  const $cityInput = document.getElementById('cityInput');
+  const $cityValue = document.getElementById('cityValue');
+  const $cityDropdown = document.getElementById('cityDropdown');
+  const $dateFilterToggle = document.getElementById('dateFilterToggle');
+  const $dateFilterRow = document.getElementById('dateFilterRow');
+  const $dateFrom = document.getElementById('dateFrom');
+  const $dateTo = document.getElementById('dateTo');
+  const $clearDateBtn = document.getElementById('clearDateBtn');
+  const $defaultSections = document.getElementById('defaultSections');
+  const $resultsSection = document.getElementById('resultsSection');
+  const $resultsGrid = document.getElementById('resultsGrid');
+  const $resultsHeader = document.getElementById('resultsHeader');
+  const $catAll = document.getElementById('catAll');
+
+  function debounce(fn, ms) {
+    let t;
+    return function (...args) {
+      clearTimeout(t);
+      t = setTimeout(() => fn.apply(this, args), ms);
+    };
+  }
+
+  function buildEventCardHTML(ev) {
+    const imgHtml = ev.image_url
+      ? `<img src="${ev.image_url}" alt="${escHtml(ev.name)}" class="event-card-img" loading="lazy" />`
+      : `<div class="event-card-img-placeholder"><span class="material-symbols-outlined" style="font-size:2.5rem;color:rgba(255,255,255,0.15);">event</span></div>`;
+
+    const badgeHtml = ev.category
+      ? `<span class="event-card-badge">${escHtml(ev.category)}</span>`
+      : '';
+
+    const dateMeta = ev.start_date_fmt
+      ? `<div class="event-card-meta"><span class="material-symbols-outlined">calendar_today</span>${escHtml(ev.start_date_fmt)}${ev.start_time ? ' • ' + escHtml(ev.start_time) : ''}</div>`
+      : '';
+
+    const cityMeta = ev.city
+      ? `<div class="event-card-meta"><span class="material-symbols-outlined">location_on</span>${escHtml(ev.city)}${ev.state ? ', ' + escHtml(ev.state) : ''}</div>`
+      : '';
+
+    return `
+      <a class="event-card" href="/evento/${ev.id}" data-event-id="${ev.id}">
+        <div class="event-card-img-wrap">
+          ${imgHtml}
+          <div class="event-card-img-overlay"></div>
+          ${badgeHtml}
+        </div>
+        <div class="event-card-body">
+          <div class="event-card-title">${escHtml(ev.name)}</div>
+          ${dateMeta}
+          ${cityMeta}
+        </div>
+      </a>`;
+  }
+
+  function escHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  const allUFs = [...new Set(ALL_MUNICIPIOS.map(m => m.uf))].filter(Boolean).sort();
+
+  function buildStateDropdown(query) {
+    const q = (query || '').trim().toLowerCase();
+    let items = allUFs;
+
+    if (q) {
+      items = items.filter(uf => uf.toLowerCase().includes(q));
+    }
+
+    $stateDropdown.innerHTML = '';
+
+    if (USER_UF && (!q || USER_UF.toLowerCase().includes(q))) {
+      const pin = document.createElement('div');
+      pin.className = 'city-dropdown-item is-pinned';
+      pin.textContent = USER_UF;
+      pin.setAttribute('role', 'option');
+      pin.addEventListener('click', () => selectState(USER_UF));
+      $stateDropdown.appendChild(pin);
+    }
+
+    if (items.length === 0 && !USER_UF) {
+      const empty = document.createElement('div');
+      empty.className = 'city-dropdown-empty';
+      empty.textContent = 'Nenhum estado';
+      $stateDropdown.appendChild(empty);
+    } else {
+      const limit = Math.min(items.length, 30);
+      for (let i = 0; i < limit; i++) {
+        const uf = items[i];
+        if (USER_UF && uf === USER_UF) continue;
+        const el = document.createElement('div');
+        el.className = 'city-dropdown-item';
+        el.textContent = uf;
+        el.setAttribute('role', 'option');
+        el.addEventListener('click', () => selectState(uf));
+        $stateDropdown.appendChild(el);
+      }
+    }
+  }
+
+  function selectState(uf) {
+    $stateInput.value = uf;
+    $stateValue.value = uf;
+    stateFilter = uf;
+    closeStateDropdown();
+
+    $cityInput.value = '';
+    $cityValue.value = '';
+    cityFilter = '';
+
+    if (stateFilter) {
+      $cityInput.disabled = false;
+      $cityInput.placeholder = 'Cidade...';
+    } else {
+      $cityInput.disabled = true;
+      $cityInput.placeholder = 'Selecione um estado...';
+    }
+
+    updateClearFiltersVisibility();
+    triggerSearch();
+  }
+
+  function openStateDropdown() {
+    buildStateDropdown($stateInput.value);
+    $stateDropdown.classList.add('is-open');
+  }
+
+  function closeStateDropdown() {
+    $stateDropdown.classList.remove('is-open');
+  }
+
+  $stateInput.addEventListener('focus', () => {
+    openStateDropdown();
+    $stateInput.select();
+  });
+
+  $stateInput.addEventListener('input', () => {
+    buildStateDropdown($stateInput.value);
+    $stateDropdown.classList.add('is-open');
+    if (!$stateInput.value.trim()) {
+      $stateValue.value = '';
+      stateFilter = '';
+
+      $cityInput.value = '';
+      $cityValue.value = '';
+      cityFilter = '';
+      $cityInput.disabled = true;
+      $cityInput.placeholder = 'Selecione um estado...';
+    }
+    updateClearFiltersVisibility();
+  });
+
+  function buildCityDropdown(query) {
+    const q = (query || '').trim().toLowerCase();
+
+    let items = ALL_MUNICIPIOS.filter(m => m.uf === stateFilter);
+
+    if (q) {
+      items = items.filter(m => {
+        const fullName = m.uf ? `${m.nome}, ${m.uf}`.toLowerCase() : m.nome.toLowerCase();
+        return fullName.includes(q);
+      });
+    }
+
+    $cityDropdown.innerHTML = '';
+
+    const userCityLabel = USER_UF ? `${USER_CITY}, ${USER_UF}` : USER_CITY;
+    if (USER_CITY && USER_UF === stateFilter && (!q || userCityLabel.toLowerCase().includes(q))) {
+      const pin = document.createElement('div');
+      pin.className = 'city-dropdown-item is-pinned';
+      pin.textContent = userCityLabel;
+      pin.setAttribute('role', 'option');
+      pin.addEventListener('click', () => selectCity(USER_CITY, USER_UF));
+      $cityDropdown.appendChild(pin);
+    }
+
+    if (items.length === 0 && !USER_CITY) {
+      const empty = document.createElement('div');
+      empty.className = 'city-dropdown-empty';
+      empty.textContent = 'Nenhuma cidade encontrada';
+      $cityDropdown.appendChild(empty);
+    } else {
+      const limit = Math.min(items.length, 60);
+      for (let i = 0; i < limit; i++) {
+        const m = items[i];
+        if (USER_CITY && m.nome === USER_CITY) continue;
+        const el = document.createElement('div');
+        el.className = 'city-dropdown-item';
+        el.textContent = m.uf ? `${m.nome}, ${m.uf}` : m.nome;
+        el.setAttribute('role', 'option');
+        el.addEventListener('click', () => selectCity(m.nome, m.uf));
+        $cityDropdown.appendChild(el);
+      }
+    }
+  }
+
+  function selectCity(nome, uf) {
+    const label = uf ? `${nome}, ${uf}` : nome;
+    $cityInput.value = label;
+    $cityValue.value = nome;
+    cityFilter = nome;
+    closeCityDropdown();
+    updateClearFiltersVisibility();
+    triggerSearch();
+  }
+
+  function openCityDropdown() {
+    buildCityDropdown($cityInput.value);
+    $cityDropdown.classList.add('is-open');
+  }
+
+  function closeCityDropdown() {
+    $cityDropdown.classList.remove('is-open');
+  }
+
+  $cityInput.addEventListener('focus', () => {
+    openCityDropdown();
+    $cityInput.select();
+  });
+  $cityInput.addEventListener('input', () => {
+    buildCityDropdown($cityInput.value);
+    $cityDropdown.classList.add('is-open');
+
+    if (!$cityInput.value.trim()) {
+      $cityValue.value = '';
+      cityFilter = '';
+    }
+    updateClearFiltersVisibility();
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!document.getElementById('citySelectWrap').contains(e.target)) {
+      closeCityDropdown();
+    }
+    if (!document.getElementById('stateSelectWrap').contains(e.target)) {
+      closeStateDropdown();
+    }
+  });
+
+  $dateFilterToggle.addEventListener('click', () => {
+    const isActive = $dateFilterRow.classList.toggle('is-visible');
+    $dateFilterToggle.classList.toggle('is-active', isActive);
+  });
+
+  $clearDateBtn.addEventListener('click', () => {
+    $dateFrom.value = '';
+    $dateTo.value = '';
+    dateFrom = '';
+    dateTo = '';
+    triggerSearch();
+  });
+
+  $dateFrom.addEventListener('change', () => { dateFrom = $dateFrom.value; updateClearFiltersVisibility(); triggerSearch(); });
+  $dateTo.addEventListener('change', () => { dateTo = $dateTo.value; updateClearFiltersVisibility(); triggerSearch(); });
+
+  function syncTagDismiss(btn) {
+    const existing = btn.querySelector('.cat-tag-dismiss');
+    if (existing) existing.remove();
+
+    const catId = btn.dataset.categoryId;
+    if (btn.classList.contains('is-active') && catId !== '') {
+      const x = document.createElement('span');
+      x.className = 'cat-tag-dismiss';
+      x.setAttribute('aria-label', 'Remover filtro');
+      x.textContent = '✕';
+
+      x.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleCategory(catId, btn);
+      });
+      btn.appendChild(x);
+    }
+  }
+
+
+  function toggleCategory(catId, btn) {
+    if (catId === '') {
+
+      activeCategories.clear();
+      document.querySelectorAll('.cat-tag[data-category-id]').forEach(b => {
+        b.classList.remove('is-active');
+        const existing = b.querySelector('.cat-tag-dismiss');
+        if (existing) existing.remove();
+      });
+      $catAll.classList.add('is-active');
+    } else {
+
+      if (activeCategories.has(catId)) {
+        activeCategories.delete(catId);
+        btn.classList.remove('is-active');
+        const existing = btn.querySelector('.cat-tag-dismiss');
+        if (existing) existing.remove();
+      } else {
+        activeCategories.add(catId);
+        btn.classList.add('is-active');
+        syncTagDismiss(btn);
+      }
+
+      if (activeCategories.size === 0) {
+        $catAll.classList.add('is-active');
+      } else {
+        $catAll.classList.remove('is-active');
+      }
+    }
+
+    updateClearFiltersVisibility();
+    triggerSearch();
+  }
+
+  document.querySelectorAll('.cat-tag[data-category-id]').forEach(btn => {
+    const catId = btn.dataset.categoryId || '';
+    btn.addEventListener('click', () => toggleCategory(catId, btn));
+  });
+
+
+  $clearFiltersBtn.addEventListener('click', clearAllFilters);
+
+  function updateClearFiltersVisibility() {
+    const hasFilter = searchQuery || (activeCategories.size > 0) || stateFilter || cityFilter || dateFrom || dateTo;
+    $clearFiltersBtn.classList.toggle('is-visible', Boolean(hasFilter));
+  }
+
+  function clearAllFilters() {
+
+    searchQuery = '';
+    $searchInput.value = '';
+
+    stateFilter = '';
+    $stateInput.value = '';
+    $stateValue.value = '';
+    cityFilter = '';
+    $cityInput.value = '';
+    $cityValue.value = '';
+    $cityInput.disabled = true;
+    $cityInput.placeholder = 'Selecione um estado...';
+
+    dateFrom = '';
+    dateTo = '';
+    $dateFrom.value = '';
+    $dateTo.value = '';
+    $dateFilterRow.classList.remove('is-visible');
+    $dateFilterToggle.classList.remove('is-active');
+
+    toggleCategory('', $catAll);
+
+    $clearFiltersBtn.classList.remove('is-visible');
+
+    showDefaultSections();
+  }
+
+
+  $searchInput.addEventListener('input', debounce(() => {
+    searchQuery = $searchInput.value.trim();
+    updateClearFiltersVisibility();
+    triggerSearch();
+  }, 350));
+
+  function isFilterActive() {
+    return !!(searchQuery || (activeCategories.size > 0) || stateFilter || cityFilter || dateFrom || dateTo);
+  }
+
+  async function triggerSearch() {
+    if (!isFilterActive()) {
+      showDefaultSections();
+      return;
+    }
+    showResultsSection();
+    await fetchAndRenderResults();
+  }
+
+  function showDefaultSections() {
+    isSearchActive = false;
+    $defaultSections.style.display = '';
+    $resultsSection.classList.remove('is-visible');
+
+    setTimeout(() => {
+      Object.values(carousels).forEach(c => {
+        if (c && typeof c.update === 'function') {
+          c.update();
+        }
+      });
+    }, 50);
+  }
+
+  function showResultsSection() {
+    isSearchActive = true;
+    $defaultSections.style.display = 'none';
+    $resultsSection.classList.add('is-visible');
+  }
+
+  async function fetchAndRenderResults(page = 1) {
+    $resultsGrid.innerHTML = `<div class="results-loading" style="grid-column:1/-1"><span class="spinner"></span>Buscando eventos...</div>`;
+
+    const params = new URLSearchParams();
+    if (searchQuery) params.set('q', searchQuery);
+    if (activeCategories.size) params.set('categorias', Array.from(activeCategories).join(','));
+    if (stateFilter) params.set('estado', stateFilter);
+    if (cityFilter) params.set('cidade', cityFilter);
+    if (dateFrom) params.set('data_inicio', dateFrom);
+    if (dateTo) params.set('data_fim', dateTo);
+    params.set('page', page);
+
+    try {
+      const resp = await fetch('/api/eventos/buscar?' + params.toString());
+      if (!resp.ok) throw new Error('Erro na resposta');
+      const data = await resp.json();
+      renderResults(data);
+    } catch (e) {
+      $resultsGrid.innerHTML = `<div class="results-empty" style="grid-column:1/-1">Erro ao buscar eventos. Tente novamente.</div>`;
+    }
+  }
+
+  function renderResults(data) {
+    const { eventos, total } = data;
+
+    let label = 'Resultados';
+    const parts = [];
+    if (searchQuery) parts.push(`"${searchQuery}"`);
+    if (activeCategories.size) {
+      const selectedNames = [];
+      activeCategories.forEach(catId => {
+        const btn = document.querySelector(`.cat-tag[data-category-id="${catId}"]`);
+        if (btn) selectedNames.push(btn.textContent.trim());
+      });
+      if (selectedNames.length) {
+        parts.push(selectedNames.join(' + '));
+      }
+    }
+    if (parts.length) label = `${total} resultado${total !== 1 ? 's' : ''}`;
+    else label = `${total} evento${total !== 1 ? 's' : ''} encontrado${total !== 1 ? 's' : ''}`;
+
+    $resultsHeader.textContent = label;
+
+    if (!eventos || eventos.length === 0) {
+      $resultsGrid.innerHTML = `<div class="results-empty" style="grid-column:1/-1">
+        <span class="material-symbols-outlined" style="font-size:2.5rem;display:block;margin-bottom:10px;color:#d1d5db;">search_off</span>
+        Nenhum evento encontrado com esses filtros.
+      </div>`;
+      return;
+    }
+
+    $resultsGrid.innerHTML = eventos.map(buildEventCardHTML).join('');
+  }
+
+  function initCarousel(trackId, prevBtnId, nextBtnId, pageInfoId) {
+    const track = document.getElementById(trackId);
+    const prevBtn = document.getElementById(prevBtnId);
+    const nextBtn = document.getElementById(nextBtnId);
+    const pageInfo = document.getElementById(pageInfoId);
+
+    if (!track) return;
+
+    const cards = Array.from(track.children).filter(el => el.classList.contains('event-card'));
+    if (cards.length === 0) {
+      if (prevBtn) prevBtn.disabled = true;
+      if (nextBtn) nextBtn.disabled = true;
+      if (pageInfo) pageInfo.textContent = '';
+      return;
+    }
+
+    cards.forEach(card => {
+      card.style.display = '';
+    });
+
+    let currentIndex = 0;
+
+    function getVisibleCardsCount() {
+      const containerWidth = track.parentElement.clientWidth;
+      if (cards.length === 0) return 0;
+      const cardWidth = cards[0].offsetWidth || 248;
+      const gap = 16; // 1rem de gap
+      return Math.max(1, Math.floor((containerWidth + gap) / (cardWidth + gap)));
+    }
+
+    function updateView() {
+      if (cards.length === 0) return;
+      const cardWidth = cards[0].offsetWidth || 248;
+      const gap = 16;
+      const step = cardWidth + gap;
+
+      const visibleCount = getVisibleCardsCount();
+      const maxIndex = Math.max(0, cards.length - visibleCount);
+
+      if (currentIndex > maxIndex) {
+        currentIndex = maxIndex;
+      }
+      if (currentIndex < 0) {
+        currentIndex = 0;
+      }
+
+      const translateX = -currentIndex * step;
+      track.style.transform = `translateX(${translateX}px)`;
+
+      if (prevBtn) prevBtn.disabled = (currentIndex === 0);
+      if (nextBtn) nextBtn.disabled = (currentIndex >= maxIndex);
+
+      const totalPages = Math.ceil(cards.length / visibleCount) || 1;
+      const currentPage = Math.ceil(currentIndex / visibleCount) + 1;
+      if (pageInfo) {
+        pageInfo.textContent = `${currentPage} / ${totalPages}`;
+      }
+    }
+
+    if (prevBtn) {
+      prevBtn.addEventListener('click', () => {
+        const visibleCount = getVisibleCardsCount();
+        currentIndex = Math.max(0, currentIndex - visibleCount);
+        updateView();
+      });
+    }
+    if (nextBtn) {
+      nextBtn.addEventListener('click', () => {
+        const visibleCount = getVisibleCardsCount();
+        const maxIndex = Math.max(0, cards.length - visibleCount);
+        currentIndex = Math.min(maxIndex, currentIndex + visibleCount);
+        updateView();
+      });
+    }
+
+    window.addEventListener('resize', debounce(updateView, 150));
+
+    setTimeout(updateView, 100);
+
+    carousels[trackId] = {
+      update: updateView,
+      reset: () => { currentIndex = 0; updateView(); }
+    };
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    initCarousel('proximosTrack', 'proximosPrev', 'proximosNext', 'proximosPageInfo');
+    initCarousel('galeraTrack', 'galeraPrev', 'galeraNext', 'galeraPageInfo');
+  });
+
+}) ();
+</script>
+{% endblock %}

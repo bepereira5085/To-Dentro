@@ -1,0 +1,277 @@
+{% extends "main/base.html" %}
+
+{% block title %}{{ event.name }} — Tô Dentro{% endblock %}
+
+{% block extra_head %}
+<style>
+  .evento-hero {
+    position: relative;
+    height: 380px;
+    overflow: hidden;
+    background: #0d0d0d;
+  }
+  .evento-hero-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.55;
+  }
+  .evento-hero-placeholder {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d1515 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .evento-hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 55%);
+    display: flex;
+    align-items: flex-end;
+    padding: 2.5rem;
+  }
+  .evento-hero-content { max-width: 760px; }
+  .evento-badge {
+    display: inline-block;
+    background: #c81e1e;
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 4px 14px;
+    border-radius: 999px;
+    margin-bottom: 0.75rem;
+    letter-spacing: 0.03em;
+  }
+  .evento-title {
+    font-size: clamp(1.6rem, 3.5vw, 2.5rem);
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+  }
+
+  .evento-body {
+    background: #f7f7f8;
+    min-height: 60vh;
+  }
+  .evento-container {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem;
+  }
+
+  .evento-info-card {
+    background: #fff;
+    border-radius: 18px;
+    border: 1.5px solid #ebebeb;
+    padding: 1.75rem 2rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  }
+  .evento-info-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 0;
+    font-size: 0.95rem;
+    color: #374151;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .evento-info-row:last-child { border-bottom: none; }
+  .evento-info-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: #fff0f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .evento-info-icon .material-symbols-outlined {
+    font-size: 18px;
+    color: #c81e1e;
+  }
+  .evento-info-label { font-weight: 600; color: #1a1a1a; }
+
+  .evento-desc-card {
+    background: #fff;
+    border-radius: 18px;
+    border: 1.5px solid #ebebeb;
+    padding: 1.75rem 2rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  }
+  .evento-desc-card h2 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 1rem;
+  }
+  .evento-desc-card p {
+    font-size: 0.95rem;
+    color: #4b5563;
+    line-height: 1.75;
+  }
+
+  .back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: #6b7280;
+    font-size: 0.88rem;
+    font-weight: 500;
+    text-decoration: none;
+    margin-bottom: 1.75rem;
+    transition: color 0.2s;
+  }
+  .back-btn:hover { color: #c81e1e; }
+  .back-btn .material-symbols-outlined { font-size: 18px; }
+
+  .evento-org-card {
+    background: #fff;
+    border-radius: 18px;
+    border: 1.5px solid #ebebeb;
+    padding: 1.25rem 2rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  .evento-org-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    background: #1a1a1a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .evento-org-name { font-weight: 700; font-size: 0.95rem; color: #1a1a1a; }
+  .evento-org-label { font-size: 0.78rem; color: #9ca3af; font-weight: 500; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="evento-hero">
+  {% if imagem_url %}
+    <img src="{{ imagem_url }}" alt="{{ event.name }}" class="evento-hero-img" />
+  {% else %}
+    <div class="evento-hero-placeholder">
+      <span class="material-symbols-outlined" style="font-size:5rem; color:rgba(255,255,255,0.1);">event</span>
+    </div>
+  {% endif %}
+  <div class="evento-hero-overlay">
+    <div class="evento-hero-content">
+      {% if categorias %}
+        <span class="evento-badge">{{ categorias[0] }}</span>
+      {% endif %}
+      <h1 class="evento-title">{{ event.name }}</h1>
+    </div>
+  </div>
+</div>
+
+<div class="evento-body">
+  <div class="evento-container">
+
+    <a href="{{ url_for('main.home') }}" class="back-btn">
+      <span class="material-symbols-outlined">arrow_back</span>
+      Voltar para a Home
+    </a>
+
+    <div class="evento-info-card">
+      {% if data_fmt %}
+      <div class="evento-info-row">
+        <div class="evento-info-icon">
+          <span class="material-symbols-outlined">calendar_today</span>
+        </div>
+        <div>
+          <div class="evento-info-label">{{ data_fmt }}{% if hora_fmt %} às {{ hora_fmt }}{% endif %}</div>
+          {% if ocorrencia and ocorrencia.duration_days > 1 %}
+          <div style="font-size:0.8rem; color:#9ca3af;">Duração: {{ ocorrencia.duration_days }} dias</div>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+
+      {% if endereco %}
+      <div class="evento-info-row">
+        <div class="evento-info-icon">
+          <span class="material-symbols-outlined">location_on</span>
+        </div>
+        <div>
+          <div class="evento-info-label">{{ endereco.city }}, {{ endereco.state }}</div>
+          {% if endereco.street %}
+          <div style="font-size:0.82rem; color:#9ca3af;">
+            {{ endereco.street }}{% if endereco.number %}, {{ endereco.number }}{% endif %}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+
+      {% if ocorrencia and ocorrencia.interested_count is defined %}
+      <div class="evento-info-row">
+        <div class="evento-info-icon">
+          <span class="material-symbols-outlined">person_raised_hand</span>
+        </div>
+        <div>
+          <div class="evento-info-label">{{ ocorrencia.interested_count }} pessoas marcaram "Tô Dentro!"</div>
+        </div>
+      </div>
+      {% endif %}
+
+      {% if categorias %}
+      <div class="evento-info-row">
+        <div class="evento-info-icon">
+          <span class="material-symbols-outlined">label</span>
+        </div>
+        <div style="display:flex; flex-wrap:wrap; gap:6px;">
+          {% for cat in categorias %}
+          <span style="background:#fff0f0; color:#c81e1e; padding:3px 12px; border-radius:999px; font-size:0.78rem; font-weight:600;">
+            {{ cat }}
+          </span>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    {% if event.description %}
+    <div class="evento-desc-card">
+      <h2>Sobre o evento</h2>
+      <p>{{ event.description }}</p>
+    </div>
+    {% endif %}
+
+    {% if event.organization %}
+    <div class="evento-org-card">
+      <div class="evento-org-avatar">
+        {{ event.organization.name[:2]|upper }}
+      </div>
+      <div>
+        <div class="evento-org-label">Organizado por</div>
+        <div class="evento-org-name">{{ event.organization.name }}</div>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if ocorrencia and ocorrencia.observations %}
+    <div class="evento-desc-card">
+      <h2>Observações</h2>
+      <p>{{ ocorrencia.observations }}</p>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+
+{% endblock %}
