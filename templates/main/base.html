@@ -282,9 +282,11 @@
                 Amigos
               </a>
             </div>
-            {% if current_user.type.value == 'Organizer' %}
+            {% if current_user.type == UserType.ORGANIZER %}
             <div class="navbar-item">
-              <a href="#" class="navbar-item" style="font-size:0.9rem; font-weight:500; color:#1a1a1a;">
+              <a href="{{ url_for('main.my_events') }}"
+                 class="button is-small {% if request.endpoint == 'main.my_events' %}btn-primary-td{% else %}btn-ghost-td{% endif %}"
+                 style="border-radius:20px; padding:6px 20px; font-size:0.85rem; font-weight:600;">
                 Meus Eventos
               </a>
             </div>

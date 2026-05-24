@@ -18,7 +18,7 @@ def _parse_value(key, value):
 def init_app(app):
     load_dotenv(".env.dev")
     for key, value in os.environ.items():
-        if key.startswith("FLASK_") or key in [
+        if key.startswith("FLASK_") or key.startswith("CLOUDINARY_") or key in [
             "SECRET_KEY",
             "SQLALCHEMY_DATABASE_URI",
             "SQLALCHEMY_TRACK_MODIFICATIONS",

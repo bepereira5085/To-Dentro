@@ -1,0 +1,827 @@
+{% extends "main/base.html" %}
+
+{% block title %}Criar Evento — Tô Dentro{% endblock %}
+
+{% block extra_head %}
+<style>
+  .create-event-page {
+    background: #f7f7f8;
+    min-height: 100vh;
+    padding: 3rem 1.5rem 5rem;
+  }
+
+  .form-container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+    border: 1px solid #ebebeb;
+    overflow: hidden;
+  }
+
+  .form-header {
+    background: linear-gradient(135deg, #c81e1e 0%, #8c1010 100%);
+    padding: 2.2rem;
+    color: #fff;
+  }
+
+  .form-header h1 {
+    font-size: 1.6rem;
+    font-weight: 800;
+    margin-bottom: 0.4rem;
+    letter-spacing: -0.02em;
+  }
+
+  .form-header p {
+    font-size: 0.88rem;
+    opacity: 0.9;
+    font-weight: 500;
+  }
+
+  .form-section {
+    padding: 2.2rem;
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  .form-section:last-child {
+    border-bottom: none;
+  }
+
+  .section-title {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #1a1a1a;
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    letter-spacing: -0.01em;
+  }
+
+  .section-title .material-symbols-outlined {
+    color: #c81e1e;
+    font-size: 22px;
+  }
+
+  .input-label {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #4b5563;
+    margin-bottom: 0.4rem;
+    display: block;
+  }
+
+  .input-field {
+    width: 100%;
+    height: 44px;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 0 14px;
+    font-size: 0.88rem;
+    font-family: 'Inter', sans-serif;
+    color: #1a1a1a;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    background: #fafafa;
+  }
+
+  .input-field:focus {
+    border-color: #c81e1e;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(200, 30, 30, 0.06);
+  }
+
+  .textarea-field {
+    width: 100%;
+    min-height: 120px;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 0.88rem;
+    font-family: 'Inter', sans-serif;
+    color: #1a1a1a;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    background: #fafafa;
+    resize: vertical;
+  }
+
+  .textarea-field:focus {
+    border-color: #c81e1e;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(200, 30, 30, 0.06);
+  }
+
+  .select-field {
+    width: 100%;
+    height: 44px;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 0 14px;
+    font-size: 0.88rem;
+    font-family: 'Inter', sans-serif;
+    color: #1a1a1a;
+    outline: none;
+    background: #fafafa;
+    cursor: pointer;
+  }
+
+  .select-field:focus {
+    border-color: #c81e1e;
+  }
+
+  /* Seletor Multi-Tags de Categorias */
+  .categories-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 0.5rem;
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 10px;
+    background: #fafafa;
+  }
+
+  .category-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #4b5563;
+    cursor: pointer;
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1.5px solid transparent;
+    transition: all 0.15s;
+    background: #fff;
+  }
+
+  .category-checkbox-label:hover {
+    border-color: #e5e7eb;
+    background: #f9fafb;
+  }
+
+  .category-checkbox-label.is-checked {
+    background: #fff5f5;
+    border-color: #c81e1e;
+    color: #c81e1e;
+  }
+
+  .category-checkbox-label input {
+    display: none;
+  }
+
+  /* File Uploader e Previews */
+  .dropzone-area {
+    border: 2px dashed #d1d5db;
+    border-radius: 14px;
+    padding: 2.5rem;
+    text-align: center;
+    background: #fafafa;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+  }
+
+  .dropzone-area:hover {
+    border-color: #c81e1e;
+    background: #fff8f8;
+  }
+
+  .dropzone-icon {
+    font-size: 40px;
+    color: #9ca3af;
+    margin-bottom: 0.5rem;
+  }
+
+  .dropzone-text {
+    font-size: 0.88rem;
+    color: #4b5563;
+    font-weight: 600;
+  }
+
+  .dropzone-subtext {
+    font-size: 0.75rem;
+    color: #9ca3af;
+    margin-top: 0.25rem;
+  }
+
+  .image-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 0.75rem;
+    margin-top: 1.25rem;
+  }
+
+  .preview-card {
+    position: relative;
+    width: 100%;
+    height: 110px;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    border: 1px solid #e5e7eb;
+  }
+
+  .preview-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .remove-preview-btn {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 13px;
+    transition: background 0.15s;
+  }
+
+  .remove-preview-btn:hover {
+    background: #c81e1e;
+  }
+
+  /* Toggle Switch para Recorrência */
+  .toggle-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #fafafa;
+    padding: 1rem 1.25rem;
+    border-radius: 12px;
+    border: 1.5px solid #e5e7eb;
+  }
+
+  .toggle-text {
+    font-weight: 700;
+    color: #1a1a1a;
+    font-size: 0.88rem;
+  }
+
+  .toggle-subtext {
+    font-size: 0.78rem;
+    color: #6b7280;
+    font-weight: 500;
+    margin-top: 0.15rem;
+  }
+
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 46px;
+    height: 26px;
+  }
+
+  .switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    inset: 0;
+    background-color: #d1d5db;
+    transition: .3s;
+    border-radius: 34px;
+  }
+
+  .slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .3s;
+    border-radius: 50%;
+  }
+
+  input:checked + .slider {
+    background-color: #c81e1e;
+  }
+
+  input:checked + .slider:before {
+    transform: translateX(20px);
+  }
+
+  /* Painel de Recorrência Expandido */
+  .recurrence-panel {
+    display: none;
+    margin-top: 1.5rem;
+    padding: 1.5rem;
+    background: #fff8f8;
+    border-radius: 12px;
+    border: 1.5px solid #ffdede;
+    animation: slideDown 0.3s ease both;
+  }
+
+  .recurrence-panel.is-visible {
+    display: block;
+  }
+
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .weekday-pill-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 0.4rem;
+  }
+
+  .weekday-pill {
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 1.5px solid #e5e7eb;
+    background: #fff;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #4b5563;
+    cursor: pointer;
+    transition: all 0.15s;
+    user-select: none;
+  }
+
+  .weekday-pill:hover {
+    border-color: #d1d5db;
+  }
+
+  .weekday-pill.is-active {
+    background: #c81e1e;
+    color: #fff;
+    border-color: #c81e1e;
+  }
+
+  .weekday-pill input {
+    display: none;
+  }
+
+  /* Ações do Formulário */
+  .form-actions {
+    padding: 2.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 1rem;
+    background: #fafafa;
+  }
+
+  .submit-btn {
+    height: 48px;
+    background: #c81e1e;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 0 2rem;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 4px 14px rgba(200, 30, 30, 0.2);
+  }
+
+  .submit-btn:hover {
+    background: #a81818;
+    box-shadow: 0 6px 20px rgba(200, 30, 30, 0.3);
+  }
+
+  .submit-btn:active {
+    transform: scale(0.98);
+  }
+
+  .cancel-btn {
+    height: 48px;
+    background: transparent;
+    color: #4b5563;
+    border: 1.5px solid #d1d5db;
+    border-radius: 10px;
+    padding: 0 1.5rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .cancel-btn:hover {
+    border-color: #4b5563;
+    background: #f3f4f6;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="create-event-page">
+
+  <div class="form-container">
+    <div class="form-header">
+      <h1>Criar Novo Evento</h1>
+      <p>Preencha os detalhes abaixo para cadastrar um novo evento em uma de suas organizações.</p>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data" id="createEventForm">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <section class="form-section">
+        <h2 class="section-title">
+          <span class="material-symbols-outlined">photo_library</span>
+          1. Fotos do Evento
+        </h2>
+
+        <div class="dropzone-area" id="dropzoneArea">
+          <span class="material-symbols-outlined dropzone-icon">cloud_upload</span>
+          <div class="dropzone-text">Clique aqui ou arraste para fazer upload de fotos</div>
+          <div class="dropzone-subtext">Você pode selecionar no máximo 5 fotos (.jpg, .jpeg, .png)</div>
+          <input type="file" name="images" id="imageInput" multiple accept="image/*" style="display: none;" />
+        </div>
+
+        <div class="image-preview-grid" id="imagePreviewGrid">
+        </div>
+      </section>
+
+      <section class="form-section">
+        <h2 class="section-title">
+          <span class="material-symbols-outlined">info</span>
+          2. Informações Básicas
+        </h2>
+
+        <div class="columns is-multiline">
+          <div class="column is-12 pb-3">
+            <label class="input-label" for="eventName">Nome do Evento</label>
+            <input type="text" name="name" id="eventName" class="input-field" placeholder="Ex: Concerto de Jazz ao Ar Livre" required />
+          </div>
+
+          <div class="column is-12 pb-3">
+            <label class="input-label" for="eventDesc">Descrição do Evento</label>
+            <textarea name="description" id="eventDesc" class="textarea-field" placeholder="Descreva os detalhes do evento, programação, público-alvo..." required></textarea>
+          </div>
+
+          <div class="column is-6 pb-3">
+            <label class="input-label" for="eventOrg">Organização Produtora</label>
+            <select name="organization_id" id="eventOrg" class="select-field" required>
+              {% for org in organizations %}
+              <option value="{{ org.id }}">{{ org.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="column is-12 pb-3">
+            <label class="input-label">Categorias do Evento</label>
+            <div class="categories-grid">
+              {% for cat in categories %}
+              <label class="category-checkbox-label" id="catLabel-{{ cat.id }}">
+                <input type="checkbox" name="categories" value="{{ cat.id }}" class="cat-checkbox" />
+                {{ cat.type.value }}
+              </label>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="form-section">
+        <h2 class="section-title">
+          <span class="material-symbols-outlined">repeat</span>
+          3. Recorrência
+        </h2>
+
+        <div class="toggle-container">
+          <div>
+            <div class="toggle-text">Este evento é recorrente?</div>
+            <div class="toggle-subtext">Ative se o evento se repete periodicamente no calendário.</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" name="is_recurrent" id="isRecurrentToggle" />
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="recurrence-panel" id="recurrencePanel">
+          <div class="columns is-multiline">
+
+            <div class="column is-6 pb-3">
+              <label class="input-label" for="recurrenceType">Tipo de Recorrência</label>
+              <select name="recurrence_type" id="recurrenceType" class="select-field">
+                <option value="DAILY">Diário</option>
+                <option value="WEEKLY" selected>Semanal</option>
+                <option value="MONTHLY">Mensal</option>
+                <option value="YEARLY">Anual</option>
+              </select>
+            </div>
+
+            <div class="column is-6 pb-3">
+              <label class="input-label" for="endDate">Data Limite da Recorrência</label>
+              <input type="date" name="end_date" id="endDate" class="input-field" />
+            </div>
+
+            <div class="column is-6 pb-3" id="weeksIntervalContainer">
+              <label class="input-label" for="weeksInterval">Intervalo em Semanas</label>
+              <select name="weeks_interval" id="weeksInterval" class="select-field">
+                <option value="">Selecione...</option>
+                <option value="ONE">1 Semana (Semanal)</option>
+                <option value="TWO">2 Semanas (Quinzenal)</option>
+              </select>
+            </div>
+
+            <div class="column is-6 pb-3" id="dayOfMonthContainer" style="display: none;">
+              <label class="input-label" for="dayOfMonth">Dia do Mês</label>
+              <input type="number" name="day_of_month" id="dayOfMonth" class="input-field" min="1" max="31" placeholder="Ex: 15" />
+            </div>
+
+            <div class="column is-12 pb-3" id="weekdaysContainer">
+              <label class="input-label">Dias da Semana</label>
+              <div class="weekday-pill-grid">
+                <label class="weekday-pill">
+                  <input type="checkbox" name="weekdays" value="SUNDAY" /> Dom
+                </label>
+                <label class="weekday-pill">
+                  <input type="checkbox" name="weekdays" value="MONDAY" /> Seg
+                </label>
+                <label class="weekday-pill">
+                  <input type="checkbox" name="weekdays" value="TUESDAY" /> Ter
+                </label>
+                <label class="weekday-pill">
+                  <input type="checkbox" name="weekdays" value="WEDNESDAY" /> Qua
+                </label>
+                <label class="weekday-pill">
+                  <input type="checkbox" name="weekdays" value="THURSDAY" /> Qui
+                </label>
+                <label class="weekday-pill">
+                  <input type="checkbox" name="weekdays" value="FRIDAY" /> Sex
+                </label>
+                <label class="weekday-pill">
+                  <input type="checkbox" name="weekdays" value="SATURDAY" /> Sáb
+                </label>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <section class="form-section">
+        <h2 class="section-title">
+          <span class="material-symbols-outlined">location_on</span>
+          4. Detalhes da Ocorrência e Endereço
+        </h2>
+
+        <div class="columns is-multiline">
+
+          <div class="column is-4 pb-3">
+            <label class="input-label" for="startDate">Data de Início</label>
+            <input type="date" name="start_date" id="startDate" class="input-field" required />
+          </div>
+
+          <div class="column is-4 pb-3">
+            <label class="input-label" for="startTime">Hora de Início</label>
+            <input type="time" name="start_time" id="startTime" class="input-field" required />
+          </div>
+
+          <div class="column is-4 pb-3">
+            <label class="input-label" for="durationDays">Duração (dias)</label>
+            <input type="number" name="duration_days" id="durationDays" class="input-field" min="1" value="1" required />
+          </div>
+
+          <div class="column is-4 pb-3">
+            <label class="input-label" for="durationTime">Tempo de Duração (hora)</label>
+            <input type="time" name="duration_time" id="durationTime" class="input-field" />
+          </div>
+
+          <div class="column is-8 pb-3">
+            <label class="input-label" for="observations">Observações</label>
+            <input type="text" name="observations" id="observations" class="input-field" placeholder="Ex: Chegue 30 minutos antes, traga seu comprovante..." />
+          </div>
+
+          <div class="column is-4 pb-3">
+            <label class="input-label" for="cep">CEP</label>
+            <input type="text" name="cep" id="cep" class="input-field" placeholder="00000000" maxlength="8" required />
+          </div>
+
+          <div class="column is-8 pb-3">
+            <label class="input-label" for="street">Rua / Logradouro</label>
+            <input type="text" name="street" id="street" class="input-field" required />
+          </div>
+
+          <div class="column is-3 pb-3">
+            <label class="input-label" for="number">Número</label>
+            <input type="text" name="number" id="number" class="input-field" required />
+          </div>
+
+          <div class="column is-6 pb-3">
+            <label class="input-label" for="city">Cidade</label>
+            <input type="text" name="city" id="city" class="input-field" required />
+          </div>
+
+          <div class="column is-3 pb-3">
+            <label class="input-label" for="state">Estado (UF)</label>
+            <input type="text" name="state" id="state" class="input-field" placeholder="Ex: ES" maxlength="2" required />
+          </div>
+
+        </div>
+      </section>
+
+      <div class="form-actions">
+        <a href="{{ url_for('main.my_events') }}" class="cancel-btn">Cancelar</a>
+        <button type="submit" class="submit-btn">
+          <span class="material-symbols-outlined">save</span>
+          Salvar Evento
+        </button>
+      </div>
+
+    </form>
+  </div>
+
+</div>
+
+<script>
+  (function() {
+    'use strict';
+
+    const dropzoneArea = document.getElementById('dropzoneArea');
+    const imageInput = document.getElementById('imageInput');
+    const imagePreviewGrid = document.getElementById('imagePreviewGrid');
+
+    let selectedFiles = [];
+
+    dropzoneArea.addEventListener('click', () => imageInput.click());
+
+    imageInput.addEventListener('change', (e) => {
+      handleFiles(Array.from(e.target.files));
+    });
+
+    dropzoneArea.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropzoneArea.style.borderColor = '#c81e1e';
+      dropzoneArea.style.background = '#fff8f8';
+    });
+
+    dropzoneArea.addEventListener('dragleave', () => {
+      dropzoneArea.style.borderColor = '#d1d5db';
+      dropzoneArea.style.background = '#fafafa';
+    });
+
+    dropzoneArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzoneArea.style.borderColor = '#d1d5db';
+      dropzoneArea.style.background = '#fafafa';
+      handleFiles(Array.from(e.dataTransfer.files));
+    });
+
+    function handleFiles(files) {
+      const imageFiles = files.filter(f => f.type.startsWith('image/'));
+
+      if (selectedFiles.length + imageFiles.length > 5) {
+        alert('Você só pode enviar no máximo 5 imagens.');
+        return;
+      }
+
+      imageFiles.forEach(file => {
+        selectedFiles.push(file);
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const card = document.createElement('div');
+          card.className = 'preview-card';
+
+          card.innerHTML = `
+            <img src="${event.target.result}" class="preview-image" />
+            <button type="button" class="remove-preview-btn">✕</button>
+          `;
+
+          card.querySelector('.remove-preview-btn').addEventListener('click', () => {
+            removeFile(file, card);
+          });
+
+          imagePreviewGrid.appendChild(card);
+        };
+        reader.readAsDataURL(file);
+      });
+
+      syncFileInput();
+    }
+
+    function removeFile(fileToRemove, cardElement) {
+      selectedFiles = selectedFiles.filter(f => f !== fileToRemove);
+      cardElement.remove();
+      syncFileInput();
+    }
+
+    function syncFileInput() {
+      const dataTransfer = new DataTransfer();
+      selectedFiles.forEach(file => dataTransfer.items.add(file));
+      imageInput.files = dataTransfer.files;
+    }
+
+    document.querySelectorAll('.cat-checkbox').forEach(cb => {
+      cb.addEventListener('change', () => {
+        const label = document.getElementById('catLabel-' + cb.value);
+        if (label) {
+          label.classList.toggle('is-checked', cb.checked);
+        }
+      });
+    });
+
+    const isRecurrentToggle = document.getElementById('isRecurrentToggle');
+    const recurrencePanel = document.getElementById('recurrencePanel');
+    const recurrenceType = document.getElementById('recurrenceType');
+
+    const weeksIntervalContainer = document.getElementById('weeksIntervalContainer');
+    const dayOfMonthContainer = document.getElementById('dayOfMonthContainer');
+    const weekdaysContainer = document.getElementById('weekdaysContainer');
+
+    isRecurrentToggle.addEventListener('change', () => {
+      recurrencePanel.classList.toggle('is-visible', isRecurrentToggle.checked);
+
+      document.getElementById('recurrenceType').required = isRecurrentToggle.checked;
+    });
+
+    recurrenceType.addEventListener('change', () => {
+      const type = recurrenceType.value;
+      if (type === 'DAILY' || type === 'YEARLY') {
+        weeksIntervalContainer.style.display = 'none';
+        dayOfMonthContainer.style.display = 'none';
+        weekdaysContainer.style.display = 'none';
+      } else if (type === 'WEEKLY') {
+        weeksIntervalContainer.style.display = 'block';
+        dayOfMonthContainer.style.display = 'none';
+        weekdaysContainer.style.display = 'block';
+      } else if (type === 'MONTHLY') {
+        weeksIntervalContainer.style.display = 'none';
+        dayOfMonthContainer.style.display = 'block';
+        weekdaysContainer.style.display = 'none';
+      }
+    });
+
+    document.querySelectorAll('.weekday-pill').forEach(pill => {
+      const checkbox = pill.querySelector('input');
+      pill.addEventListener('click', (e) => {
+        if (e.target !== checkbox) {
+          checkbox.checked = !checkbox.checked;
+        }
+        pill.classList.toggle('is-active', checkbox.checked);
+      });
+    });
+
+    const cepInput = document.getElementById('cep');
+    const streetInput = document.getElementById('street');
+    const cityInput = document.getElementById('city');
+    const stateInput = document.getElementById('state');
+    const numberInput = document.getElementById('number');
+
+    cepInput.addEventListener('input', async () => {
+      const cep = cepInput.value.replace(/\D/g, '');
+      if (cep.length === 8) {
+        cepInput.disabled = true;
+        streetInput.value = 'Buscando endereço...';
+        cityInput.value = 'Buscando...';
+        stateInput.value = '...';
+
+        try {
+          const resp = await fetch('/api/cep/' + cep);
+          if (resp.ok) {
+            const data = await resp.json();
+            streetInput.value = data.logradouro || '';
+            cityInput.value = data.cidade || '';
+            stateInput.value = data.uf || '';
+
+            numberInput.focus();
+          } else {
+            streetInput.value = '';
+            cityInput.value = '';
+            stateInput.value = '';
+          }
+        } catch (e) {
+          streetInput.value = '';
+          cityInput.value = '';
+          stateInput.value = '';
+        } finally {
+          cepInput.disabled = false;
+        }
+      }
+    });
+
+  })();
+</script>
+{% endblock %}

@@ -323,6 +323,13 @@
       Voltar para a Home
     </a>
 
+    {% if organizador_dono %}
+    <a href="{{ url_for('main.edit_event', event_id=event.id) }}" class="button is-small btn-primary-td" style="border-radius:20px; padding:6px 20px; font-size:0.85rem; font-weight:600; float: right; height:34px; display:inline-flex; align-items:center; gap:4px; box-shadow: 0 2px 8px rgba(200, 30, 30, 0.15);">
+      <span class="material-symbols-outlined" style="font-size:16px;">edit</span>
+      Editar Evento
+    </a>
+    {% endif %}
+
     {% if event.images %}
     <div class="evento-carousel-card">
       <div class="carousel-container">

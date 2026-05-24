@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date, datetime, time
 
 import requests as http_requests
 from flask import (
@@ -10,6 +10,7 @@ from flask import (
     session,
     url_for,
     abort,
+    flash,
 )
 from flask_login import current_user, login_required, login_user, logout_user
 from werkzeug.datastructures import MultiDict
@@ -24,6 +25,8 @@ from to_dentro.models.event_address import EventAddress
 from to_dentro.models.event_category import EventCategories
 from to_dentro.models.event_image import EventImage
 from to_dentro.models.event_occurrence import EventOccurrence
+from to_dentro.models.event_recurrence import EventRecurrence, RecurrenceTypes, WeeksInterval
+from to_dentro.models.event_recurrence_weekday import EventRecurrenceWeekday, WeekDays
 from to_dentro.models.follows import Follow
 from to_dentro.models.interested_user import InterestedUser
 from to_dentro.models.notification import Notification, NotificationType
@@ -35,6 +38,7 @@ from to_dentro.services.cep_service import (
     calcular_proximidade_cep,
     obter_cep_usuario,
 )
+from to_dentro.services.image_service import upload_image
 
 main_bp = Blueprint("main", __name__)
 
@@ -125,6 +129,54 @@ def _serializar_evento(event, occurrence, address, image_url=None, interest_coun
         "cep": address.cep if address else "",
         "interested_count": interest_count,
         "occurrence_id": occurrence.id if occurrence else None,
+    }
+
+
+def _serializar_evento_unico(event, image_url=None):
+    """Serializa um evento único, buscando sua primeira ocorrência futura ou passada."""
+    ocorrencia = (
+        EventOccurrence.query.filter_by(event_id=event.id)
+        .filter(EventOccurrence.start_date >= date.today())
+        .order_by(EventOccurrence.start_date.asc())
+        .first()
+    )
+    if not ocorrencia:
+        ocorrencia = (
+            EventOccurrence.query.filter_by(event_id=event.id)
+            .order_by(EventOccurrence.start_date.desc())
+            .first()
+        )
+
+    endereco = ocorrencia.addresses[0].address if ocorrencia and ocorrencia.addresses else None
+
+    categorias = [ec.category.type.value for ec in event.categories]
+    categoria_principal = categorias[0] if categorias else "Evento"
+
+    data_fmt = ""
+    hora_fmt = ""
+    if ocorrencia:
+        meses = [
+            "", "jan.", "fev.", "mar.", "abr.", "mai.", "jun.",
+            "jul.", "ago.", "set.", "out.", "nov.", "dez.",
+        ]
+        d = ocorrencia.start_date
+        data_fmt = f"{d.day} de {meses[d.month]}"
+        hora_fmt = ocorrencia.start_time.strftime("%H:%M") if ocorrencia.start_time else ""
+
+    return {
+        "id": event.id,
+        "name": event.name,
+        "description": event.description,
+        "image_url": image_url or "",
+        "category": categoria_principal,
+        "categorias": categorias,
+        "start_date": ocorrencia.start_date.isoformat() if ocorrencia else "",
+        "start_date_fmt": data_fmt,
+        "start_time": hora_fmt,
+        "city": endereco.city if endereco else "",
+        "state": endereco.state if endereco else "",
+        "organization_name": event.organization.name if event.organization else "Organização",
+        "organization_id": event.organization_id,
     }
 
 
@@ -468,6 +520,10 @@ def event_details(event_id):
             ocorrencia.start_time.strftime("%H:%M") if ocorrencia.start_time else ""
         )
 
+    organizador_dono = False
+    if current_user.is_authenticated and current_user.type == UserType.ORGANIZER:
+        organizador_dono = event.organization_id in [ou.organization_id for ou in current_user.organizations]
+
     return render_template(
         "main/event_details.html",
         event=event,
@@ -478,6 +534,7 @@ def event_details(event_id):
         data_fmt=data_fmt,
         hora_fmt=hora_fmt,
         usuario_interessado=usuario_interessado,
+        organizador_dono=organizador_dono,
     )
 
 @main_bp.route("/api/cep/<cep>")
@@ -948,6 +1005,673 @@ def api_marcar_notificacao_lida(notif_id):
     return jsonify({"status": "ok"}), 200
 
 
+@main_bp.route("/meus-eventos")
+@login_required
+def my_events():
+    if current_user.type != UserType.ORGANIZER:
+        abort(403)
+
+    orgs = [ou.organization for ou in current_user.organizations]
+    categories = Category.query.order_by(Category.id).all()
+    municipios = _buscar_todos_municipios_ibge()
+
+    return render_template(
+        "main/my_events.html",
+        organizations=orgs,
+        categories=categories,
+        municipios=municipios,
+    )
+
+
+@main_bp.route("/api/meus-eventos/buscar")
+@login_required
+def api_buscar_meus_eventos():
+    if current_user.type != UserType.ORGANIZER:
+        return jsonify({"error": "Acesso não autorizado."}), 403
+
+    org_ids = [ou.organization_id for ou in current_user.organizations]
+    if not org_ids:
+        return jsonify({"eventos": [], "total": 0})
+
+    q = request.args.get("q", "").strip() or None
+    category_ids_str = request.args.get("categorias", "").strip()
+    cidade = request.args.get("cidade", "").strip() or None
+    estado = request.args.get("estado", "").strip() or None
+    data_inicio = request.args.get("data_inicio", "").strip() or None
+    data_fim = request.args.get("data_fim", "").strip() or None
+    org_id = request.args.get("organizacao_id", "").strip() or None
+    page = int(request.args.get("page", 1))
+    page_size = 15
+
+    query = Event.query.filter(Event.organization_id.in_(org_ids))
+
+    if org_id and org_id.isdigit():
+        query = query.filter(Event.organization_id == int(org_id))
+
+    if q:
+        termo = f"%{q}%"
+        query = query.filter(
+            db.or_(
+                Event.name.ilike(termo),
+                Event.description.ilike(termo),
+            )
+        )
+
+    if category_ids_str:
+        cids = [int(x) for x in category_ids_str.split(",") if x.strip().isdigit()]
+        if cids:
+            query = query.join(EventCategories).filter(
+                EventCategories.category_id.in_(cids)
+            )
+
+    if cidade or estado or data_inicio or data_fim:
+        query = query.join(EventOccurrence).join(EventAddress).join(Address)
+        if cidade:
+            query = query.filter(Address.city.ilike(f"%{cidade}%"))
+        if estado:
+            query = query.filter(Address.state.ilike(f"{estado}"))
+        if data_inicio:
+            try:
+                dt_inicio = date.fromisoformat(data_inicio)
+                query = query.filter(EventOccurrence.start_date >= dt_inicio)
+            except ValueError:
+                pass
+        if data_fim:
+            try:
+                dt_fim = date.fromisoformat(data_fim)
+                query = query.filter(EventOccurrence.start_date <= dt_fim)
+            except ValueError:
+                pass
+
+    query = query.distinct()
+    total = query.count()
+    eventos_pagina = (
+        query.order_by(Event.id.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+        .all()
+    )
+
+    eventos_json = []
+    for ev in eventos_pagina:
+        img_url = ev.images[0].url if ev.images else ""
+        eventos_json.append(_serializar_evento_unico(ev, image_url=img_url))
+
+    return jsonify(
+        {
+            "eventos": eventos_json,
+            "total": total,
+            "page": page,
+            "page_size": page_size,
+            "has_next": (page * page_size) < total,
+            "has_prev": page > 1,
+        }
+    )
+
+
+@main_bp.route("/criar-evento", methods=["GET", "POST"])
+@login_required
+def create_event():
+    if current_user.type != UserType.ORGANIZER:
+        abort(403)
+
+    orgs = [ou.organization for ou in current_user.organizations]
+    if not orgs:
+        flash(
+            "Você precisa estar associado a pelo menos uma organização para criar eventos.",
+            "is-warning",
+        )
+        return redirect(url_for("main.home"))
+
+    if request.method == "POST":
+        name = request.form.get("name", "").strip()
+        description = request.form.get("description", "").strip()
+        org_id = request.form.get("organization_id")
+        is_recurrent = request.form.get("is_recurrent") in ("true", "on", "1")
+
+        cat_ids = request.form.getlist("categories")
+
+        cep = request.form.get("cep", "").strip().replace("-", "")
+        street = request.form.get("street", "").strip()
+        number = request.form.get("number", "").strip()
+        city = request.form.get("city", "").strip()
+        state = request.form.get("state", "").strip()
+        country = request.form.get("country", "Brasil").strip()
+
+        start_date_str = request.form.get("start_date")
+        start_time_str = request.form.get("start_time")
+        duration_days_str = request.form.get("duration_days", "1")
+        duration_time_str = request.form.get("duration_time")
+        observations = request.form.get("observations", "").strip() or None
+
+        rec_type_str = request.form.get("recurrence_type")
+        rec_end_date_str = request.form.get("end_date")
+        rec_weeks_str = request.form.get("weeks_interval")
+        rec_day_month_str = request.form.get("day_of_month")
+        rec_weekdays = request.form.getlist("weekdays")
+
+        try:
+            if not org_id or int(org_id) not in [o.id for o in orgs]:
+                raise ValueError("Organização inválida ou não pertence a você.")
+
+            if not name:
+                raise ValueError("O nome do evento é obrigatório.")
+
+            if not start_date_str or not start_time_str:
+                raise ValueError("Data e hora de início são obrigatórias.")
+
+            start_date_val = date.fromisoformat(start_date_str)
+            start_time_val = time.fromisoformat(start_time_str)
+
+            duration_days_val = (
+                int(duration_days_str) if duration_days_str.isdigit() else 1
+            )
+            if duration_days_val < 1:
+                duration_days_val = 1
+
+            duration_time_val = None
+            if duration_time_str:
+                try:
+                    duration_time_val = time.fromisoformat(duration_time_str)
+                except ValueError:
+                    pass
+
+            address = Address(
+                street=street,
+                number=number,
+                city=city,
+                state=state,
+                cep=cep,
+                country=country,
+            )
+            db.session.add(address)
+            db.session.flush()
+
+            event = Event(
+                organization_id=int(org_id),
+                name=name,
+                description=description,
+                is_recurrent=is_recurrent,
+            )
+            db.session.add(event)
+            db.session.flush()
+
+            dates_to_create = [start_date_val]
+
+            if is_recurrent:
+                if not rec_type_str:
+                    raise ValueError(
+                        "Tipo de recorrência é obrigatório para eventos recorrentes."
+                    )
+
+                end_date_val = None
+                if rec_end_date_str:
+                    try:
+                        end_date_val = date.fromisoformat(rec_end_date_str)
+                    except ValueError:
+                        pass
+
+                weeks_interval_val = None
+                if rec_weeks_str and rec_weeks_str in ("ONE", "TWO"):
+                    weeks_interval_val = WeeksInterval[rec_weeks_str]
+
+                day_of_month_val = None
+                if rec_day_month_str and rec_day_month_str.isdigit():
+                    day_of_month_val = int(rec_day_month_str)
+                    if not (1 <= day_of_month_val <= 31):
+                        day_of_month_val = None
+
+                rec_type_val = (
+                    RecurrenceTypes[rec_type_str]
+                    if rec_type_str in RecurrenceTypes.__members__
+                    else RecurrenceTypes.DAILY
+                )
+
+                recurrence = EventRecurrence(
+                    event_id=event.id,
+                    type=rec_type_val,
+                    start_date=start_date_val,
+                    end_date=end_date_val,
+                    weeks_interval=weeks_interval_val,
+                    day_of_month=day_of_month_val,
+                )
+                db.session.add(recurrence)
+                db.session.flush()
+
+                weekdays_enum_list = []
+                for wday in rec_weekdays:
+                    if wday in WeekDays.__members__:
+                        db.session.add(
+                            EventRecurrenceWeekday(
+                                recurrence_id=recurrence.id,
+                                weekday=WeekDays[wday],
+                            )
+                        )
+                        weekdays_enum_list.append(WeekDays[wday])
+
+                from to_dentro.utils.recurrence import generate_recurrence_dates
+                dates_to_create = generate_recurrence_dates(
+                    start_date=start_date_val,
+                    end_date=end_date_val,
+                    rec_type=rec_type_val,
+                    weeks_interval=weeks_interval_val,
+                    day_of_month=day_of_month_val,
+                    weekdays=weekdays_enum_list
+                )
+
+            for dt in dates_to_create:
+                occurrence = EventOccurrence(
+                    event_id=event.id,
+                    observations=observations,
+                    interested_count=0,
+                    start_date=dt,
+                    duration_days=duration_days_val,
+                    start_time=start_time_val,
+                    duration_time=duration_time_val,
+                )
+                db.session.add(occurrence)
+                db.session.flush()
+
+                event_address = EventAddress(
+                    event_occurrence_id=occurrence.id, address_id=address.id
+                )
+                db.session.add(event_address)
+
+            for cid in cat_ids:
+                if cid.isdigit():
+                    db.session.add(
+                        EventCategories(event_id=event.id, category_id=int(cid))
+                    )
+
+            files = request.files.getlist("images")
+            uploaded_count = 0
+            for file in files:
+                if file and file.filename != "":
+                    if uploaded_count >= 5:
+                        break
+                    url = upload_image(file)
+                    if url:
+                        db.session.add(EventImage(event_id=event.id, url=url))
+                        uploaded_count += 1
+
+            db.session.commit()
+            flash("Evento criado com sucesso!", "is-success")
+            return redirect(url_for("main.my_events"))
+
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Erro ao criar evento: {e}", "is-danger")
+
+    categories = Category.query.order_by(Category.id).all()
+    return render_template(
+        "main/create_event.html", organizations=orgs, categories=categories
+    )
+
+
+@main_bp.route("/evento/<int:event_id>/editar", methods=["GET", "POST"])
+@login_required
+def edit_event(event_id):
+    if current_user.type != UserType.ORGANIZER:
+        abort(403)
+
+    event = Event.query.get_or_404(event_id)
+
+    orgs = [ou.organization for ou in current_user.organizations]
+    if event.organization_id not in [o.id for o in orgs]:
+        abort(403)
+
+    occurrence = (
+        EventOccurrence.query.filter_by(event_id=event.id)
+        .filter(EventOccurrence.start_date >= date.today())
+        .order_by(EventOccurrence.start_date.asc())
+        .first()
+    )
+    if not occurrence:
+        occurrence = (
+            EventOccurrence.query.filter_by(event_id=event.id)
+            .order_by(EventOccurrence.start_date.desc())
+            .first()
+        )
+
+    address = occurrence.addresses[0].address if occurrence and occurrence.addresses else None
+    recurrence = EventRecurrence.query.filter_by(event_id=event.id).first()
+    recurrence_weekdays = [rw.weekday.name for rw in recurrence.weekdays] if recurrence else []
+    selected_category_ids = [ec.category_id for ec in event.categories]
+
+    if request.method == "POST":
+        name = request.form.get("name", "").strip()
+        description = request.form.get("description", "").strip()
+        org_id = request.form.get("organization_id")
+        is_recurrent = request.form.get("is_recurrent") in ("true", "on", "1")
+
+        cat_ids = request.form.getlist("categories")
+
+        cep = request.form.get("cep", "").strip().replace("-", "")
+        street = request.form.get("street", "").strip()
+        number = request.form.get("number", "").strip()
+        city = request.form.get("city", "").strip()
+        state = request.form.get("state", "").strip()
+        country = request.form.get("country", "Brasil").strip()
+
+        start_date_str = request.form.get("start_date")
+        start_time_str = request.form.get("start_time")
+        duration_days_str = request.form.get("duration_days", "1")
+        duration_time_str = request.form.get("duration_time")
+        observations = request.form.get("observations", "").strip() or None
+
+        rec_type_str = request.form.get("recurrence_type")
+        rec_end_date_str = request.form.get("end_date")
+        rec_weeks_str = request.form.get("weeks_interval")
+        rec_day_month_str = request.form.get("day_of_month")
+        rec_weekdays = request.form.getlist("weekdays")
+
+        deleted_image_ids = request.form.getlist("deleted_images")
+
+        try:
+            if not org_id or int(org_id) not in [o.id for o in orgs]:
+                raise ValueError("Organização inválida ou não pertence a você.")
+
+            if not name:
+                raise ValueError("O nome do evento é obrigatório.")
+
+            if not start_date_str or not start_time_str:
+                raise ValueError("Data e hora de início são obrigatórias.")
+
+            start_date_val = date.fromisoformat(start_date_str)
+            start_time_val = time.fromisoformat(start_time_str)
+
+            duration_days_val = (
+                int(duration_days_str) if duration_days_str.isdigit() else 1
+            )
+            if duration_days_val < 1:
+                duration_days_val = 1
+
+            duration_time_val = None
+            if duration_time_str:
+                try:
+                    duration_time_val = time.fromisoformat(duration_time_str)
+                except ValueError:
+                    pass
+
+            remaining_existing = len(event.images) - len(deleted_image_ids)
+            new_files = request.files.getlist("images")
+            valid_new_files = [f for f in new_files if f and f.filename != ""]
+
+            if remaining_existing + len(valid_new_files) > 5:
+                raise ValueError("O evento pode ter no máximo 5 imagens no total.")
+
+            for img_id_str in deleted_image_ids:
+                if img_id_str.isdigit():
+                    img = EventImage.query.get(int(img_id_str))
+                    if img and img.event_id == event.id:
+                        db.session.delete(img)
+
+            for file in valid_new_files:
+                url = upload_image(file)
+                if url:
+                    db.session.add(EventImage(event_id=event.id, url=url))
+
+            if address:
+                address.cep = cep
+                address.street = street
+                address.number = number
+                address.city = city
+                address.state = state
+                address.country = country
+            else:
+                address = Address(
+                    street=street,
+                    number=number,
+                    city=city,
+                    state=state,
+                    cep=cep,
+                    country=country,
+                )
+                db.session.add(address)
+                db.session.flush()
+
+            date_or_recurrence_changed = False
+
+            old_is_recurrent = event.is_recurrent
+            old_start_date = None
+            old_rec_type = None
+            old_end_date = None
+            old_weeks_interval = None
+            old_day_of_month = None
+            old_weekdays = set()
+
+            if recurrence:
+                old_start_date = recurrence.start_date
+                old_rec_type = recurrence.type
+                old_end_date = recurrence.end_date
+                old_weeks_interval = recurrence.weeks_interval
+                old_day_of_month = recurrence.day_of_month
+                old_weekdays = {rw.weekday.name for rw in recurrence.weekdays}
+
+            new_end_date_val = None
+            if rec_end_date_str:
+                try:
+                    new_end_date_val = date.fromisoformat(rec_end_date_str)
+                except ValueError:
+                    pass
+
+            new_weeks_interval_val = None
+            if rec_weeks_str and rec_weeks_str in ("ONE", "TWO"):
+                new_weeks_interval_val = WeeksInterval[rec_weeks_str]
+
+            new_day_of_month_val = None
+            if rec_day_month_str and rec_day_month_str.isdigit():
+                new_day_of_month_val = int(rec_day_month_str)
+                if not (1 <= new_day_of_month_val <= 31):
+                    new_day_of_month_val = None
+
+            new_rec_type_val = None
+            if rec_type_str in RecurrenceTypes.__members__:
+                new_rec_type_val = RecurrenceTypes[rec_type_str]
+
+            new_weekdays_set = set(rec_weekdays)
+
+            if old_is_recurrent != is_recurrent:
+                date_or_recurrence_changed = True
+            elif is_recurrent:
+                if old_start_date != start_date_val:
+                    date_or_recurrence_changed = True
+                elif old_rec_type != new_rec_type_val:
+                    date_or_recurrence_changed = True
+                elif old_end_date != new_end_date_val:
+                    date_or_recurrence_changed = True
+                elif old_weeks_interval != new_weeks_interval_val:
+                    date_or_recurrence_changed = True
+                elif old_day_of_month != new_day_of_month_val:
+                    date_or_recurrence_changed = True
+                elif old_weekdays != new_weekdays_set:
+                    date_or_recurrence_changed = True
+
+            event.organization_id = int(org_id)
+            event.name = name
+            event.description = description
+            event.is_recurrent = is_recurrent
+
+            today = date.today()
+            from datetime import timedelta
+
+            if date_or_recurrence_changed:
+                future_occurrences = EventOccurrence.query.filter_by(event_id=event.id).filter(EventOccurrence.start_date > today).all()
+                for f_occ in future_occurrences:
+                    EventAddress.query.filter_by(event_occurrence_id=f_occ.id).delete()
+                    db.session.delete(f_occ)
+                db.session.flush()
+
+                new_dates = []
+                if is_recurrent:
+                    tomorrow = today + timedelta(days=1)
+                    gen_start_date = max(start_date_val, tomorrow)
+
+                    weekdays_enum_list = []
+
+                    if recurrence:
+                        EventRecurrenceWeekday.query.filter_by(recurrence_id=recurrence.id).delete()
+                        db.session.delete(recurrence)
+                        db.session.flush()
+
+                    new_recurrence = EventRecurrence(
+                        event_id=event.id,
+                        type=new_rec_type_val,
+                        start_date=start_date_val,
+                        end_date=new_end_date_val,
+                        weeks_interval=new_weeks_interval_val,
+                        day_of_month=new_day_of_month_val,
+                    )
+                    db.session.add(new_recurrence)
+                    db.session.flush()
+
+                    for wday in rec_weekdays:
+                        if wday in WeekDays.__members__:
+                            db.session.add(
+                                EventRecurrenceWeekday(
+                                    recurrence_id=new_recurrence.id,
+                                    weekday=WeekDays[wday],
+                                )
+                            )
+                            weekdays_enum_list.append(WeekDays[wday])
+
+                    from to_dentro.utils.recurrence import generate_recurrence_dates
+                    new_dates = generate_recurrence_dates(
+                        start_date=gen_start_date,
+                        end_date=new_end_date_val,
+                        rec_type=new_rec_type_val,
+                        weeks_interval=new_weeks_interval_val,
+                        day_of_month=new_day_of_month_val,
+                        weekdays=weekdays_enum_list
+                    )
+                else:
+                    if recurrence:
+                        EventRecurrenceWeekday.query.filter_by(recurrence_id=recurrence.id).delete()
+                        db.session.delete(recurrence)
+                        db.session.flush()
+
+                    if start_date_val > today:
+                        new_dates = [start_date_val]
+
+                # 3. Cria as novas ocorrências futuras
+                for dt in new_dates:
+                    new_occ = EventOccurrence(
+                        event_id=event.id,
+                        observations=observations,
+                        interested_count=0,
+                        start_date=dt,
+                        duration_days=duration_days_val,
+                        start_time=start_time_val,
+                        duration_time=duration_time_val,
+                    )
+                    db.session.add(new_occ)
+                    db.session.flush()
+
+                    db.session.add(
+                        EventAddress(
+                            event_occurrence_id=new_occ.id, address_id=address.id
+                        )
+                    )
+
+                if occurrence and occurrence.start_date <= today:
+                    occurrence.observations = observations
+                    occurrence.duration_days = duration_days_val
+                    occurrence.start_time = start_time_val
+                    occurrence.duration_time = duration_time_val
+
+                    has_assoc = False
+                    if occurrence.addresses:
+                        for ea in occurrence.addresses:
+                            if ea.address_id == address.id:
+                                has_assoc = True
+                    if not has_assoc:
+                        db.session.add(
+                            EventAddress(
+                                event_occurrence_id=occurrence.id, address_id=address.id
+                            )
+                        )
+            else:
+                if is_recurrent and recurrence:
+                    pass
+                elif is_recurrent and not recurrence:
+                    new_recurrence = EventRecurrence(
+                        event_id=event.id,
+                        type=new_rec_type_val,
+                        start_date=start_date_val,
+                        end_date=new_end_date_val,
+                        weeks_interval=new_weeks_interval_val,
+                        day_of_month=new_day_of_month_val,
+                    )
+                    db.session.add(new_recurrence)
+                    db.session.flush()
+                    for wday in rec_weekdays:
+                        if wday in WeekDays.__members__:
+                            db.session.add(
+                                EventRecurrenceWeekday(
+                                    recurrence_id=new_recurrence.id,
+                                    weekday=WeekDays[wday],
+                                )
+                            )
+
+                future_occurrences = EventOccurrence.query.filter_by(event_id=event.id).filter(EventOccurrence.start_date > today).all()
+                for f_occ in future_occurrences:
+                    f_occ.observations = observations
+                    f_occ.duration_days = duration_days_val
+                    f_occ.start_time = start_time_val
+                    f_occ.duration_time = duration_time_val
+
+                if occurrence and occurrence.start_date <= today:
+                    occurrence.observations = observations
+                    occurrence.duration_days = duration_days_val
+                    occurrence.start_time = start_time_val
+                    occurrence.duration_time = duration_time_val
+
+                    has_assoc = False
+                    if occurrence.addresses:
+                        for ea in occurrence.addresses:
+                            if ea.address_id == address.id:
+                                has_assoc = True
+                    if not has_assoc:
+                        db.session.add(
+                            EventAddress(
+                                event_occurrence_id=occurrence.id, address_id=address.id
+                            )
+                        )
+
+            EventCategories.query.filter_by(event_id=event.id).delete()
+            for cid in cat_ids:
+                if cid.isdigit():
+                    db.session.add(
+                        EventCategories(event_id=event.id, category_id=int(cid))
+                    )
+
+            db.session.commit()
+            flash("Evento atualizado com sucesso!", "is-success")
+            return redirect(url_for("main.my_events"))
+
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Erro ao editar evento: {e}", "is-danger")
+
+    categories = Category.query.order_by(Category.id).all()
+
+    recurrence = EventRecurrence.query.filter_by(event_id=event.id).first()
+    recurrence_weekdays = [rw.weekday.name for rw in recurrence.weekdays] if recurrence else []
+    selected_category_ids = [ec.category_id for ec in event.categories]
+
+    return render_template(
+        "main/edit_event.html",
+        event=event,
+        occurrence=occurrence,
+        address=address,
+        recurrence=recurrence,
+        recurrence_weekdays=recurrence_weekdays,
+        selected_category_ids=selected_category_ids,
+        organizations=orgs,
+        categories=categories,
+    )
+
+
 @main_bp.app_context_processor
 def inject_global_variables():
     return {
@@ -958,5 +1682,6 @@ def inject_global_variables():
             'Crie e divulgue seus próprios eventos',
             'Acompanhe seus produtores favoritos',
             'Receba notificações personalizadas'
-        ]
+        ],
+        'UserType': UserType
     }
