@@ -35,3 +35,32 @@ def delete_image(public_id: str) -> bool:
     except Exception as e:
         print(f"Error deleting image from Cloudinary: {e}")
         return False
+
+def delete_image_by_url(url: str) -> bool:
+    """
+    Deletes an image from Cloudinary by extracting its public ID from the URL.
+    :param url: The secure URL of the image.
+    :return: True if successfully deleted, False otherwise.
+    """
+    if not url:
+        return False
+    try:
+        # Standard Cloudinary URL structure:
+        # https://res.cloudinary.com/cloud_name/image/upload/v12345/folder/public_id.jpg
+        parts = url.split("/image/upload/")
+        if len(parts) < 2:
+            return False
+        path = parts[1]
+        path_parts = path.split("/")
+        # Skip the version segment (v12345678) if it exists
+        if path_parts[0].startswith("v") and path_parts[0][1:].isdigit():
+            path_parts = path_parts[1:]
+        
+        public_id_with_ext = "/".join(path_parts)
+        public_id = public_id_with_ext.rsplit(".", 1)[0]
+        
+        return delete_image(public_id)
+    except Exception as e:
+        print(f"Error parsing public ID or deleting image by url: {e}")
+        return False
+

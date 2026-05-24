@@ -429,6 +429,21 @@
     border-color: #4b5563;
     background: #f3f4f6;
   }
+
+  .submit-btn:disabled {
+    background: #fca5a5;
+    color: #fff;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  .spin {
+    animation: spin 1s linear infinite;
+  }
 </style>
 {% endblock %}
 
@@ -777,9 +792,8 @@
     document.querySelectorAll('.weekday-pill').forEach(pill => {
       const checkbox = pill.querySelector('input');
       pill.addEventListener('click', (e) => {
-        if (e.target !== checkbox) {
-          checkbox.checked = !checkbox.checked;
-        }
+        e.preventDefault();
+        checkbox.checked = !checkbox.checked;
         pill.classList.toggle('is-active', checkbox.checked);
       });
     });
@@ -821,6 +835,18 @@
         }
       }
     });
+
+    // Loading no botão Salvar
+    const formElement = document.getElementById('createEventForm');
+    if (formElement) {
+      formElement.addEventListener('submit', function() {
+        const submitBtn = this.querySelector('.submit-btn');
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = '<span class="material-symbols-outlined spin">progress_activity</span> Salvando...';
+        }
+      });
+    }
 
   })();
 </script>

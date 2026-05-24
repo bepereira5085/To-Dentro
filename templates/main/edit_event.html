@@ -423,6 +423,74 @@
     border-color: #4b5563;
     background: #f3f4f6;
   }
+
+  .submit-btn:disabled {
+    background: #fca5a5;
+    color: #fff;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+  }
+
+  .spin {
+    animation: button-spin 1s linear infinite;
+  }
+
+  .delete-btn {
+    height: 48px;
+    background: transparent;
+    color: #dc2626;
+    border: 1.5px solid #fecaca;
+    border-radius: 10px;
+    padding: 0 1.5rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-right: auto; /* Push Cancel and Save buttons to the right */
+  }
+
+  .delete-btn:hover {
+    background: #fef2f2;
+    border-color: #dc2626;
+  }
+
+  .delete-btn:active {
+    transform: scale(0.98);
+  }
+
+  .delete-btn.is-loading {
+    opacity: 0.6;
+    pointer-events: none;
+    cursor: not-allowed;
+  }
+
+  .delete-btn .btn-spinner {
+    display: none;
+    width: 18px;
+    height: 18px;
+    border: 2px solid #fecaca;
+    border-top-color: #dc2626;
+    border-radius: 50%;
+    animation: button-spin 0.7s linear infinite;
+    flex-shrink: 0;
+  }
+
+  .delete-btn.is-loading .material-symbols-outlined {
+    display: none;
+  }
+
+  .delete-btn.is-loading .btn-spinner {
+    display: inline-block;
+  }
+
+  @keyframes button-spin {
+    to { transform: rotate(360deg); }
+  }
 </style>
 {% endblock %}
 
@@ -663,6 +731,11 @@
 
       <!-- Ações -->
       <div class="form-actions">
+        <button type="button" class="delete-btn" id="deleteEventBtn" onclick="confirmDelete()">
+          <span class="material-symbols-outlined">delete</span>
+          <span class="btn-spinner"></span>
+          <span class="btn-text">Excluir</span>
+        </button>
         <a href="{{ url_for('main.my_events') }}" class="cancel-btn">Cancelar</a>
         <button type="submit" class="submit-btn">
           <span class="material-symbols-outlined">save</span>
@@ -670,6 +743,10 @@
         </button>
       </div>
 
+    </form>
+
+    <form id="deleteEventForm" action="{{ url_for('main.delete_event', event_id=event.id) }}" method="POST" style="display: none;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     </form>
   </div>
 
@@ -819,9 +896,8 @@
     document.querySelectorAll('.weekday-pill').forEach(pill => {
       const checkbox = pill.querySelector('input');
       pill.addEventListener('click', (e) => {
-        if (e.target !== checkbox) {
-          checkbox.checked = !checkbox.checked;
-        }
+        e.preventDefault();
+        checkbox.checked = !checkbox.checked;
         pill.classList.toggle('is-active', checkbox.checked);
       });
     });
@@ -864,6 +940,44 @@
       }
     });
 
+    // Loading no botão Salvar
+    const formElement = document.getElementById('editEventForm');
+    if (formElement) {
+      formElement.addEventListener('submit', function() {
+        const submitBtn = this.querySelector('.submit-btn');
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = '<span class="material-symbols-outlined spin">progress_activity</span> Salvando...';
+        }
+      });
+    }
+
   })();
+
+  function confirmDelete() {
+    if (confirm('Tem certeza de que deseja excluir este evento? Esta ação é irreversível e excluirá permanentemente todas as ocorrências, recorrências e imagens do evento.')) {
+      const deleteBtn = document.getElementById('deleteEventBtn');
+      const cancelBtn = document.querySelector('.form-actions .cancel-btn');
+      const submitBtn = document.querySelector('.form-actions .submit-btn');
+      
+      deleteBtn.disabled = true;
+      deleteBtn.classList.add('is-loading');
+      if (cancelBtn) {
+        cancelBtn.style.pointerEvents = 'none';
+        cancelBtn.style.opacity = '0.5';
+      }
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.style.opacity = '0.5';
+      }
+      
+      const btnText = deleteBtn.querySelector('.btn-text');
+      if (btnText) {
+        btnText.textContent = 'Excluindo...';
+      }
+      
+      document.getElementById('deleteEventForm').submit();
+    }
+  }
 </script>
 {% endblock %}

@@ -38,7 +38,7 @@ from to_dentro.services.cep_service import (
     calcular_proximidade_cep,
     obter_cep_usuario,
 )
-from to_dentro.services.image_service import upload_image
+from to_dentro.services.image_service import upload_image, delete_image_by_url
 
 main_bp = Blueprint("main", __name__)
 
@@ -1404,6 +1404,8 @@ def edit_event(event_id):
                 if img_id_str.isdigit():
                     img = EventImage.query.get(int(img_id_str))
                     if img and img.event_id == event.id:
+                        if img.url:
+                            delete_image_by_url(img.url)
                         db.session.delete(img)
 
             for file in valid_new_files:
@@ -1670,6 +1672,37 @@ def edit_event(event_id):
         organizations=orgs,
         categories=categories,
     )
+
+
+@main_bp.route("/evento/<int:event_id>/excluir", methods=["POST"])
+@login_required
+def delete_event(event_id):
+    if current_user.type != UserType.ORGANIZER:
+        abort(403)
+
+    event = Event.query.get_or_404(event_id)
+
+    # Check if the event belongs to one of the user's organizations
+    orgs = [ou.organization for ou in current_user.organizations]
+    if event.organization_id not in [o.id for o in orgs]:
+        abort(403)
+
+    try:
+        # 1. Delete all images from Cloudinary first
+        for img in event.images:
+            if img.url:
+                delete_image_by_url(img.url)
+        
+        # 2. Delete event (cascade delete will automatically clean other tables)
+        db.session.delete(event)
+        db.session.commit()
+
+        flash("Evento e todos os dados associados foram excluídos com sucesso!", "is-success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Erro ao excluir o evento: {e}", "is-danger")
+
+    return redirect(url_for("main.my_events"))
 
 
 @main_bp.app_context_processor
