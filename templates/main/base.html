@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Tô Dentro — A plataforma de eventos comunitários e gratuitos" />
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{% block title %}{{ titulo_app }}{% endblock %}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -107,9 +108,16 @@
             {% if current_user.is_authenticated %}
             <div class="navbar-item">
               <a href="{{ url_for('main.home') }}"
-                 class="button is-small btn-primary-td"
+                 class="button is-small {% if request.endpoint == 'main.home' %}btn-primary-td{% else %}btn-ghost-td{% endif %}"
                  style="border-radius:20px; padding:6px 20px; font-size:0.85rem; font-weight:600;">
                 Explorar
+              </a>
+            </div>
+            <div class="navbar-item">
+              <a href="{{ url_for('main.friends') }}"
+                 class="button is-small {% if request.endpoint == 'main.friends' %}btn-primary-td{% else %}btn-ghost-td{% endif %}"
+                 style="border-radius:20px; padding:6px 20px; font-size:0.85rem; font-weight:600;">
+                Amigos
               </a>
             </div>
             {% if current_user.type.value == 'Organizer' %}

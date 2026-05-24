@@ -1,0 +1,1201 @@
+{% extends "main/base.html" %}
+
+{% block title %}Amigos — Tô Dentro{% endblock %}
+
+{% block extra_head %}
+<style>
+  .friends-page {
+    background: #f7f7f8;
+    min-height: 100vh;
+  }
+
+  .friends-search-bar {
+    background: #fff;
+    border-bottom: 1px solid #ebebeb;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    padding: 1rem 0;
+  }
+
+  .friends-search-inner {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    padding: 0 1.5rem;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .friends-search-wrap {
+    flex: 1;
+    position: relative;
+    min-width: 0;
+  }
+
+  .friends-search-wrap .search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 20px;
+    color: #9ca3af;
+    pointer-events: none;
+  }
+
+  .friends-search-input {
+    width: 100%;
+    height: 46px;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 0 14px 0 44px;
+    font-size: 0.9rem;
+    font-family: 'Inter', sans-serif;
+    color: #1a1a1a;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    background: #fafafa;
+  }
+
+  .friends-search-input:focus {
+    border-color: #c81e1e;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(200,30,30,0.08);
+  }
+
+  .friends-search-input::placeholder { color: #b0b7c3; }
+
+  .btn-find-friends {
+    height: 46px;
+    padding: 0 1.25rem;
+    background: #c81e1e;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+    box-shadow: 0 3px 10px rgba(200,30,30,0.22);
+    flex-shrink: 0;
+  }
+
+  .btn-find-friends:hover {
+    background: #a81818;
+    box-shadow: 0 5px 16px rgba(200,30,30,0.32);
+    transform: translateY(-1px);
+  }
+
+  .btn-find-friends:active { transform: scale(0.98); }
+  .friends-content {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+
+  .friends-section-title {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #1a1a1a;
+    letter-spacing: -0.02em;
+    margin-bottom: 1.25rem;
+  }
+
+  .friends-count {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #9ca3af;
+    margin-left: 0.5rem;
+  }
+
+  .friends-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+
+  .friend-card {
+    background: #fff;
+    border-radius: 16px;
+    border: 1px solid #f0f0f0;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    padding: 1.5rem 1rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: none;
+    background: #fff;
+    width: 100%;
+    font-family: 'Inter', sans-serif;
+  }
+
+  .friend-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 28px rgba(0,0,0,0.1);
+  }
+
+  .friend-avatar {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d0a0a 60%, #c81e1e 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 0.04em;
+    overflow: hidden;
+    flex-shrink: 0;
+    /* TODO: exibir foto de perfil quando o campo for adicionado ao banco */
+  }
+
+  .friend-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .friend-name {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    text-align: center;
+    line-height: 1.3;
+  }
+
+  .friends-empty {
+    text-align: center;
+    padding: 4rem 1rem;
+    color: #9ca3af;
+  }
+
+  .friends-empty .material-symbols-outlined {
+    font-size: 3.5rem;
+    display: block;
+    margin-bottom: 1rem;
+    color: #d1d5db;
+  }
+
+  .friends-empty p {
+    font-size: 0.95rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .modal-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.52);
+    z-index: 500;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    backdrop-filter: blur(3px);
+  }
+
+  .modal-backdrop.is-open {
+    display: flex;
+    animation: backdropIn 0.2s ease;
+  }
+
+  @keyframes backdropIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  .modal-box {
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 12px 50px rgba(0,0,0,0.22);
+    width: 100%;
+    max-width: 520px;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    animation: modalIn 0.28s cubic-bezier(0.34,1.56,0.64,1);
+  }
+
+  @keyframes modalIn {
+    from { opacity: 0; transform: translateY(30px) scale(0.96); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .modal-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    background: rgba(0,0,0,0.07);
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #4b5563;
+    transition: background 0.2s;
+    z-index: 10;
+    flex-shrink: 0;
+  }
+
+  .modal-close:hover {
+    background: rgba(200,30,30,0.1);
+    color: #c81e1e;
+  }
+
+  .find-modal-header {
+    padding: 1.5rem 1.75rem 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .find-modal-title {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #1a1a1a;
+    letter-spacing: -0.02em;
+  }
+
+  .find-modal-body {
+    padding: 1rem 1.75rem 1.75rem;
+  }
+
+  .find-search-wrap {
+    position: relative;
+    margin-bottom: 1rem;
+  }
+
+  .find-search-wrap .search-icon {
+    position: absolute;
+    left: 13px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 18px;
+    color: #9ca3af;
+    pointer-events: none;
+  }
+
+  .find-search-input {
+    width: 100%;
+    height: 44px;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 0 13px 0 40px;
+    font-size: 0.88rem;
+    font-family: 'Inter', sans-serif;
+    color: #1a1a1a;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    background: #fafafa;
+  }
+
+  .find-search-input:focus {
+    border-color: #c81e1e;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(200,30,30,0.08);
+  }
+
+  .find-search-input::placeholder { color: #b0b7c3; }
+
+  .find-results-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    max-height: 360px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+
+  .find-user-item {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.15s;
+    border: 1px solid transparent;
+    background: none;
+    width: 100%;
+    font-family: 'Inter', sans-serif;
+    text-align: left;
+  }
+
+  .find-user-item:hover {
+    background: #f7f7f8;
+    border-color: #f0f0f0;
+  }
+
+  .find-user-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1a1a1a 0%, #3d1a1a 70%, #c81e1e 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+  }
+
+  .find-user-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    flex: 1;
+  }
+
+  .find-arrow {
+    color: #9ca3af;
+    font-size: 18px;
+    transition: color 0.15s;
+  }
+
+  .find-user-item:hover .find-arrow { color: #c81e1e; }
+
+  .find-message {
+    text-align: center;
+    color: #9ca3af;
+    font-size: 0.88rem;
+    padding: 2rem 0;
+  }
+
+  .ud-header {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d0a0a 60%, #c81e1e 100%);
+    padding: 2.5rem 2rem 1.75rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .ud-avatar {
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+    border: 4px solid rgba(255,255,255,0.25);
+    background: rgba(255,255,255,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 0.05em;
+    overflow: hidden;
+    flex-shrink: 0;
+    /* TODO: exibir foto de perfil quando o campo for adicionado ao banco */
+  }
+
+  .ud-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .ud-name {
+    font-size: 1.45rem;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    text-align: center;
+  }
+
+  /* Body */
+  .ud-body {
+    padding: 1.75rem 2rem 2rem;
+  }
+
+  .ud-section-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #9ca3af;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 0.65rem;
+  }
+  .ud-cats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    margin-bottom: 1.75rem;
+  }
+
+  .ud-cat-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 30px;
+    padding: 0 13px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    border: 1.5px solid #e5e7eb;
+    background: #f9fafb;
+    color: #4b5563;
+    transition: transform 0.15s;
+  }
+
+  .ud-cat-tag:hover { transform: translateY(-1px); }
+
+  .ud-cat-tag.is-common {
+    background: #fff0f0;
+    border-color: #c81e1e;
+    color: #c81e1e;
+    font-weight: 700;
+  }
+
+  .ud-cat-tag .material-symbols-outlined {
+    font-size: 13px;
+  }
+
+  .ud-empty-text {
+    font-size: 0.85rem;
+    color: #9ca3af;
+    font-style: italic;
+    margin-bottom: 1.75rem;
+  }
+
+  .ud-events-scroll {
+    display: flex;
+    gap: 0.85rem;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+    scrollbar-width: none;
+    scroll-snap-type: x mandatory;
+    margin-bottom: 1.75rem;
+  }
+
+  .ud-events-scroll::-webkit-scrollbar { display: none; }
+
+  .ud-event-mini {
+    flex-shrink: 0;
+    width: 175px;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #fff;
+    border: 1px solid #f0f0f0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+    scroll-snap-align: start;
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: block;
+  }
+
+  .ud-event-mini:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .ud-event-mini-img {
+    width: 100%;
+    height: 105px;
+    overflow: hidden;
+    background: #1a1a1a;
+    position: relative;
+  }
+
+  .ud-event-mini-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s;
+  }
+
+  .ud-event-mini:hover .ud-event-mini-img img { transform: scale(1.05); }
+
+  .ud-event-mini-placeholder {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #1a1a1a 0%, #3d1a1a 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .ud-event-mini-badge {
+    position: absolute;
+    bottom: 7px;
+    left: 8px;
+    background: #c81e1e;
+    color: #fff;
+    padding: 2px 8px;
+    border-radius: 5px;
+    font-size: 0.67rem;
+    font-weight: 700;
+    z-index: 2;
+  }
+
+  .ud-event-mini-body {
+    padding: 9px 10px 10px;
+  }
+
+  .ud-event-mini-title {
+    font-weight: 700;
+    font-size: 0.8rem;
+    color: #1a1a1a;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-bottom: 5px;
+  }
+
+  .ud-event-mini-meta {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.7rem;
+    color: #6b7280;
+  }
+
+  .ud-event-mini-meta .material-symbols-outlined {
+    font-size: 12px;
+    color: #9ca3af;
+  }
+
+  .ud-divider {
+    height: 1px;
+    background: #f0f0f0;
+    margin: 1.5rem 0;
+  }
+
+  .ud-follow-btn {
+    width: 100%;
+    height: 50px;
+    border-radius: 12px;
+    border: none;
+    font-size: 1rem;
+    font-weight: 700;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .ud-follow-btn.state-follow {
+    background: #c81e1e;
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(200,30,30,0.28);
+  }
+
+  .ud-follow-btn.state-follow:hover {
+    background: #a81818;
+    box-shadow: 0 6px 20px rgba(200,30,30,0.38);
+    transform: translateY(-1px);
+  }
+
+  .ud-follow-btn.state-unfollow {
+    background: #f3f4f6;
+    color: #4b5563;
+    border: 1.5px solid #e5e7eb;
+  }
+
+  .ud-follow-btn.state-unfollow:hover {
+    background: #fee2e2;
+    border-color: #c81e1e;
+    color: #c81e1e;
+  }
+
+  .ud-follow-btn:active { transform: scale(0.98); }
+  .ud-follow-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  .ud-loading {
+    padding: 3rem 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    color: #9ca3af;
+    font-size: 0.88rem;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .spinner {
+    display: inline-block;
+    width: 28px;
+    height: 28px;
+    border: 3px solid #e5e7eb;
+    border-top-color: #c81e1e;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 640px) {
+    .friends-search-inner { flex-wrap: wrap; }
+    .btn-find-friends { width: 100%; justify-content: center; }
+    .friends-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+    .modal-box { border-radius: 16px; }
+    .find-modal-header, .find-modal-body { padding-left: 1.25rem; padding-right: 1.25rem; }
+    .ud-body { padding: 1.25rem 1.25rem 1.5rem; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="friends-page">
+
+  <div class="friends-search-bar">
+    <div class="friends-search-inner">
+      <div class="friends-search-wrap">
+        <span class="material-symbols-outlined search-icon">search</span>
+        <input
+          type="text"
+          id="friendsSearchInput"
+          class="friends-search-input"
+          placeholder="Buscar amigos pelo nome..."
+          autocomplete="off"
+          aria-label="Buscar amigos"
+        />
+      </div>
+      <button class="btn-find-friends" id="openFindModalBtn" type="button"
+              aria-label="Encontrar amigos">
+        <span class="material-symbols-outlined" style="font-size:18px;">person_search</span>
+        Encontrar amigos
+      </button>
+    </div>
+  </div>
+
+  <div class="friends-content">
+    <div class="friends-section-title">
+      Seus amigos
+      <span class="friends-count" id="friendsCount">({{ seguindo|length }})</span>
+    </div>
+
+    <div class="friends-grid" id="friendsGrid">
+      {% if seguindo %}
+        {% for usuario in seguindo %}
+        <button
+          class="friend-card"
+          id="friend-card-{{ usuario.id }}"
+          data-name="{{ usuario.name|lower }}"
+          data-user-id="{{ usuario.id }}"
+          type="button"
+          aria-label="Ver perfil de {{ usuario.name }}">
+          <div class="friend-avatar">
+            {# TODO: exibir foto de perfil quando o campo for adicionado ao banco #}
+            {{ usuario.name[:2]|upper }}
+          </div>
+          <div class="friend-name">{{ usuario.name }}</div>
+        </button>
+        {% endfor %}
+      {% else %}
+        <div id="friendsInitialEmpty" style="grid-column: 1 / -1;">
+          <div class="friends-empty">
+            <span class="material-symbols-outlined">group</span>
+            <p>Você ainda não segue ninguém.<br>Que tal encontrar seus primeiros amigos?</p>
+            <button class="btn-find-friends" id="openFindModalBtnEmpty" type="button"
+                    style="margin: 0 auto; display:inline-flex;">
+              <span class="material-symbols-outlined" style="font-size:18px;">person_search</span>
+              Encontrar amigos
+            </button>
+          </div>
+        </div>
+      {% endif %}
+
+      <div id="searchEmptyState" style="grid-column: 1 / -1; display: none;">
+        <div class="friends-empty">
+          <span class="material-symbols-outlined">search_off</span>
+          <p>Nenhum amigo encontrado com esse nome.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="modal-backdrop" id="findFriendsModal" role="dialog" aria-modal="true"
+     aria-label="Encontrar amigos">
+  <div class="modal-box" id="findFriendsBox" style="max-width:460px;">
+    <button class="modal-close" id="closeFindModalBtn" type="button" aria-label="Fechar">
+      <span class="material-symbols-outlined" style="font-size:18px;">close</span>
+    </button>
+
+    <div class="find-modal-header">
+      <span class="find-modal-title">Encontrar amigos</span>
+    </div>
+
+    <div class="find-modal-body">
+      <div class="find-search-wrap">
+        <span class="material-symbols-outlined search-icon">search</span>
+        <input
+          type="text"
+          id="findSearchInput"
+          class="find-search-input"
+          placeholder="Buscar pelo nome..."
+          autocomplete="off"
+          aria-label="Buscar usuários"
+        />
+      </div>
+      <div class="find-results-list" id="findResultsList">
+        <div class="find-message">
+          <span class="material-symbols-outlined"
+                style="font-size:2rem;display:block;margin-bottom:8px;color:#d1d5db;">person_search</span>
+          Digite um nome para encontrar pessoas.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="userDetailsModal" role="dialog" aria-modal="true"
+     aria-label="Detalhes do usuário">
+  <div class="modal-box" id="userDetailsBox">
+    <button class="modal-close" id="closeUserDetailsBtn" type="button" aria-label="Fechar">
+      <span class="material-symbols-outlined" style="font-size:18px;">close</span>
+    </button>
+
+    <div id="userDetailsContent">
+      <div class="ud-loading">
+        <span class="spinner"></span>
+        Carregando...
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+(function () {
+  'use strict';
+
+  function debounce(fn, ms) {
+    let t;
+    return function (...args) {
+      clearTimeout(t);
+      t = setTimeout(() => fn.apply(this, args), ms);
+    };
+  }
+
+  function escHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  const $friendsSearch = document.getElementById('friendsSearchInput');
+  const $friendsCount  = document.getElementById('friendsCount');
+  const $searchEmpty   = document.getElementById('searchEmptyState');
+  const allCards       = Array.from(document.querySelectorAll('.friend-card[data-name]'));
+
+  function filterFriendsLocally(q) {
+    const term = q.trim().toLowerCase();
+    let visible = 0;
+    allCards.forEach(card => {
+      const match = !term || card.dataset.name.includes(term);
+      card.style.display = match ? '' : 'none';
+      if (match) visible++;
+    });
+    if ($searchEmpty) $searchEmpty.style.display = (term && visible === 0) ? 'block' : 'none';
+    if ($friendsCount) $friendsCount.textContent = `(${visible})`;
+  }
+
+  if ($friendsSearch) {
+    $friendsSearch.addEventListener('input', () => filterFriendsLocally($friendsSearch.value));
+  }
+
+  function openModal(el) {
+    el.classList.add('is-open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal(el) {
+    el.classList.remove('is-open');
+    if (!$findModal.classList.contains('is-open') &&
+        !$udModal.classList.contains('is-open')) {
+      document.body.style.overflow = '';
+    }
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape') return;
+    if ($udModal.classList.contains('is-open'))   { closeModal($udModal); return; }
+    if ($findModal.classList.contains('is-open')) { closeModal($findModal); }
+  });
+
+  const $findModal     = document.getElementById('findFriendsModal');
+  const $findInput     = document.getElementById('findSearchInput');
+  const $findList      = document.getElementById('findResultsList');
+  const $closeFindBtn  = document.getElementById('closeFindModalBtn');
+  const $openFindBtn   = document.getElementById('openFindModalBtn');
+  const $openFindBtnE  = document.getElementById('openFindModalBtnEmpty');
+
+  const FIND_EMPTY_HTML = `
+    <div class="find-message">
+      <span class="material-symbols-outlined"
+            style="font-size:2rem;display:block;margin-bottom:8px;color:#d1d5db;">person_search</span>
+      Digite um nome para encontrar pessoas.
+    </div>`;
+
+  function openFindModal() {
+    openModal($findModal);
+    setTimeout(() => $findInput && $findInput.focus(), 60);
+  }
+
+  function closeFindModal() {
+    closeModal($findModal);
+    if ($findInput) $findInput.value = '';
+    if ($findList)  $findList.innerHTML = FIND_EMPTY_HTML;
+  }
+
+  if ($openFindBtn)  $openFindBtn.addEventListener('click', openFindModal);
+  if ($openFindBtnE) $openFindBtnE.addEventListener('click', openFindModal);
+  if ($closeFindBtn) $closeFindBtn.addEventListener('click', closeFindModal);
+
+  $findModal.addEventListener('click', e => {
+    if (e.target === $findModal) closeFindModal();
+  });
+
+  async function buscarUsuarios(q) {
+    $findList.innerHTML = `
+      <div class="find-message">
+        <span class="spinner" style="margin-bottom:6px;"></span>
+        Buscando...
+      </div>`;
+
+    try {
+      const params = new URLSearchParams();
+      if (q) params.set('q', q);
+      const resp = await fetch('/api/usuarios/buscar?' + params.toString());
+      if (!resp.ok) throw new Error();
+      const lista = await resp.json();
+      renderFindResults(lista, q);
+    } catch {
+      $findList.innerHTML = `<div class="find-message">Erro ao buscar. Tente novamente.</div>`;
+    }
+  }
+
+  function renderFindResults(lista, q) {
+    if (!lista.length) {
+      $findList.innerHTML = `
+        <div class="find-message">
+          <span class="material-symbols-outlined"
+                style="font-size:2rem;display:block;margin-bottom:8px;color:#d1d5db;">search_off</span>
+          ${q ? 'Nenhum usuário encontrado.' : 'Nenhum usuário disponível.'}
+        </div>`;
+      return;
+    }
+
+    $findList.innerHTML = lista.map(u => `
+      <button class="find-user-item" type="button"
+              data-user-id="${u.id}" aria-label="Ver perfil de ${escHtml(u.name)}">
+        <div class="find-user-avatar">${escHtml(u.initials)}</div>
+        <span class="find-user-name">${escHtml(u.name)}</span>
+        <span class="material-symbols-outlined find-arrow">chevron_right</span>
+      </button>
+    `).join('');
+
+    $findList.querySelectorAll('.find-user-item').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const uid = btn.dataset.userId;
+        closeFindModal();
+        openUserDetailsModal(uid);
+      });
+    });
+  }
+
+  if ($findInput) {
+    $findInput.addEventListener('input', debounce(() => {
+      const q = $findInput.value.trim();
+      if (!q) { $findList.innerHTML = FIND_EMPTY_HTML; return; }
+      buscarUsuarios(q);
+    }, 350));
+  }
+
+  const $udModal = document.getElementById('userDetailsModal');
+  const $udContent = document.getElementById('userDetailsContent');
+  const $closeUdBtn = document.getElementById('closeUserDetailsBtn');
+
+  let currentUserId = null;
+
+  if ($closeUdBtn) $closeUdBtn.addEventListener('click', () => closeModal($udModal));
+  $udModal.addEventListener('click', e => {
+    if (e.target === $udModal) closeModal($udModal);
+  });
+
+  async function openUserDetailsModal(userId) {
+    currentUserId = userId;
+
+    // Mostra loading
+    $udContent.innerHTML = `
+      <div class="ud-loading">
+        <span class="spinner"></span>
+        Carregando perfil...
+      </div>`;
+    openModal($udModal);
+
+    try {
+      const resp = await fetch(`/api/usuario/${userId}/detalhes`);
+      if (!resp.ok) throw new Error();
+      const data = await resp.json();
+      renderUserDetails(data);
+    } catch {
+      $udContent.innerHTML = `
+        <div class="ud-loading" style="color:#c81e1e;">
+          <span class="material-symbols-outlined" style="font-size:2rem;">error</span>
+          Não foi possível carregar o perfil.
+        </div>`;
+    }
+  }
+
+  function buildCategoriesHTML(categories) {
+    if (!categories || !categories.length) {
+      return `<p class="ud-empty-text">Nenhuma categoria selecionada.</p>`;
+    }
+    const tags = categories.map(cat => {
+      const common = cat.is_common;
+      return `<span class="ud-cat-tag ${common ? 'is-common' : ''}" title="${common ? 'Categoria em comum!' : ''}">
+        ${common ? '<span class="material-symbols-outlined" style="font-size:13px;">favorite</span>' : ''}
+        ${escHtml(cat.name)}
+      </span>`;
+    }).join('');
+    return `<div class="ud-cats">${tags}</div>`;
+  }
+
+  function buildEventsHTML(events) {
+    if (!events || !events.length) {
+      return `<p class="ud-empty-text">Nenhum evento marcado ainda.</p>`;
+    }
+
+    const cards = events.map(ev => {
+      const imgHtml = ev.image_url
+        ? `<img src="${escHtml(ev.image_url)}" alt="${escHtml(ev.name)}" loading="lazy" />`
+        : `<div class="ud-event-mini-placeholder">
+             <span class="material-symbols-outlined" style="font-size:2rem;color:rgba(255,255,255,0.15);">event</span>
+           </div>`;
+
+      const badgeHtml = ev.category
+        ? `<span class="ud-event-mini-badge">${escHtml(ev.category)}</span>` : '';
+
+      const dateMeta = ev.start_date_fmt
+        ? `<div class="ud-event-mini-meta">
+             <span class="material-symbols-outlined">calendar_today</span>
+             ${escHtml(ev.start_date_fmt)}${ev.start_time ? ' • ' + escHtml(ev.start_time) : ''}
+           </div>` : '';
+
+      const cityMeta = ev.city
+        ? `<div class="ud-event-mini-meta">
+             <span class="material-symbols-outlined">location_on</span>
+             ${escHtml(ev.city)}${ev.state ? ', ' + escHtml(ev.state) : ''}
+           </div>` : '';
+
+      return `
+        <a class="ud-event-mini" href="/evento/${ev.id}" id="ud-event-${ev.id}">
+          <div class="ud-event-mini-img">
+            ${imgHtml}
+            ${badgeHtml}
+          </div>
+          <div class="ud-event-mini-body">
+            <div class="ud-event-mini-title">${escHtml(ev.name)}</div>
+            ${dateMeta}
+            ${cityMeta}
+          </div>
+        </a>`;
+    }).join('');
+
+    return `<div class="ud-events-scroll">${cards}</div>`;
+  }
+
+  function renderUserDetails(data) {
+    const nameAge = data.age !== null
+      ? `${escHtml(data.first_name)}, ${data.age}`
+      : escHtml(data.first_name);
+
+    const avatarInner = data.photo_url
+      /* TODO: exibir foto real quando o campo for adicionado ao banco */
+      ? `<img src="${escHtml(data.photo_url)}" alt="${escHtml(data.name)}" />`
+      : escHtml(data.initials);
+
+    const followClass  = data.is_following ? 'state-unfollow' : 'state-follow';
+    const followIcon   = data.is_following ? 'person_remove' : 'person_add';
+    const followLabel  = data.is_following ? 'Só estraga o rolê' : 'Vai com a gente!';
+
+    $udContent.innerHTML = `
+      <!-- Header -->
+      <div class="ud-header">
+        <div class="ud-avatar">${avatarInner}</div>
+        <div class="ud-name">${nameAge}</div>
+      </div>
+
+      <!-- Body -->
+      <div class="ud-body">
+
+        <div class="ud-section-label">Categorias favoritas</div>
+        ${buildCategoriesHTML(data.categories)}
+
+        <div class="ud-divider"></div>
+
+        <div class="ud-section-label">Últimos eventos que topou!</div>
+        ${buildEventsHTML(data.recent_events)}
+
+        <div class="ud-divider"></div>
+
+        <button
+          class="ud-follow-btn ${followClass}"
+          id="ud-follow-btn"
+          data-user-id="${data.id}"
+          data-is-following="${data.is_following}"
+          type="button">
+          <span class="material-symbols-outlined" style="font-size:20px;" id="ud-follow-icon">${followIcon}</span>
+          <span id="ud-follow-label">${followLabel}</span>
+        </button>
+
+      </div>`;
+
+    setupFollowButton(data.id, data.is_following);
+  }
+
+  function setupFollowButton(userId, initialIsFollowing) {
+    const btn   = document.getElementById('ud-follow-btn');
+    const label = document.getElementById('ud-follow-label');
+    const icon  = document.getElementById('ud-follow-icon');
+    if (!btn) return;
+
+    let isFollowing = initialIsFollowing;
+
+    function updateUI() {
+      if (isFollowing) {
+        btn.className = 'ud-follow-btn state-unfollow';
+        label.textContent = 'Só estraga o rolê';
+        icon.textContent  = 'person_remove';
+      } else {
+        btn.className = 'ud-follow-btn state-follow';
+        label.textContent = 'Vai com a gente!';
+        icon.textContent  = 'person_add';
+      }
+    }
+
+    btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      const endpoint = isFollowing
+        ? `/api/unfollow/${userId}`
+        : `/api/follow/${userId}`;
+
+      const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+      try {
+        const resp = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken
+            }
+        });
+        if (!resp.ok) throw new Error();
+        isFollowing = !isFollowing;
+        updateUI();
+
+        if (isFollowing) {
+          addFriendToGrid(userId);
+        } else {
+          removeFriendFromGrid(userId);
+        }
+      } catch {
+        alert('Ops! Não foi possível concluir a ação. Tente novamente.');
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  }
+
+  async function addFriendToGrid(userId) {
+    try {
+      const resp = await fetch(`/api/usuario/${userId}/detalhes`);
+      if (!resp.ok) return;
+      const data = await resp.json();
+
+      const $grid = document.getElementById('friendsGrid');
+      const $initialEmpty = document.getElementById('friendsInitialEmpty');
+      if ($initialEmpty) $initialEmpty.remove();
+
+      if (document.getElementById(`friend-card-${userId}`)) return;
+
+      const btn = document.createElement('button');
+      btn.className = 'friend-card';
+      btn.id = `friend-card-${userId}`;
+      btn.dataset.name = data.name.toLowerCase();
+      btn.dataset.userId = userId;
+      btn.type = 'button';
+      btn.setAttribute('aria-label', `Ver perfil de ${data.name}`);
+      btn.innerHTML = `
+        <div class="friend-avatar">${escHtml(data.initials)}</div>
+        <div class="friend-name">${escHtml(data.name)}</div>`;
+      btn.addEventListener('click', () => openUserDetailsModal(userId));
+
+      const $emptyState = document.getElementById('searchEmptyState');
+      $grid.insertBefore(btn, $emptyState);
+
+      const visible = $grid.querySelectorAll('.friend-card:not([style*="none"])').length;
+      if ($friendsCount) $friendsCount.textContent = `(${visible})`;
+
+      allCards.push(btn);
+    } catch {}
+  }
+
+  function removeFriendFromGrid(userId) {
+    const card = document.getElementById(`friend-card-${userId}`);
+    if (card) {
+      card.remove();
+      const idx = allCards.indexOf(card);
+      if (idx !== -1) allCards.splice(idx, 1);
+
+      const remaining = document.querySelectorAll('.friend-card').length;
+      if ($friendsCount) $friendsCount.textContent = `(${remaining})`;
+
+      if (remaining === 0) {
+        const $grid = document.getElementById('friendsGrid');
+        const emptyDiv = document.createElement('div');
+        emptyDiv.id = 'friendsInitialEmpty';
+        emptyDiv.style.gridColumn = '1 / -1';
+        emptyDiv.innerHTML = `
+          <div class="friends-empty">
+            <span class="material-symbols-outlined">group</span>
+            <p>Você ainda não segue ninguém.<br>Que tal encontrar seus primeiros amigos?</p>
+            <button class="btn-find-friends" type="button"
+                    style="margin: 0 auto; display:inline-flex;" onclick="document.getElementById('openFindModalBtn').click()">
+              <span class="material-symbols-outlined" style="font-size:18px;">person_search</span>
+              Encontrar amigos
+            </button>
+          </div>`;
+        $grid.insertBefore(emptyDiv, $grid.firstChild);
+      }
+    }
+  }
+
+  allCards.forEach(card => {
+    card.addEventListener('click', () => openUserDetailsModal(card.dataset.userId));
+  });
+
+})();
+</script>
+{% endblock %}

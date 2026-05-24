@@ -1,0 +1,491 @@
+{% extends "main/base.html" %}
+
+{% block title %}{{ usuario.name }} — Tô Dentro{% endblock %}
+
+{% block extra_head %}
+<style>
+  .ud-page {
+    background: #f7f7f8;
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 2.5rem 1rem 4rem;
+  }
+
+  .ud-modal {
+    background: #fff;
+    border-radius: 24px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.13);
+    width: 100%;
+    max-width: 540px;
+    overflow: hidden;
+    animation: udSlideIn 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  }
+
+  @keyframes udSlideIn {
+    from { opacity: 0; transform: translateY(30px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .ud-header {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d0a0a 60%, #c81e1e 100%);
+    padding: 2.5rem 2rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .ud-avatar {
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+    border: 4px solid rgba(255,255,255,0.25);
+    background: rgba(255,255,255,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 0.05em;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .ud-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .ud-identity {
+    text-align: center;
+  }
+
+  .ud-name {
+    font-size: 1.45rem;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+
+  .ud-back-btn {
+    align-self: flex-start;
+    background: rgba(255,255,255,0.12);
+    border: 1.5px solid rgba(255,255,255,0.2);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 6px 14px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: background 0.2s;
+  }
+
+  .ud-back-btn:hover {
+    background: rgba(255,255,255,0.22);
+    color: #fff;
+    text-decoration: none;
+  }
+
+  .ud-body {
+    padding: 1.75rem 2rem 2rem;
+  }
+
+  .ud-section-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #9ca3af;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 0.65rem;
+  }
+
+  .ud-cats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    margin-bottom: 1.75rem;
+  }
+
+  .ud-cat-tag {
+    display: inline-flex;
+    align-items: center;
+    height: 30px;
+    padding: 0 13px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    border: 1.5px solid #e5e7eb;
+    background: #f9fafb;
+    color: #4b5563;
+    transition: transform 0.15s;
+  }
+
+  .ud-cat-tag:hover {
+    transform: translateY(-1px);
+  }
+
+  .ud-cat-tag.is-common {
+    background: #fff0f0;
+    border-color: #c81e1e;
+    color: #c81e1e;
+    font-weight: 700;
+  }
+
+  .ud-cats-empty {
+    font-size: 0.85rem;
+    color: #9ca3af;
+    font-style: italic;
+  }
+
+  .ud-events-scroll {
+    display: flex;
+    gap: 0.85rem;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+    scrollbar-width: none;
+    scroll-snap-type: x mandatory;
+    margin-bottom: 1.75rem;
+  }
+
+  .ud-events-scroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  .ud-event-mini {
+    flex-shrink: 0;
+    width: 175px;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #fff;
+    border: 1px solid #f0f0f0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+    scroll-snap-align: start;
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: block;
+  }
+
+  .ud-event-mini:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .ud-event-mini-img {
+    width: 100%;
+    height: 105px;
+    overflow: hidden;
+    background: #1a1a1a;
+    position: relative;
+  }
+
+  .ud-event-mini-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s;
+  }
+
+  .ud-event-mini:hover .ud-event-mini-img img {
+    transform: scale(1.05);
+  }
+
+  .ud-event-mini-placeholder {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #1a1a1a 0%, #3d1a1a 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .ud-event-mini-badge {
+    position: absolute;
+    bottom: 7px;
+    left: 8px;
+    background: #c81e1e;
+    color: #fff;
+    padding: 2px 8px;
+    border-radius: 5px;
+    font-size: 0.67rem;
+    font-weight: 700;
+    z-index: 2;
+  }
+
+  .ud-event-mini-body {
+    padding: 9px 10px 10px;
+  }
+
+  .ud-event-mini-title {
+    font-weight: 700;
+    font-size: 0.8rem;
+    color: #1a1a1a;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-bottom: 5px;
+  }
+
+  .ud-event-mini-meta {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.7rem;
+    color: #6b7280;
+  }
+
+  .ud-event-mini-meta .material-symbols-outlined {
+    font-size: 12px;
+    color: #9ca3af;
+  }
+
+  .ud-events-empty {
+    font-size: 0.85rem;
+    color: #9ca3af;
+    font-style: italic;
+  }
+
+  .ud-follow-btn {
+    width: 100%;
+    height: 50px;
+    border-radius: 12px;
+    border: none;
+    font-size: 1rem;
+    font-weight: 700;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .ud-follow-btn.is-following-state {
+    background: #c81e1e;
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(200,30,30,0.28);
+  }
+
+  .ud-follow-btn.is-following-state:hover {
+    background: #a81818;
+    box-shadow: 0 6px 20px rgba(200,30,30,0.38);
+    transform: translateY(-1px);
+  }
+
+  .ud-follow-btn.is-unfollow-state {
+    background: #f3f4f6;
+    color: #4b5563;
+    border: 1.5px solid #e5e7eb;
+    box-shadow: none;
+  }
+
+  .ud-follow-btn.is-unfollow-state:hover {
+    background: #fee2e2;
+    border-color: #c81e1e;
+    color: #c81e1e;
+  }
+
+  .ud-follow-btn:active {
+    transform: scale(0.98);
+  }
+
+  .ud-follow-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .ud-divider {
+    height: 1px;
+    background: #f0f0f0;
+    margin: 1.5rem 0;
+  }
+
+  @media (max-width: 600px) {
+    .ud-page {
+      padding: 1rem 0.5rem 3rem;
+      align-items: flex-start;
+    }
+    .ud-modal {
+      border-radius: 16px;
+    }
+    .ud-body {
+      padding: 1.25rem 1.25rem 1.5rem;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ud-page">
+  <div class="ud-modal" role="dialog" aria-label="Detalhes de {{ usuario.name }}">
+
+    <div class="ud-header">
+      <a href="{{ url_for('main.friends') }}" class="ud-back-btn">
+        <span class="material-symbols-outlined" style="font-size:16px;">arrow_back</span>
+        Voltar
+      </a>
+
+      <div class="ud-avatar">
+        {# TODO: exibir foto do usuário quando o campo photo_url for adicionado ao banco #}
+        {{ usuario.name[:2]|upper }}
+      </div>
+
+      <div class="ud-identity">
+        <div class="ud-name">
+          {% if idade is not none %}
+            {{ primeiro_nome }}, {{ idade }}
+          {% else %}
+            {{ primeiro_nome }}
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="ud-body">
+
+      <div class="ud-section-label">Categorias favoritas</div>
+      {% if categorias %}
+      <div class="ud-cats" id="ud-cats" aria-label="Categorias">
+        {% for cat in categorias %}
+        <span class="ud-cat-tag {% if cat.is_common %}is-common{% endif %}"
+              title="{% if cat.is_common %}Categoria em comum!{% endif %}">
+          {% if cat.is_common %}<span class="material-symbols-outlined" style="font-size:13px;margin-right:3px;">favorite</span>{% endif %}
+          {{ cat.name }}
+        </span>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="ud-cats-empty">Nenhuma categoria selecionada.</p>
+      {% endif %}
+
+      <div class="ud-divider"></div>
+
+      <div class="ud-section-label">Últimos eventos que topou!</div>
+      {% if ultimos_eventos %}
+      <div class="ud-events-scroll" id="ud-events-scroll" aria-label="Últimos eventos">
+        {% for ev in ultimos_eventos %}
+        <a class="ud-event-mini"
+           href="{{ url_for('main.event_details', event_id=ev.id) }}"
+           id="ud-event-{{ ev.id }}">
+          <div class="ud-event-mini-img">
+            {% if ev.image_url %}
+            <img src="{{ ev.image_url }}" alt="{{ ev.name }}" loading="lazy" />
+            {% else %}
+            <div class="ud-event-mini-placeholder">
+              <span class="material-symbols-outlined"
+                    style="font-size:2rem;color:rgba(255,255,255,0.15);">event</span>
+            </div>
+            {% endif %}
+            {% if ev.category %}
+            <span class="ud-event-mini-badge">{{ ev.category }}</span>
+            {% endif %}
+          </div>
+          <div class="ud-event-mini-body">
+            <div class="ud-event-mini-title">{{ ev.name }}</div>
+            {% if ev.start_date_fmt %}
+            <div class="ud-event-mini-meta">
+              <span class="material-symbols-outlined">calendar_today</span>
+              {{ ev.start_date_fmt }}{% if ev.start_time %} • {{ ev.start_time }}{% endif %}
+            </div>
+            {% endif %}
+            {% if ev.city %}
+            <div class="ud-event-mini-meta">
+              <span class="material-symbols-outlined">location_on</span>
+              {{ ev.city }}{% if ev.state %}, {{ ev.state }}{% endif %}
+            </div>
+            {% endif %}
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="ud-events-empty">Nenhum evento marcado ainda.</p>
+      {% endif %}
+
+      <div class="ud-divider"></div>
+
+      <button
+        class="ud-follow-btn {% if is_following %}is-unfollow-state{% else %}is-following-state{% endif %}"
+        id="ud-follow-btn"
+        data-user-id="{{ usuario.id }}"
+        data-is-following="{{ 'true' if is_following else 'false' }}"
+        type="button"
+        aria-label="{% if is_following %}Deixar de seguir {{ primeiro_nome }}{% else %}Seguir {{ primeiro_nome }}{% endif %}">
+        <span class="material-symbols-outlined" style="font-size:20px;" id="ud-follow-icon">
+          {% if is_following %}person_remove{% else %}person_add{% endif %}
+        </span>
+        <span id="ud-follow-label">
+          {% if is_following %}Só estraga o rolê{% else %}Vai com a gente!{% endif %}
+        </span>
+      </button>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    'use strict';
+
+    const btn       = document.getElementById('ud-follow-btn');
+    const label     = document.getElementById('ud-follow-label');
+    const icon      = document.getElementById('ud-follow-icon');
+    const userId    = btn.dataset.userId;
+    let isFollowing = btn.dataset.isFollowing === 'true';
+
+    function updateButtonUI() {
+      if (isFollowing) {
+        btn.className  = 'ud-follow-btn is-unfollow-state';
+        label.textContent = 'Só estraga o rolê';
+        icon.textContent  = 'person_remove';
+        btn.setAttribute('aria-label', `Deixar de seguir`);
+      } else {
+        btn.className  = 'ud-follow-btn is-following-state';
+        label.textContent = 'Vai com a gente!';
+        icon.textContent  = 'person_add';
+        btn.setAttribute('aria-label', `Seguir`);
+      }
+    }
+
+    btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      const endpoint = isFollowing
+        ? `/api/unfollow/${userId}`
+        : `/api/follow/${userId}`;
+
+      const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+      try {
+        const resp = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken
+            }
+        });
+        if (!resp.ok) throw new Error('Erro na resposta');
+        isFollowing = !isFollowing;
+        updateButtonUI();
+      } catch (e) {
+        alert('Ops! Não foi possível concluir a ação. Tente novamente.');
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  })();
+</script>
+{% endblock %}
