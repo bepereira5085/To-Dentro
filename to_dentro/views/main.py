@@ -583,8 +583,7 @@ def _serializar_usuario(user, current_user_category_ids=None):
         "name": user.name,
         "first_name": primeiro_nome,
         "age": idade,
-        # TODO: adicionar suporte a foto de perfil quando o campo for adicionado ao banco
-        "photo_url": None,
+        "photo_url": user.photo_url,
         "categories": categorias,
         "initials": (user.name[:2]).upper() if user.name else "??",
     }
@@ -671,8 +670,7 @@ def api_usuario_detalhes(user_id):
         "name": usuario.name,
         "first_name": primeiro_nome,
         "age": idade,
-        # TODO: retornar foto de perfil quando o campo for adicionado ao banco
-        "photo_url": None,
+        "photo_url": usuario.photo_url,
         "initials": (usuario.name[:2]).upper() if usuario.name else "??",
         "categories": categorias,
         "recent_events": ultimos_eventos,
@@ -739,8 +737,8 @@ def api_buscar_amigos():
             "name": u.name,
             "first_name": u.name.split()[0],
             "initials": (u.name[:2]).upper(),
-            # TODO: adicionar foto de perfil quando o campo for adicionado ao banco
-            "photo_url": None,
+            "photo_url": u.photo_url,
+            "age": _calcular_idade(u.birth_date) if u.birth_date else None,
         }
         for u in usuarios
     ])
@@ -753,7 +751,7 @@ def api_buscar_usuarios():
     q = request.args.get("q", "").strip()
 
     seguindo_ids = [f.following_id for f in current_user.following]
-    seguindo_ids.append(current_user.id)  # excluir o próprio usuário
+    seguindo_ids.append(current_user.id)
 
     query = User.query.filter(User.id.notin_(seguindo_ids))
     if q:
@@ -767,8 +765,8 @@ def api_buscar_usuarios():
             "name": u.name,
             "first_name": u.name.split()[0],
             "initials": (u.name[:2]).upper(),
-            # TODO: adicionar foto de perfil quando o campo for adicionado ao banco
-            "photo_url": None,
+            "photo_url": u.photo_url,
+            "age": _calcular_idade(u.birth_date) if u.birth_date else None,
         }
         for u in usuarios
     ])

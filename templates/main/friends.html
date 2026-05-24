@@ -353,6 +353,13 @@
     font-weight: 700;
     color: #fff;
     flex-shrink: 0;
+    overflow: hidden;
+  }
+
+  .find-user-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
 
   .find-user-name {
@@ -701,10 +708,13 @@
           type="button"
           aria-label="Ver perfil de {{ usuario.name }}">
           <div class="friend-avatar">
-            {# TODO: exibir foto de perfil quando o campo for adicionado ao banco #}
-            {{ usuario.name[:2]|upper }}
+            {% if usuario.photo_url %}
+              <img src="{{ usuario.photo_url }}" alt="{{ usuario.name }}" />
+            {% else %}
+              {{ usuario.name[:2]|upper }}
+            {% endif %}
           </div>
-          <div class="friend-name">{{ usuario.name }}</div>
+          <div class="friend-name">{{ usuario.name }}{% if usuario.age %}, {{ usuario.age }}{% endif %}</div>
         </button>
         {% endfor %}
       {% else %}
@@ -910,8 +920,10 @@
     $findList.innerHTML = lista.map(u => `
       <button class="find-user-item" type="button"
               data-user-id="${u.id}" aria-label="Ver perfil de ${escHtml(u.name)}">
-        <div class="find-user-avatar">${escHtml(u.initials)}</div>
-        <span class="find-user-name">${escHtml(u.name)}</span>
+        <div class="find-user-avatar">
+          ${u.photo_url ? `<img src="${escHtml(u.photo_url)}" alt="${escHtml(u.name)}" />` : escHtml(u.initials)}
+        </div>
+        <span class="find-user-name">${escHtml(u.name)}${u.age ? ', ' + u.age : ''}</span>
         <span class="material-symbols-outlined find-arrow">chevron_right</span>
       </button>
     `).join('');

@@ -44,6 +44,9 @@ class User(db.Model, UserMixin):
     verified_at: Mapped[Optional[datetime]] = mapped_column(
         db.DateTime(timezone=True), nullable=True
     )
+    photo_url: Mapped[Optional[str]] = mapped_column(
+        db.String(255), nullable=True
+    )
 
     organizations: Mapped[List["OrganizationUser"]] = relationship(
         "OrganizationUser", back_populates="user", cascade="all, delete-orphan"
@@ -113,6 +116,13 @@ class User(db.Model, UserMixin):
             except KeyError:
                 raise ValueError(f"'{user_type}' não é um tipo de utilizador válido.")
         return user_type
+
+    @property
+    def age(self) -> Optional[int]:
+        if not self.birth_date:
+            return None
+        hoje = date.today()
+        return hoje.year - self.birth_date.year - ((hoje.month, hoje.day) < (self.birth_date.month, self.birth_date.day))
 
     def set_password(self, password: str) -> None:
         self.password_hash = generate_password_hash(password)
