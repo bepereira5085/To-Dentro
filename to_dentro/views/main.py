@@ -265,9 +265,7 @@ def _ordenar_por_proximidade(eventos_raw, cep_usuario: str | None):
     return sorted(eventos_raw, key=_score)
 
 
-# ---------------------------------------------------------------------------
-# Rotas públicas
-# ---------------------------------------------------------------------------
+
 
 @main_bp.route("/")
 def index():
@@ -344,7 +342,6 @@ def register():
                     }
                     return redirect(url_for("main.register"))
 
-            # Save in session for Step 2
             session["register_step1_data"] = {
                 "name": form.name.data.strip(),
                 "email": email_cleaned,
@@ -374,7 +371,6 @@ def register():
     else:
         step1_data = session.get("register_step1_data")
         if step1_data:
-            # Reconstruct date object for WTF DateField if prefilling
             form_dict = dict(step1_data)
             if form_dict.get("birth_date"):
                 form_dict["birth_date"] = date.fromisoformat(form_dict["birth_date"])
@@ -399,7 +395,6 @@ def register_step2():
             return redirect(url_for("main.register_step2"))
 
         try:
-            # 1. Create the user
             user_type = UserType.ORGANIZER if step1_data["user_type"] == "ORGANIZER" else UserType.REGULAR
             user = User(
                 name=step1_data["name"],
@@ -411,7 +406,6 @@ def register_step2():
             )
             user.set_password(step1_data["password"])
 
-            # 2. Upload photo if provided
             photo_file = request.files.get("photo")
             if photo_file and photo_file.filename != "":
                 photo_url = upload_image(photo_file)
@@ -421,7 +415,6 @@ def register_step2():
             db.session.add(user)
             db.session.flush()
 
-            # 3. Handle CEP and Address
             cep_value = step1_data.get("cep")
             if cep_value:
                 dados_cep = buscar_endereco_por_cep(cep_value)
@@ -439,7 +432,6 @@ def register_step2():
                 user_address = UserAddress(user_id=user.id, address_id=address.id)
                 db.session.add(user_address)
 
-            # 4. Associate favorite categories
             for cid in selected_cats:
                 if cid.isdigit():
                     db.session.add(UserCategory(user_id=user.id, category_id=int(cid)))
@@ -922,7 +914,6 @@ def api_follow(user_id):
     follow = Follow(follower_id=current_user.id, following_id=user_id)
     db.session.add(follow)
 
-    # Cria notificação para o usuário seguido
     notificacao = Notification(
         actor_user_id=current_user.id,
         recipient_user_id=user_id,
@@ -1628,7 +1619,6 @@ def edit_event(event_id):
                     if start_date_val > today:
                         new_dates = [start_date_val]
 
-                # 3. Cria as novas ocorrências futuras
                 for dt in new_dates:
                     new_occ = EventOccurrence(
                         event_id=event.id,
@@ -1755,18 +1745,15 @@ def delete_event(event_id):
 
     event = Event.query.get_or_404(event_id)
 
-    # Check if the event belongs to one of the user's organizations
     orgs = [ou.organization for ou in current_user.organizations]
     if event.organization_id not in [o.id for o in orgs]:
         abort(403)
 
     try:
-        # 1. Delete all images from Cloudinary first
         for img in event.images:
             if img.url:
                 delete_image_by_url(img.url)
         
-        # 2. Delete event (cascade delete will automatically clean other tables)
         db.session.delete(event)
         db.session.commit()
 
