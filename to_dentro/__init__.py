@@ -5,10 +5,13 @@ from to_dentro.ext import config, db, migrate, debugtoolbar, wtf, cli, auth, clo
 from to_dentro.views.main import main_bp
 
 
-def create_app():
+def create_app(test_config=None):
     app = Flask(__name__, template_folder="../templates", static_folder='../static')
 
     config.init_app(app)
+
+    if test_config:
+        app.config.update(test_config)
 
     db.init_app(app)
     migrate.init_app(app)

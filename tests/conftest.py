@@ -12,8 +12,7 @@ def app():
     - SQLALCHEMY_DATABASE_URI: Banco de dados SQLite em memória para garantir rapidez e isolamento.
     - WTF_CSRF_ENABLED: Desabilita a proteção CSRF nos formulários para simplificar os testes de envio de dados.
     """
-    app = create_app()
-    app.config.update({
+    app = create_app({
         "TESTING": True,
         "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
         "WTF_CSRF_ENABLED": False,
