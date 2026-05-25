@@ -30,6 +30,8 @@ from to_dentro.models.event_recurrence_weekday import EventRecurrenceWeekday, We
 from to_dentro.models.follows import Follow
 from to_dentro.models.interested_user import InterestedUser
 from to_dentro.models.notification import Notification, NotificationType
+from to_dentro.models.organization import Organization
+from to_dentro.models.organization_user import OrganizationUser
 from to_dentro.models.user import User, UserType
 from to_dentro.models.user_address import UserAddress
 from to_dentro.models.user_category import UserCategory
@@ -1830,6 +1832,239 @@ def profile():
         user_cep=user_cep,
         selected_category_ids=selected_category_ids
     )
+
+@main_bp.route("/minhas-organizacoes")
+@login_required
+def my_organizations():
+    if current_user.type != UserType.ORGANIZER:
+        abort(403)
+
+    orgs = [ou.organization for ou in current_user.organizations]
+    categories = Category.query.order_by(Category.id).all()
+    municipios = _buscar_todos_municipios_ibge()
+
+    return render_template(
+        "main/my_organizations.html",
+        organizations=orgs,
+        categories=categories,
+        municipios=municipios,
+    )
+
+
+@main_bp.route("/api/minhas-organizacoes/buscar")
+@login_required
+def api_buscar_minhas_organizacoes():
+    if current_user.type != UserType.ORGANIZER:
+        return jsonify({"error": "Acesso não autorizado."}), 403
+
+    org_ids = [ou.organization_id for ou in current_user.organizations]
+    if not org_ids:
+        return jsonify({"organizacoes": [], "total": 0})
+
+    q = request.args.get("q", "").strip() or None
+    cnpj_filter = request.args.get("cnpj", "").strip() or None
+    email_filter = request.args.get("email", "").strip() or None
+    page = int(request.args.get("page", 1))
+    page_size = 15
+
+    query = Organization.query.filter(Organization.id.in_(org_ids))
+
+    if q:
+        termo = f"%{q}%"
+        query = query.filter(Organization.name.ilike(termo))
+
+    if cnpj_filter:
+        cnpj_limpo = _strip_non_digits(cnpj_filter)
+        if cnpj_limpo:
+            query = query.filter(Organization.cnpj.ilike(f"%{cnpj_limpo}%"))
+
+    if email_filter:
+        query = query.filter(Organization.email.ilike(f"%{email_filter}%"))
+
+    query = query.distinct()
+    total = query.count()
+    orgs_pagina = (
+        query.order_by(Organization.name.asc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+        .all()
+    )
+
+    orgs_json = []
+    for org in orgs_pagina:
+        orgs_json.append({
+            "id": org.id,
+            "name": org.name,
+            "cnpj": org.cnpj,
+            "email": org.email,
+            "photo_url": org.photo_url,
+        })
+
+    return jsonify(
+        {
+            "organizacoes": orgs_json,
+            "total": total,
+            "page": page,
+            "page_size": page_size,
+            "has_next": (page * page_size) < total,
+            "has_prev": page > 1,
+        }
+    )
+
+
+@main_bp.route("/criar-organizacao", methods=["GET", "POST"])
+@login_required
+def create_organization():
+    if current_user.type != UserType.ORGANIZER:
+        abort(403)
+
+    if request.method == "POST":
+        name = request.form.get("name", "").strip()
+        email = request.form.get("email", "").strip()
+        cnpj_raw = request.form.get("cnpj", "").strip()
+        cnpj = _strip_non_digits(cnpj_raw)
+
+        try:
+            if not name:
+                raise ValueError("O nome da organização é obrigatório.")
+            if not email:
+                raise ValueError("O e-mail é obrigatório.")
+            if len(cnpj) != 14:
+                raise ValueError("O CNPJ deve conter exatamente 14 dígitos.")
+                
+            existing_cnpj = Organization.query.filter_by(cnpj=cnpj).first()
+            if existing_cnpj:
+                raise ValueError("Este CNPJ já está cadastrado em outra organização.")
+
+            existing_email = Organization.query.filter_by(email=email).first()
+            if existing_email:
+                raise ValueError("Este e-mail já está sendo utilizado por outra organização.")
+
+            org = Organization(name=name, email=email, cnpj=cnpj)
+            
+            photo_file = request.files.get("photo")
+            if photo_file and photo_file.filename != "":
+                photo_url = upload_image(photo_file)
+                if photo_url:
+                    org.photo_url = photo_url
+
+            db.session.add(org)
+            db.session.flush()
+
+            org_user = OrganizationUser(user_id=current_user.id, organization_id=org.id, role='owner')
+            db.session.add(org_user)
+
+            db.session.commit()
+            flash("Organização criada com sucesso!", "is-success")
+            return redirect(url_for("main.my_organizations"))
+
+        except ValueError as e:
+            db.session.rollback()
+            flash(str(e), "is-danger")
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Erro ao criar organização: {e}", "is-danger")
+
+    return render_template("main/create_organization.html")
+
+
+@main_bp.route("/organizacao/<int:org_id>/editar", methods=["GET", "POST"])
+@login_required
+def edit_organization(org_id):
+    if current_user.type != UserType.ORGANIZER:
+        abort(403)
+
+    organization = Organization.query.get_or_404(org_id)
+    org_user = OrganizationUser.query.filter_by(user_id=current_user.id, organization_id=org_id).first()
+    
+    if not org_user:
+        abort(403)
+
+    if request.method == "POST":
+        name = request.form.get("name", "").strip()
+        email = request.form.get("email", "").strip()
+        cnpj_raw = request.form.get("cnpj", "").strip()
+        cnpj = _strip_non_digits(cnpj_raw)
+        
+        deleted_photo = request.form.get("deleted_photo") == "true"
+
+        try:
+            if not name:
+                raise ValueError("O nome da organização é obrigatório.")
+            if not email:
+                raise ValueError("O e-mail é obrigatório.")
+            if len(cnpj) != 14:
+                raise ValueError("O CNPJ deve conter exatamente 14 dígitos.")
+                
+            existing_cnpj = Organization.query.filter_by(cnpj=cnpj).first()
+            if existing_cnpj and existing_cnpj.id != organization.id:
+                raise ValueError("Este CNPJ já está cadastrado em outra organização.")
+
+            existing_email = Organization.query.filter_by(email=email).first()
+            if existing_email and existing_email.id != organization.id:
+                raise ValueError("Este e-mail já está sendo utilizado por outra organização.")
+
+            organization.name = name
+            organization.email = email
+            organization.cnpj = cnpj
+            
+            if deleted_photo and organization.photo_url:
+                delete_image_by_url(organization.photo_url)
+                organization.photo_url = None
+
+            photo_file = request.files.get("photo")
+            if photo_file and photo_file.filename != "":
+                new_photo_url = upload_image(photo_file)
+                if new_photo_url:
+                    if organization.photo_url:
+                        delete_image_by_url(organization.photo_url)
+                    organization.photo_url = new_photo_url
+
+            db.session.commit()
+            flash("Organização atualizada com sucesso!", "is-success")
+            return redirect(url_for("main.my_organizations"))
+
+        except ValueError as e:
+            db.session.rollback()
+            flash(str(e), "is-danger")
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Erro ao editar organização: {e}", "is-danger")
+
+    return render_template("main/edit_organization.html", organization=organization)
+
+
+@main_bp.route("/organizacao/<int:org_id>/excluir", methods=["POST"])
+@login_required
+def delete_organization(org_id):
+    if current_user.type != UserType.ORGANIZER:
+        abort(403)
+
+    organization = Organization.query.get_or_404(org_id)
+    org_user = OrganizationUser.query.filter_by(user_id=current_user.id, organization_id=org_id).first()
+    
+    if not org_user:
+        abort(403)
+
+    try:
+        if organization.photo_url:
+            delete_image_by_url(organization.photo_url)
+            
+        for event in organization.events:
+            for img in event.images:
+                if img.url:
+                    delete_image_by_url(img.url)
+        
+        db.session.delete(organization)
+        db.session.commit()
+
+        flash("Organização e todos os seus eventos foram excluídos com sucesso!", "is-success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Erro ao excluir organização: {e}", "is-danger")
+
+    return redirect(url_for("main.my_organizations"))
+
 
 @main_bp.app_context_processor
 def inject_global_variables():

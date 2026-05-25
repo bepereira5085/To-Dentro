@@ -156,6 +156,13 @@
   }
   .evento-org-name { font-weight: 700; font-size: 0.95rem; color: #1a1a1a; }
   .evento-org-label { font-size: 0.78rem; color: #9ca3af; font-weight: 500; }
+  .evento-org-img {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    object-fit: cover;
+    flex-shrink: 0;
+  }
 
   .evento-carousel-card {
     background: #fff;
@@ -426,9 +433,13 @@
 
     {% if event.organization %}
     <div class="evento-org-card">
-      <div class="evento-org-avatar">
-        {{ event.organization.name[:2]|upper }}
-      </div>
+      {% if event.organization.photo_url %}
+        <img src="{{ event.organization.photo_url }}" alt="{{ event.organization.name }}" class="evento-org-img" />
+      {% else %}
+        <div class="evento-org-avatar">
+          {{ event.organization.name[:2]|upper }}
+        </div>
+      {% endif %}
       <div>
         <div class="evento-org-label">Organizado por</div>
         <div class="evento-org-name">{{ event.organization.name }}</div>

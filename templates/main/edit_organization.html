@@ -1,0 +1,401 @@
+{% extends "main/base.html" %}
+
+{% block title %}Editar Organização — Tô Dentro{% endblock %}
+
+{% block extra_head %}
+<style>
+  .edit-page {
+    background: #f7f7f8;
+    min-height: 100vh;
+    padding: 2.5rem 1.5rem 4rem;
+  }
+
+  .form-container {
+    max-width: 700px;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    padding: 2.5rem;
+    border: 1px solid #f0f0f0;
+  }
+
+  .form-header {
+    margin-bottom: 2rem;
+    border-bottom: 1px solid #f3f4f6;
+    padding-bottom: 1.5rem;
+  }
+
+  .form-title {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #1a1a1a;
+    letter-spacing: -0.02em;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .form-subtitle {
+    font-size: 0.9rem;
+    color: #6b7280;
+    margin-top: 0.5rem;
+  }
+
+  .field-label {
+    font-weight: 700;
+    color: #374151;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+    display: block;
+  }
+
+  .input-styled {
+    width: 100%;
+    height: 48px;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 0 16px;
+    font-size: 0.95rem;
+    font-family: 'Inter', sans-serif;
+    color: #1a1a1a;
+    transition: all 0.2s;
+    background: #fafafa;
+  }
+
+  .input-styled:focus {
+    border-color: #c81e1e;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(200, 30, 30, 0.08);
+    outline: none;
+  }
+
+  .dropzone-area {
+    border: 2px dashed #d1d5db;
+    border-radius: 14px;
+    padding: 2.5rem;
+    text-align: center;
+    background: #fafafa;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+  }
+
+  .dropzone-area:hover {
+    border-color: #c81e1e;
+    background: #fff8f8;
+  }
+
+  .dropzone-icon {
+    font-size: 40px;
+    color: #9ca3af;
+    margin-bottom: 0.5rem;
+  }
+
+  .dropzone-text {
+    font-size: 0.88rem;
+    color: #4b5563;
+    font-weight: 600;
+  }
+
+  .dropzone-subtext {
+    font-size: 0.75rem;
+    color: #9ca3af;
+    margin-top: 0.25rem;
+  }
+
+  .image-preview-container {
+    margin-top: 1.25rem;
+    display: none;
+  }
+
+  .preview-card {
+    position: relative;
+    width: 140px;
+    height: 140px;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    border: 1px solid #e5e7eb;
+    margin: 0 auto;
+  }
+
+  .preview-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .remove-preview-btn {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.15s;
+  }
+
+  .remove-preview-btn:hover {
+    background: #c81e1e;
+  }
+
+  .form-actions {
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #f3f4f6;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 1rem;
+  }
+
+  .btn-submit {
+    min-width: 160px;
+    height: 48px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 0.95rem;
+  }
+
+  .delete-btn {
+    height: 48px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #c81e1e;
+    background: transparent;
+    border: 1.5px solid #c81e1e;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-right: auto;
+  }
+
+  .delete-btn:hover {
+    background: #fff5f5;
+  }
+
+  @media (max-width: 768px) {
+    .form-container {
+      padding: 1.5rem;
+    }
+    .form-actions {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.75rem;
+    }
+    .delete-btn {
+      margin-right: 0;
+      justify-content: center;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="edit-page">
+  <div class="form-container">
+    <div class="form-header">
+      <h1 class="form-title">
+        <span class="material-symbols-outlined" style="font-size: 32px; color: #1a1a1a;">edit</span>
+        Editar Organização
+      </h1>
+      <p class="form-subtitle">Atualize os dados ou a foto da sua organização.</p>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data" id="editOrgForm">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <!-- Campo oculto para indicar remoção de foto -->
+      <input type="hidden" name="deleted_photo" id="deletedPhotoInput" value="false">
+
+      <!-- Seção: Informações Básicas -->
+      <div style="margin-bottom: 2rem;">
+        <h2 style="font-size: 1.1rem; font-weight: 800; color: #1a1a1a; margin-bottom: 1.25rem;">Informações Básicas</h2>
+        
+        <div class="field" style="margin-bottom: 1.25rem;">
+          <label class="field-label" for="name">Nome da Organização <span style="color: #c81e1e;">*</span></label>
+          <input type="text" id="name" name="name" class="input-styled" value="{{ organization.name }}" required>
+        </div>
+
+        <div class="columns is-variable is-3" style="margin-bottom: 0;">
+          <div class="column is-half" style="padding-bottom: 0;">
+            <div class="field">
+              <label class="field-label" for="cnpj">CNPJ <span style="color: #c81e1e;">*</span></label>
+              <input type="text" id="cnpj" name="cnpj" class="input-styled" value="{{ organization.cnpj }}" required>
+            </div>
+          </div>
+          <div class="column is-half" style="padding-bottom: 0;">
+            <div class="field">
+              <label class="field-label" for="email">E-mail de Contato <span style="color: #c81e1e;">*</span></label>
+              <input type="email" id="email" name="email" class="input-styled" value="{{ organization.email }}" required>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Seção: Foto da Organização -->
+      <div style="margin-bottom: 2rem;">
+        <h2 style="font-size: 1.1rem; font-weight: 800; color: #1a1a1a; margin-bottom: 0.5rem;">Foto da Organização</h2>
+        <p style="font-size: 0.85rem; color: #6b7280; margin-bottom: 1rem;">Atualize ou remova o logotipo da organização.</p>
+        
+        <input type="file" id="photoInput" name="photo" accept="image/*" style="display: none;">
+        
+        <div class="dropzone-area" id="dropzone" style="{% if organization.photo_url %}display: none;{% endif %}">
+          <span class="material-symbols-outlined dropzone-icon">cloud_upload</span>
+          <div class="dropzone-text">Clique para selecionar ou arraste uma foto</div>
+          <div class="dropzone-subtext">Formatos suportados: JPG, PNG, WEBP (Máx. 5MB)</div>
+        </div>
+
+        <div class="image-preview-container" id="previewContainer" style="{% if organization.photo_url %}display: block;{% endif %}">
+          <div class="preview-card">
+            <img src="{% if organization.photo_url %}{{ organization.photo_url }}{% endif %}" id="previewImage" class="preview-image" alt="Preview da Foto">
+            <button type="button" class="remove-preview-btn" id="removePhotoBtn" title="Remover Foto">
+              <span class="material-symbols-outlined">close</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="delete-btn" id="deleteOrgBtn" onclick="confirmDelete()">
+          <span class="material-symbols-outlined">delete</span>
+          Excluir
+        </button>
+        <a href="{{ url_for('main.my_organizations') }}" class="button btn-ghost-td" style="height: 48px; border-radius: 12px; font-weight: 600;">
+          Cancelar
+        </a>
+        <button type="submit" class="button btn-primary-td btn-submit" id="submitBtn">
+          Salvar Alterações
+        </button>
+      </div>
+    </form>
+
+    <form id="deleteOrgForm" action="{{ url_for('main.delete_organization', org_id=organization.id) }}" method="POST" style="display: none;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    </form>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const cnpjInput = document.getElementById('cnpj');
+  
+  function applyCNPJMask(val) {
+    val = val.replace(/\D/g, '');
+    if (val.length > 14) val = val.slice(0, 14);
+    
+    if (val.length > 12) {
+      val = val.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2}).*/, '$1.$2.$3/$4-$5');
+    } else if (val.length > 8) {
+      val = val.replace(/^(\d{2})(\d{3})(\d{3})(\d{4}).*/, '$1.$2.$3/$4');
+    } else if (val.length > 5) {
+      val = val.replace(/^(\d{2})(\d{3})(\d{3}).*/, '$1.$2.$3');
+    } else if (val.length > 2) {
+      val = val.replace(/^(\d{2})(\d{3}).*/, '$1.$2');
+    }
+    return val;
+  }
+  
+  // Apply mask on load
+  if(cnpjInput.value) {
+    cnpjInput.value = applyCNPJMask(cnpjInput.value);
+  }
+
+  cnpjInput.addEventListener('input', function (e) {
+    e.target.value = applyCNPJMask(e.target.value);
+  });
+
+  const dropzone = document.getElementById('dropzone');
+  const photoInput = document.getElementById('photoInput');
+  const previewContainer = document.getElementById('previewContainer');
+  const previewImage = document.getElementById('previewImage');
+  const removePhotoBtn = document.getElementById('removePhotoBtn');
+  const deletedPhotoInput = document.getElementById('deletedPhotoInput');
+
+  dropzone.addEventListener('click', () => {
+    photoInput.click();
+  });
+
+  dropzone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropzone.style.borderColor = '#c81e1e';
+    dropzone.style.background = '#fff8f8';
+  });
+
+  dropzone.addEventListener('dragleave', () => {
+    dropzone.style.borderColor = '#d1d5db';
+    dropzone.style.background = '#fafafa';
+  });
+
+  dropzone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropzone.style.borderColor = '#d1d5db';
+    dropzone.style.background = '#fafafa';
+
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      photoInput.files = e.dataTransfer.files;
+      handleFile(photoInput.files[0]);
+    }
+  });
+
+  photoInput.addEventListener('change', (e) => {
+    if (e.target.files && e.target.files.length > 0) {
+      handleFile(e.target.files[0]);
+    }
+  });
+
+  function handleFile(file) {
+    if (!file.type.startsWith('image/')) {
+      alert('Por favor, selecione um arquivo de imagem.');
+      photoInput.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      previewImage.src = e.target.result;
+      dropzone.style.display = 'none';
+      previewContainer.style.display = 'block';
+      deletedPhotoInput.value = 'false'; // new photo overrides deletion
+    };
+    reader.readAsDataURL(file);
+  }
+
+  removePhotoBtn.addEventListener('click', () => {
+    photoInput.value = '';
+    previewImage.src = '';
+    previewContainer.style.display = 'none';
+    dropzone.style.display = 'block';
+    deletedPhotoInput.value = 'true'; // mark for deletion in backend
+  });
+
+  const form = document.getElementById('editOrgForm');
+  const submitBtn = document.getElementById('submitBtn');
+
+  form.addEventListener('submit', () => {
+    submitBtn.classList.add('is-loading');
+    submitBtn.disabled = true;
+  });
+});
+
+function confirmDelete() {
+  if (confirm('Tem certeza de que deseja excluir esta organização? Esta ação é irreversível e excluirá permanentemente todos os eventos e imagens associadas.')) {
+    const btn = document.getElementById('deleteOrgBtn');
+    btn.classList.add('is-loading');
+    btn.disabled = true;
+    document.getElementById('deleteOrgForm').submit();
+  }
+}
+</script>
+{% endblock %}

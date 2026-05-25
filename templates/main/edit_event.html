@@ -562,7 +562,7 @@
           </div>
 
           <div class="column is-6 pb-3">
-            <label class="input-label" for="eventOrg">Organização Produtora</label>
+            <label class="input-label" for="eventOrg">Organização</label>
             <select name="organization_id" id="eventOrg" class="select-field" required>
               {% for org in organizations %}
               <option value="{{ org.id }}" {% if org.id == event.organization_id %}selected{% endif %}>{{ org.name }}</option>

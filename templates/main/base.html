@@ -325,6 +325,13 @@
                 Meus Eventos
               </a>
             </div>
+            <div class="navbar-item">
+              <a href="{{ url_for('main.my_organizations') }}"
+                 class="button is-small {% if request.endpoint == 'main.my_organizations' %}btn-primary-td{% else %}btn-ghost-td{% endif %}"
+                 style="border-radius:20px; padding:6px 20px; font-size:0.85rem; font-weight:600;">
+                Organizações
+              </a>
+            </div>
             {% endif %}
             {% endif %}
           </div>
@@ -560,10 +567,11 @@
           if (select.classList.contains('city-search-input')) {
             trigger.style.background = '#fafafa';
             trigger.style.border = '1.5px solid #e5e7eb';
-            trigger.style.height = '36px';
-            trigger.style.borderRadius = '8px';
-            trigger.style.paddingRight = '12px';
-            trigger.style.fontSize = '0.85rem';
+            trigger.style.height = '46px';
+            trigger.style.borderRadius = '12px';
+            trigger.style.paddingRight = '14px';
+            trigger.style.paddingLeft = '38px';
+            trigger.style.fontSize = '0.88rem';
           }
           
           const label = document.createElement('span');

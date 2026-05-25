@@ -1,5 +1,5 @@
 import re
-from typing import List, TYPE_CHECKING
+from typing import List, TYPE_CHECKING, Optional
 from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 from sqlalchemy import String, Integer
 from to_dentro.ext.db import db
@@ -17,6 +17,7 @@ class Organization(db.Model):
     cnpj: Mapped[str] = mapped_column(String(14), unique=True, index=True)
     name: Mapped[str] = mapped_column(String(100))
     email: Mapped[str] = mapped_column(String(100), unique=True, index=True)
+    photo_url: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
 
     users: Mapped[List["OrganizationUser"]] = relationship(
         "OrganizationUser", back_populates="organization", cascade="all, delete-orphan"

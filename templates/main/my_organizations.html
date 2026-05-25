@@ -1,0 +1,727 @@
+{% extends "main/base.html" %}
+
+{% block title %}Minhas Organizações — Tô Dentro{% endblock %}
+
+{% block extra_head %}
+<style>
+  .my-organizations-page {
+    background: #f7f7f8;
+    min-height: 100vh;
+  }
+
+  .search-bar-wrap {
+    background: #fff;
+    border-bottom: 1px solid #ebebeb;
+    padding: 1rem 0 0;
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+  }
+
+  .search-bar-inner {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    padding: 0 1.5rem 0.9rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .search-input-wrap {
+    flex: 1;
+    position: relative;
+    min-width: 0;
+  }
+
+  .search-input-wrap .search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 20px;
+    color: #9ca3af;
+    pointer-events: none;
+  }
+
+  .search-input {
+    width: 100%;
+    height: 46px;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 0 14px 0 44px;
+    font-size: 0.9rem;
+    font-family: 'Inter', sans-serif;
+    color: #1a1a1a;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    background: #fafafa;
+  }
+
+  .search-input:focus {
+    border-color: #c81e1e;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(200, 30, 30, 0.08);
+  }
+
+  .search-input::placeholder {
+    color: #b0b7c3;
+  }
+
+  .city-select-wrap {
+    position: relative;
+    min-width: 180px;
+    max-width: 220px;
+  }
+
+  .city-select-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 18px;
+    color: #9ca3af;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .city-search-input {
+    width: 100%;
+    height: 46px;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 0 14px 0 38px;
+    font-size: 0.88rem;
+    font-family: 'Inter', sans-serif;
+    color: #1a1a1a;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    background: #fafafa;
+    cursor: text;
+  }
+
+  .city-search-input:focus {
+    border-color: #c81e1e;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(200, 30, 30, 0.08);
+  }
+
+  .city-search-input:disabled {
+    background: #f3f4f6;
+    cursor: not-allowed;
+    opacity: 0.8;
+  }
+
+  .city-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    z-index: 100;
+    max-height: 260px;
+    overflow-y: auto;
+  }
+
+  .city-dropdown.is-open {
+    display: block;
+  }
+
+  .city-dropdown-item {
+    padding: 10px 14px;
+    font-size: 0.88rem;
+    color: #374151;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .city-dropdown-item:hover {
+    background: #f3f4f6;
+  }
+
+  .city-dropdown-empty {
+    padding: 10px 14px;
+    font-size: 0.85rem;
+    color: #9ca3af;
+    text-align: center;
+  }
+
+  .date-filter-row {
+    display: none;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0 1.5rem 0.75rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .date-filter-row.is-visible {
+    display: flex;
+  }
+
+  .date-filter-row label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #6b7280;
+    white-space: nowrap;
+  }
+
+  .date-input {
+    height: 36px;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 0 10px;
+    font-size: 0.85rem;
+    font-family: 'Inter', sans-serif;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .date-input:focus {
+    border-color: #c81e1e;
+  }
+
+  .date-filter-toggle {
+    height: 46px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 14px;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 12px;
+    background: #fff;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #6b7280;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s;
+  }
+
+  .date-filter-toggle:hover {
+    border-color: #c81e1e;
+    color: #c81e1e;
+  }
+
+  .date-filter-toggle.is-active {
+    border-color: #c81e1e;
+    color: #c81e1e;
+    background: #fff5f5;
+  }
+
+  .categories-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0 1.5rem 0.85rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .categories-strip {
+    flex: 1;
+    display: flex;
+    padding-top: 1.5rem;
+    gap: 0.5rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .categories-strip::-webkit-scrollbar {
+    display: none;
+  }
+
+  .cat-tag {
+    flex-shrink: 0;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    height: 34px;
+    padding: 0 16px;
+    border-radius: 999px;
+    border: 1.5px solid #e5e7eb;
+    background: #fff;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #4b5563;
+    cursor: pointer;
+    transition: border-color 0.18s, background 0.18s, color 0.18s, transform 0.15s;
+    white-space: nowrap;
+    user-select: none;
+    gap: 5px;
+  }
+
+  .cat-tag:hover {
+    border-color: #c81e1e;
+    color: #c81e1e;
+    transform: translateY(-1px);
+  }
+
+  .cat-tag.is-active {
+    background: #c81e1e;
+    border-color: #c81e1e;
+    color: #fff;
+    padding-right: 10px;
+  }
+
+  .cat-tag.is-active:hover {
+    background: #a81818;
+    border-color: #a81818;
+    color: #fff;
+  }
+
+  .cat-tag-dismiss {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.28);
+    font-size: 11px;
+    line-height: 1;
+    flex-shrink: 0;
+    transition: background 0.15s;
+    margin-left: 1px;
+  }
+
+  .clear-filters-btn {
+    flex-shrink: 0;
+    display: none;
+    align-items: center;
+    gap: 6px;
+    height: 34px;
+    padding: 0 16px;
+    border-radius: 999px;
+    border: 1.5px solid #c81e1e;
+    background: #c81e1e;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.18s, border-color 0.18s, transform 0.15s, box-shadow 0.18s;
+    white-space: nowrap;
+    box-shadow: 0 2px 6px rgba(200, 30, 30, 0.15);
+  }
+
+  .clear-filters-btn.is-visible {
+    display: inline-flex;
+  }
+
+  .clear-filters-btn:hover {
+    background: #a81818;
+    border-color: #a81818;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(200, 30, 30, 0.25);
+  }
+
+  .event-card {
+    border-radius: 16px;
+    margin-bottom: 1rem;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 5px 8px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #f0f0f0;
+  }
+
+  .event-card:hover {
+    transform: translateY(-5px);
+    color: inherit;
+  }
+
+  .event-card-img-wrap {
+    position: relative;
+    width: 100%;
+    height: 170px;
+    overflow: hidden;
+    background: #1a1a1a;
+  }
+
+  .event-card-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s;
+  }
+
+  .event-card:hover .event-card-img {
+    transform: scale(1.04);
+  }
+
+  .event-card-img-placeholder {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #1a1a1a 0%, #3d1a1a 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .event-card-img-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.65) 0%, transparent 55%);
+  }
+
+  .event-card-badge {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    background: #c81e1e;
+    color: #fff;
+    padding: 3px 11px;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    z-index: 2;
+    letter-spacing: 0.02em;
+  }
+
+  .event-card-body {
+    padding: 13px 14px 15px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .event-card-title {
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #1a1a1a;
+    margin-bottom: 8px;
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .event-card-meta {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.78rem;
+    color: #6b7280;
+    margin-bottom: 4px;
+  }
+
+  .event-card-meta .material-symbols-outlined {
+    font-size: 14px;
+    color: #9ca3af;
+  }
+
+  .event-card-org-tag {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #c81e1e;
+    background: #fff5f5;
+    padding: 2px 8px;
+    border-radius: 4px;
+    display: inline-block;
+    margin-top: 6px;
+    align-self: flex-start;
+  }
+
+  .results-section {
+    padding: 2rem 1.5rem 3rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .results-header-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+  }
+
+  .results-header {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #1a1a1a;
+    letter-spacing: -0.02em;
+  }
+
+  .results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 1.1rem;
+  }
+
+  .results-empty {
+    text-align: center;
+    color: #9ca3af;
+    padding: 5rem 0;
+    font-size: 1rem;
+    grid-column: 1 / -1;
+  }
+
+  .results-loading {
+    text-align: center;
+    padding: 5rem 0;
+    color: #9ca3af;
+    font-size: 0.95rem;
+    grid-column: 1 / -1;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .spinner {
+    display: inline-block;
+    width: 22px;
+    height: 22px;
+    border: 2px solid #e5e7eb;
+    border-top-color: #c81e1e;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+    margin-right: 8px;
+  }
+
+  @media (max-width: 768px) {
+    .search-bar-inner {
+      flex-wrap: wrap;
+    }
+
+    .city-select-wrap, .org-select-wrap {
+      min-width: 100% !important;
+      max-width: 100% !important;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="my-organizations-page">
+
+  <div class="search-bar-wrap">
+    <div class="search-bar-inner">
+
+      <div class="search-input-wrap">
+        <span class="material-symbols-outlined search-icon">search</span>
+        <input type="text" id="searchInput" class="search-input" placeholder="Buscar por nome..." autocomplete="off"
+          aria-label="Buscar organizações" />
+      </div>
+
+      <div class="search-input-wrap" style="max-width: 200px;">
+        <span class="material-symbols-outlined search-icon" style="font-size: 18px;">badge</span>
+        <input type="text" id="cnpjInput" class="search-input" placeholder="CNPJ..." autocomplete="off"
+          aria-label="Filtrar por CNPJ" />
+      </div>
+
+      <div class="search-input-wrap" style="max-width: 250px;">
+        <span class="material-symbols-outlined search-icon" style="font-size: 18px;">email</span>
+        <input type="email" id="emailInput" class="search-input" placeholder="E-mail..." autocomplete="off"
+          aria-label="Filtrar por E-mail" />
+      </div>
+
+      <div style="margin-left: auto;">
+        <button class="clear-filters-btn" id="clearFiltersBtn" type="button" aria-label="Limpar todos os filtros">
+          <span class="material-symbols-outlined">filter_alt_off</span>
+          Limpar Filtros
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="results-section">
+    <div class="results-header-container">
+      <div class="results-header" id="resultsHeader">Gerenciar Organizações</div>
+
+      <!-- Botão Criar Organização proeminente com design Tô Dentro -->
+      <a href="{{ url_for('main.create_organization') }}" class="button is-small btn-primary-td" style="height: 42px; border-radius: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; padding: 0 20px; font-size: 0.88rem; box-shadow: 0 4px 14px rgba(200, 30, 30, 0.25);">
+        <span class="material-symbols-outlined" style="font-size: 18px; font-weight: bold;">add</span>
+        Criar Organização
+      </a>
+    </div>
+
+    <div class="results-grid" id="resultsGrid">
+      <!-- Inserido dinamicamente via JS -->
+    </div>
+  </div>
+
+</div>
+
+<!-- Script Tags e Variáveis Omitidos -->
+<script>
+  (function () {
+    'use strict';
+
+    let searchQuery = '';
+    let cnpjFilter = '';
+    let emailFilter = '';
+
+    const $clearFiltersBtn = document.getElementById('clearFiltersBtn');
+    const $searchInput = document.getElementById('searchInput');
+    const $cnpjInput = document.getElementById('cnpjInput');
+    const $emailInput = document.getElementById('emailInput');
+    const $resultsGrid = document.getElementById('resultsGrid');
+    const $resultsHeader = document.getElementById('resultsHeader');
+
+    function debounce(fn, ms) {
+      let t;
+      return function (...args) {
+        clearTimeout(t);
+        t = setTimeout(() => fn.apply(this, args), ms);
+      };
+    }
+
+    function buildEventCardHTML(org) {
+      const imgHtml = org.photo_url
+        ? `<img src="${org.photo_url}" alt="${escHtml(org.name)}" class="event-card-img" loading="lazy" />`
+        : `<div class="event-card-img-placeholder"><span class="material-symbols-outlined" style="font-size:2.5rem;color:rgba(255,255,255,0.15);">business</span></div>`;
+
+      const cnpjHtml = org.cnpj
+        ? `<div class="event-card-meta"><span class="material-symbols-outlined">badge</span>CNPJ: ${escHtml(org.cnpj.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5"))}</div>`
+        : '';
+
+      const emailHtml = org.email
+        ? `<div class="event-card-meta"><span class="material-symbols-outlined">email</span>${escHtml(org.email)}</div>`
+        : '';
+
+      return `
+        <a class="event-card" href="/organizacao/${org.id}/editar" data-event-id="${org.id}">
+          <div class="event-card-img-wrap">
+            ${imgHtml}
+            <div class="event-card-img-overlay"></div>
+          </div>
+          <div class="event-card-body">
+            <div>
+              <div class="event-card-title">${escHtml(org.name)}</div>
+              ${cnpjHtml}
+              ${emailHtml}
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px; flex-wrap:wrap; gap:6px;">
+              <button onclick="event.preventDefault(); window.location.href='/organizacao/${org.id}/editar'" class="button is-small btn-ghost-td" style="border-radius:8px; padding:2px 12px; font-size:0.75rem; font-weight:700; height:28px; display:inline-flex; align-items:center; gap:4px; box-shadow:none; border:1px solid #d1d5db !important; background:transparent;">
+                <span class="material-symbols-outlined" style="font-size:14px;">edit</span>
+                Editar
+              </button>
+            </div>
+          </div>
+        </a>`;
+    }
+
+    function escHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    // Helper function to apply CNPJ mask
+    function applyCNPJMask(val) {
+      val = val.replace(/\D/g, '');
+      if (val.length > 14) val = val.slice(0, 14);
+      if (val.length > 12) {
+        val = val.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2}).*/, '$1.$2.$3/$4-$5');
+      } else if (val.length > 8) {
+        val = val.replace(/^(\d{2})(\d{3})(\d{3})(\d{4}).*/, '$1.$2.$3/$4');
+      } else if (val.length > 5) {
+        val = val.replace(/^(\d{2})(\d{3})(\d{3}).*/, '$1.$2.$3');
+      } else if (val.length > 2) {
+        val = val.replace(/^(\d{2})(\d{3}).*/, '$1.$2');
+      }
+      return val;
+    }
+
+    $cnpjInput.addEventListener('input', debounce((e) => {
+      let masked = applyCNPJMask(e.target.value);
+      e.target.value = masked;
+      cnpjFilter = masked;
+      updateClearFiltersVisibility();
+      triggerSearch();
+    }, 350));
+
+    $emailInput.addEventListener('input', debounce((e) => {
+      emailFilter = e.target.value.trim();
+      updateClearFiltersVisibility();
+      triggerSearch();
+    }, 350));
+
+    $clearFiltersBtn.addEventListener('click', clearAllFilters);
+
+    function updateClearFiltersVisibility() {
+      const hasFilter = searchQuery || cnpjFilter || emailFilter;
+      $clearFiltersBtn.classList.toggle('is-visible', Boolean(hasFilter));
+    }
+
+    function clearAllFilters() {
+      searchQuery = '';
+      $searchInput.value = '';
+
+      cnpjFilter = '';
+      $cnpjInput.value = '';
+
+      emailFilter = '';
+      $emailInput.value = '';
+
+      $clearFiltersBtn.classList.remove('is-visible');
+      triggerSearch();
+    }
+
+    $searchInput.addEventListener('input', debounce(() => {
+      searchQuery = $searchInput.value.trim();
+      updateClearFiltersVisibility();
+      triggerSearch();
+    }, 350));
+
+    async function triggerSearch() {
+      $resultsGrid.innerHTML = `<div class="results-loading"><span class="spinner"></span>Carregando suas organizações...</div>`;
+
+      const params = new URLSearchParams();
+      if (searchQuery) params.set('q', searchQuery);
+      if (cnpjFilter) params.set('cnpj', cnpjFilter);
+      if (emailFilter) params.set('email', emailFilter);
+
+      try {
+        const resp = await fetch('/api/minhas-organizacoes/buscar?' + params.toString());
+        const data = await resp.json();
+
+        renderResults(data.organizacoes);
+      } catch (err) {
+        $resultsGrid.innerHTML = `<div class="results-empty">Erro ao buscar suas organizações. Recarregue a página.</div>`;
+      }
+    }
+
+    function renderResults(organizacoes) {
+      $resultsGrid.innerHTML = '';
+
+      if (!organizacoes || organizacoes.length === 0) {
+        $resultsGrid.innerHTML = `
+          <div class="results-empty">
+            <span class="material-symbols-outlined" style="font-size:3rem;color:#d1d5db;margin-bottom:1rem;display:block;">search_off</span>
+            Nenhuma organização encontrada.<br>
+            <span style="font-size:0.85rem;color:#9ca3af;margin-top:0.5rem;display:inline-block;">
+              Tente ajustar sua busca ou criar uma nova organização!
+            </span>
+          </div>`;
+        return;
+      }
+
+      organizacoes.forEach(org => {
+        $resultsGrid.insertAdjacentHTML('beforeend', buildEventCardHTML(org));
+      });
+    }
+
+    // Inicialização da busca padrão ao carregar a página
+    triggerSearch();
+
+  })();
+</script>
+{% endblock %}

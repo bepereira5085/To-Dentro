@@ -251,7 +251,7 @@
       </div>
       <div class="cat-card cat-black">
         <span class="material-symbols-outlined">exercise</span>
-        <span>Acadêmicos</span>
+        <span>Academia</span>
       </div>
       <div class="cat-card cat-gray">
         <span class="material-symbols-outlined">sports_and_outdoors</span>
@@ -314,7 +314,7 @@
           </div>
           <p class="profile-title">Quer curtir?</p>
           <p class="profile-desc">Descubra eventos perto de você, salve os que mais gosta e nunca perca o que importa.</p>
-          <a href="{{ url_for('main.register') }}" class="button is-fullwidth btn-primary-td">
+          <a href="{{ url_for('main.register', type='regular') }}" class="button is-fullwidth btn-primary-td">
             Quero descobrir eventos
           </a>
         </div>
@@ -326,7 +326,7 @@
           </div>
           <p class="profile-title">Quer produzir?</p>
           <p class="profile-desc">Cadastre seus eventos, acompanhe métricas e alcance o público certo da sua cidade.</p>
-          <a href="{{ url_for('main.register') }}" class="button is-fullwidth" style="background:#c81e1e!important; color:#fff!important; border:none!important; border-radius:8px!important; font-weight:600!important;">
+          <a href="{{ url_for('main.register', type='organizer') }}" class="button is-fullwidth" style="background:#c81e1e!important; color:#fff!important; border:none!important; border-radius:8px!important; font-weight:600!important;">
             Quero gerenciar eventos
           </a>
         </div>

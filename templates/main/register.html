@@ -397,7 +397,16 @@
 
         roleRegular.addEventListener('click', () => setRole('REGULAR'));
         roleOrganizer.addEventListener('click', () => setRole('ORGANIZER'));
-        setRole(userTypeInput.value);
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        const typeParam = urlParams.get('type');
+        if (typeParam === 'organizer') {
+            setRole('ORGANIZER');
+        } else if (typeParam === 'regular') {
+            setRole('REGULAR');
+        } else {
+            setRole(userTypeInput.value);
+        }
         const deleteButtons = document.querySelectorAll('.notification .delete');
         deleteButtons.forEach(btn => {
             btn.addEventListener('click', () => {
