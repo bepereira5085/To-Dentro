@@ -79,29 +79,24 @@ admin = Admin(
 def init_app(app):
     admin.init_app(app)
 
-    # 1. Entidades Principais
     admin.add_view(UserAdminView(User, db.session, name="Usuários", category="Entidades Principais"))
     admin.add_view(SecureModelView(Organization, db.session, name="Organizações", category="Entidades Principais"))
     admin.add_view(SecureModelView(Event, db.session, name="Eventos", category="Entidades Principais"))
     admin.add_view(SecureModelView(Category, db.session, name="Categorias", category="Entidades Principais"))
 
-    # 2. Detalhes dos Eventos
     admin.add_view(SecureModelView(EventOccurrence, db.session, name="Ocorrências", category="Detalhes dos Eventos"))
     admin.add_view(SecureModelView(EventImage, db.session, name="Imagens de Eventos", category="Detalhes dos Eventos"))
     admin.add_view(SecureModelView(EventRecurrence, db.session, name="Recorrências", category="Detalhes dos Eventos"))
     admin.add_view(SecureModelView(EventRecurrenceWeekday, db.session, name="Dias da Semana Recorrentes", category="Detalhes dos Eventos"))
 
-    # 3. Endereços
     admin.add_view(SecureModelView(Address, db.session, name="Endereços Gerais", category="Endereços"))
     admin.add_view(SecureModelView(UserAddress, db.session, name="Endereços de Usuários", category="Endereços"))
     admin.add_view(SecureModelView(EventAddress, db.session, name="Endereços de Eventos", category="Endereços"))
 
-    # 4. Associações / Vínculos
     admin.add_view(SecureModelView(OrganizationUser, db.session, name="Membros de Organização", category="Associações"))
     admin.add_view(SecureModelView(Follow, db.session, name="Seguidores", category="Associações"))
     admin.add_view(SecureModelView(InterestedUser, db.session, name="Usuários Interessados", category="Associações"))
     admin.add_view(SecureModelView(UserCategory, db.session, name="Categorias de Usuários", category="Associações"))
     admin.add_view(SecureModelView(EventCategories, db.session, name="Categorias de Eventos", category="Associações"))
 
-    # 5. Sistema
     admin.add_view(SecureModelView(Notification, db.session, name="Notificações", category="Sistema"))

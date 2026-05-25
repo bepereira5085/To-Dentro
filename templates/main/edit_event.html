@@ -504,20 +504,16 @@
     </div>
 
     <form method="POST" enctype="multipart/form-data" id="editEventForm">
-      <!-- Token CSRF para segurança -->
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-      <!-- Fotos Deletadas -->
       <div id="deletedImagesContainer"></div>
 
-      <!-- Seção 1: Fotos -->
       <section class="form-section">
         <h2 class="section-title">
           <span class="material-symbols-outlined">photo_library</span>
           1. Fotos do Evento
         </h2>
 
-        <!-- Fotos Existentes -->
         {% if event.images %}
         <div class="input-label" style="margin-bottom:0.75rem;">Fotos Atuais do Evento</div>
         <div class="existing-images-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 0.75rem; margin-bottom: 1.5rem;">
@@ -539,11 +535,9 @@
         </div>
 
         <div class="image-preview-grid" id="imagePreviewGrid">
-          <!-- Previews dinâmicos de novas fotos via JS -->
         </div>
       </section>
 
-      <!-- Seção 2: Informações Básicas -->
       <section class="form-section">
         <h2 class="section-title">
           <span class="material-symbols-outlined">info</span>
@@ -584,7 +578,6 @@
         </div>
       </section>
 
-      <!-- Seção 3: Recorrência -->
       <section class="form-section">
         <h2 class="section-title">
           <span class="material-symbols-outlined">repeat</span>
@@ -602,7 +595,6 @@
           </label>
         </div>
 
-        <!-- Painel Condicional de Recorrência -->
         <div class="recurrence-panel {% if event.is_recurrent %}is-visible{% endif %}" id="recurrencePanel">
           <div class="columns is-multiline">
             
@@ -666,7 +658,6 @@
         </div>
       </section>
 
-      <!-- Seção 4: Outros Dados & Endereço -->
       <section class="form-section">
         <h2 class="section-title">
           <span class="material-symbols-outlined">location_on</span>
@@ -700,7 +691,6 @@
             <input type="text" name="observations" id="observations" class="input-field" value="{% if occurrence and occurrence.observations %}{{ occurrence.observations }}{% endif %}" placeholder="Ex: Chegue 30 minutos antes, traga seu comprovante..." />
           </div>
 
-          <!-- Endereço -->
           <div class="column is-4 pb-3">
             <label class="input-label" for="cep">CEP</label>
             <input type="text" name="cep" id="cep" class="input-field" placeholder="00000000" maxlength="8" value="{% if address %}{{ address.cep }}{% endif %}" required />
@@ -729,7 +719,6 @@
         </div>
       </section>
 
-      <!-- Ações -->
       <div class="form-actions">
         <button type="button" class="delete-btn" id="deleteEventBtn" onclick="confirmDelete()">
           <span class="material-symbols-outlined">delete</span>

@@ -216,10 +216,8 @@
 
     <form method="POST" enctype="multipart/form-data" id="editOrgForm">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <!-- Campo oculto para indicar remoção de foto -->
       <input type="hidden" name="deleted_photo" id="deletedPhotoInput" value="false">
 
-      <!-- Seção: Informações Básicas -->
       <div style="margin-bottom: 2rem;">
         <h2 style="font-size: 1.1rem; font-weight: 800; color: #1a1a1a; margin-bottom: 1.25rem;">Informações Básicas</h2>
         
@@ -244,7 +242,6 @@
         </div>
       </div>
 
-      <!-- Seção: Foto da Organização -->
       <div style="margin-bottom: 2rem;">
         <h2 style="font-size: 1.1rem; font-weight: 800; color: #1a1a1a; margin-bottom: 0.5rem;">Foto da Organização</h2>
         <p style="font-size: 0.85rem; color: #6b7280; margin-bottom: 1rem;">Atualize ou remova o logotipo da organização.</p>

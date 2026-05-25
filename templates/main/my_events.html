@@ -518,7 +518,6 @@
           aria-label="Buscar eventos" />
       </div>
 
-      <!-- Filtro de Organização -->
       <div class="org-select-wrap" style="position: relative; min-width: 180px; max-width: 240px;">
         <span class="material-symbols-outlined city-select-icon" style="color: #9ca3af; font-size: 18px;">corporate_fare</span>
         <select id="orgFilterInput" class="city-search-input" aria-label="Filtrar por organização" style="appearance: none; padding-right: 32px; padding-left: 38px; cursor: pointer; background: #fafafa; font-weight: 500;">
@@ -583,7 +582,6 @@
     <div class="results-header-container">
       <div class="results-header" id="resultsHeader">Gerenciar Eventos</div>
       
-      <!-- Botão Criar Evento proeminente com design Tô Dentro -->
       <a href="{{ url_for('main.create_event') }}" class="button is-small btn-primary-td" style="height: 42px; border-radius: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; padding: 0 20px; font-size: 0.88rem; box-shadow: 0 4px 14px rgba(200, 30, 30, 0.25);">
         <span class="material-symbols-outlined" style="font-size: 18px; font-weight: bold;">add</span>
         Criar Evento
@@ -591,13 +589,11 @@
     </div>
 
     <div class="results-grid" id="resultsGrid">
-      <!-- Inserido dinamicamente via JS -->
     </div>
   </div>
 
 </div>
 
-<!-- Dados do IBGE injetados em JSON -->
 <script id="flask-municipios-data" type="application/json">
   {{ municipios | tojson }}
 </script>

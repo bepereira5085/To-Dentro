@@ -118,23 +118,18 @@ def init_app(app):
             db.session.commit()
 
             events_seed = [
-                # Agência Vibe
                 {"name": "Luau de Verão", "desc": "Música acústica na areia.", "cat": categories[0], "img": "https://site.com/luau.jpg"},
                 {"name": "Festa Neon", "desc": "A melhor festa eletrônica.", "cat": categories[4], "img": "https://site.com/neon.jpg"},
                 {"name": "Samba de Roda", "desc": "Samba raiz para a família.", "cat": categories[0], "img": "https://site.com/samba.jpg"},
-                # Esportes ES
                 {"name": "Corrida Noturna", "desc": "Percurso de 5km e 10km.", "cat": categories[1], "img": "https://site.com/corrida.jpg"},
                 {"name": "Torneio de Vôlei", "desc": "Campeonato de vôlei de praia.", "cat": categories[1], "img": "https://site.com/volei.jpg"},
                 {"name": "Aulão de Cross", "desc": "Treino pesado ao ar livre.", "cat": categories[1], "img": "https://site.com/cross.jpg"},
-                # Teatro Capixaba
                 {"name": "Peça: O Auto", "desc": "Comédia clássica em cartaz.", "cat": categories[2], "img": "https://site.com/auto.jpg"},
                 {"name": "Show de Mágica", "desc": "Ilusionismo para crianças.", "cat": categories[2], "img": "https://site.com/magica.jpg"},
                 {"name": "Stand up Comedy", "desc": "Noite de risadas garantidas.", "cat": categories[2], "img": "https://site.com/standup.jpg"},
-                # Feiras & Cia
                 {"name": "Feira de Orgânicos", "desc": "Direto do produtor rural.", "cat": categories[3], "img": "https://site.com/organicos.jpg"},
                 {"name": "Expo Noivas", "desc": "Tudo para o seu casamento.", "cat": categories[3], "img": "https://site.com/noivas.jpg"},
                 {"name": "Bazar Solidário", "desc": "Roupas com alto desconto.", "cat": categories[3], "img": "https://site.com/bazar.jpg"},
-                # Sons da Cidade
                 {"name": "Festival de Inverno", "desc": "Música e gastronomia fria.", "cat": categories[4], "img": "https://site.com/inverno.jpg"},
                 {"name": "Tributo ao Rock", "desc": "Bandas cover clássicas.", "cat": categories[0], "img": "https://site.com/rock.jpg"},
                 {"name": "Jazz na Praça", "desc": "Apresentação instrumental.", "cat": categories[0], "img": "https://site.com/jazz.jpg"},

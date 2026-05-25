@@ -45,14 +45,11 @@ def delete_image_by_url(url: str) -> bool:
     if not url:
         return False
     try:
-        # Standard Cloudinary URL structure:
-        # https://res.cloudinary.com/cloud_name/image/upload/v12345/folder/public_id.jpg
         parts = url.split("/image/upload/")
         if len(parts) < 2:
             return False
         path = parts[1]
         path_parts = path.split("/")
-        # Skip the version segment (v12345678) if it exists
         if path_parts[0].startswith("v") and path_parts[0][1:].isdigit():
             path_parts = path_parts[1:]
         
