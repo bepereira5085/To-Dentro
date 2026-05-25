@@ -37,6 +37,7 @@ class User(db.Model, UserMixin):
     birth_date: Mapped[date] = mapped_column(db.Date)
 
     type: Mapped[UserType] = mapped_column(db.Enum(UserType), default=UserType.REGULAR)
+    is_admin: Mapped[bool] = mapped_column(db.Boolean, default=False)
 
     created_at: Mapped[datetime] = mapped_column(
         db.DateTime(timezone=True), server_default=func.now()

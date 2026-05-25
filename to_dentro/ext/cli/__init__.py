@@ -216,3 +216,15 @@ def init_app(app):
         except Exception as e:
             db.session.rollback()
             click.echo(click.style(f"Erroao realizar o seed: {e}", fg="red"))
+
+    @app.cli.command("makeadmin")
+    @click.argument("email")
+    def makeadmin(email):
+        click.echo(click.style(f"Buscando usuário com o email: {email}...", fg="blue"))
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            click.echo(click.style("Usuário não encontrado.", fg="red"))
+            return
+        user.is_admin = True
+        db.session.commit()
+        click.echo(click.style(f"Usuário {user.name} agora é um administrador!", fg="green"))
