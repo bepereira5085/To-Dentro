@@ -283,7 +283,7 @@
     {% block extra_head %}{% endblock %}
   </head>
   <body class="{% block body_class %}{% endblock %}">
-    {% if not (request.path == url_for('main.login') or request.path == url_for('main.register')) %}
+    {% if not (request.path == url_for('main.login') or request.path == url_for('main.register') or request.path == url_for('main.register_step2')) %}
     <nav class="navbar site-navbar py-1" role="navigation" aria-label="main navigation">
       <div class="container">
         <div class="navbar-brand">

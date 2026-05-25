@@ -319,7 +319,8 @@ def register():
     if request.method == "POST":
         form = RegisterForm()
         if form.validate_on_submit():
-            if User.query.filter_by(email=form.email.data.strip().lower()).first():
+            email_cleaned = form.email.data.strip().lower()
+            if User.query.filter_by(email=email_cleaned).first():
                 session["register_form_data"] = request.form.to_dict()
                 session["register_form_errors"] = {
                     "email": [
@@ -329,52 +330,32 @@ def register():
                 return redirect(url_for("main.register"))
 
             user_type = (
-                UserType.ORGANIZER
+                "ORGANIZER"
                 if form.user_type.data == "ORGANIZER"
-                else UserType.REGULAR
+                else "REGULAR"
             )
-            cpf = form.cpf.data if user_type == UserType.ORGANIZER else None
-            phone = form.phone.data
+            cpf = _strip_non_digits(form.cpf.data) if user_type == "ORGANIZER" else None
+            
+            if user_type == "ORGANIZER" and cpf:
+                if User.query.filter_by(cpf=cpf).first():
+                    session["register_form_data"] = request.form.to_dict()
+                    session["register_form_errors"] = {
+                        "cpf": ["Este CPF já está cadastrado em outra conta."]
+                    }
+                    return redirect(url_for("main.register"))
 
-            user = User(
-                name=form.name.data.strip(),
-                email=form.email.data.strip().lower(),
-                phone=phone,
-                birth_date=form.birth_date.data,
-                cpf=cpf,
-                type=user_type,
-            )
-            user.set_password(form.password.data)
-
-            try:
-                db.session.add(user)
-                db.session.flush()
-
-                cep_value = form.cep.data if form.cep.data else None
-                if cep_value:
-                    dados_cep = buscar_endereco_por_cep(cep_value)
-                    address = Address(
-                        street=dados_cep["logradouro"] if dados_cep else "",
-                        number="",
-                        city=dados_cep["cidade"] if dados_cep else "",
-                        state=dados_cep["uf"] if dados_cep else "",
-                        cep=cep_value,
-                        country="Brasil",
-                    )
-                    db.session.add(address)
-                    db.session.flush()
-                    user_address = UserAddress(
-                        user_id=user.id, address_id=address.id
-                    )
-                    db.session.add(user_address)
-
-                db.session.commit()
-                login_user(user)
-                return redirect(url_for("main.home"))
-            except Exception:
-                db.session.rollback()
-                session["register_form_data"] = request.form.to_dict()
-                return redirect(url_for("main.register"))
+            # Save in session for Step 2
+            session["register_step1_data"] = {
+                "name": form.name.data.strip(),
+                "email": email_cleaned,
+                "phone": form.phone.data,
+                "birth_date": form.birth_date.data.isoformat(),
+                "cep": form.cep.data,
+                "cpf": cpf,
+                "user_type": user_type,
+                "password": form.password.data,
+            }
+            return redirect(url_for("main.register_step2"))
         else:
             session["register_form_data"] = request.form.to_dict()
             session["register_form_errors"] = form.errors
@@ -391,9 +372,99 @@ def register():
                 if field and errors:
                     field.errors = [errors[0]]
     else:
-        form = RegisterForm()
+        step1_data = session.get("register_step1_data")
+        if step1_data:
+            # Reconstruct date object for WTF DateField if prefilling
+            form_dict = dict(step1_data)
+            if form_dict.get("birth_date"):
+                form_dict["birth_date"] = date.fromisoformat(form_dict["birth_date"])
+            form = RegisterForm(formdata=MultiDict(form_dict))
+        else:
+            form = RegisterForm()
 
     return render_template("main/register.html", form=form)
+
+
+@main_bp.route("/register/step2", methods=["GET", "POST"])
+def register_step2():
+    step1_data = session.get("register_step1_data")
+    if not step1_data:
+        flash("Por favor, preencha seus dados pessoais primeiro.", "is-warning")
+        return redirect(url_for("main.register"))
+
+    if request.method == "POST":
+        selected_cats = request.form.getlist("categories")
+        if len(selected_cats) > 10:
+            flash("Você pode selecionar no máximo 10 categorias favoritas.", "is-danger")
+            return redirect(url_for("main.register_step2"))
+
+        try:
+            # 1. Create the user
+            user_type = UserType.ORGANIZER if step1_data["user_type"] == "ORGANIZER" else UserType.REGULAR
+            user = User(
+                name=step1_data["name"],
+                email=step1_data["email"],
+                phone=step1_data["phone"],
+                birth_date=date.fromisoformat(step1_data["birth_date"]),
+                cpf=step1_data["cpf"],
+                type=user_type,
+            )
+            user.set_password(step1_data["password"])
+
+            # 2. Upload photo if provided
+            photo_file = request.files.get("photo")
+            if photo_file and photo_file.filename != "":
+                photo_url = upload_image(photo_file)
+                if photo_url:
+                    user.photo_url = photo_url
+
+            db.session.add(user)
+            db.session.flush()
+
+            # 3. Handle CEP and Address
+            cep_value = step1_data.get("cep")
+            if cep_value:
+                dados_cep = buscar_endereco_por_cep(cep_value)
+                address = Address(
+                    street=dados_cep["logradouro"] if dados_cep else "",
+                    number="",
+                    city=dados_cep["cidade"] if dados_cep else "",
+                    state=dados_cep["uf"] if dados_cep else "",
+                    cep=cep_value,
+                    country="Brasil",
+                )
+                db.session.add(address)
+                db.session.flush()
+                
+                user_address = UserAddress(user_id=user.id, address_id=address.id)
+                db.session.add(user_address)
+
+            # 4. Associate favorite categories
+            for cid in selected_cats:
+                if cid.isdigit():
+                    db.session.add(UserCategory(user_id=user.id, category_id=int(cid)))
+
+            db.session.commit()
+            login_user(user)
+            session.pop("register_step1_data", None)
+            flash("Cadastro realizado com sucesso! Seja bem-vindo ao Tô Dentro.", "is-success")
+            return redirect(url_for("main.home"))
+
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Ocorreu um erro ao finalizar seu cadastro: {e}", "is-danger")
+            return redirect(url_for("main.register_step2"))
+
+    categories = Category.query.order_by(Category.id).all()
+    name_for_initials = step1_data.get("name", "TD")
+    initials = (name_for_initials[:2]).upper()
+
+    return render_template(
+        "main/register_step2.html",
+        categories=categories,
+        initials=initials,
+    )
+
 
 
 @main_bp.route("/logout")

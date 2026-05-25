@@ -1,0 +1,443 @@
+{% extends "main/base.html" %}
+
+{% block title %}Cadastre-se — Tô Dentro{% endblock %}
+
+{% block body_class %}register-page{% endblock %}
+
+{% block extra_head %}
+<style>
+  .register-page {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    background-color: #ffffff;
+  }
+
+  .register-split {
+    min-height: 100vh;
+    margin-bottom: 0 !important;
+    margin-top: 0 !important;
+  }
+
+  .register-left {
+    background-color: #0a0a0a;
+    padding: 3.5rem 4rem !important;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .register-left::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 20% 80%, rgba(200, 30, 30, 0.08) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  .logo-icon {
+    width: 36px;
+    height: 36px;
+    background: #c81e1e;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .hero-accent {
+    width: 2.5rem;
+    height: 3px;
+    background: #c81e1e;
+    border-radius: 2px;
+  }
+
+  .hero-title {
+    font-size: clamp(1.6rem, 3vw, 2.2rem) !important;
+    line-height: 1.25 !important;
+    letter-spacing: -0.02em;
+  }
+
+  .hero-subtitle {
+    line-height: 1.6;
+    max-width: 28ch;
+  }
+
+  .register-right {
+    background: #ffffff;
+    padding: 2rem;
+    overflow-y: auto;
+    max-height: 100vh;
+  }
+
+  .register-form-wrapper {
+    width: 100%;
+    max-width: 440px;
+  }
+
+  /* Upload de Foto Interativo */
+  .avatar-upload-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 1.5rem;
+  }
+
+  .avatar-upload-wrapper {
+    position: relative;
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+    border: 3px solid #c81e1e;
+    background: #f3f4f6;
+    overflow: hidden;
+    transition: all 0.2s ease;
+  }
+
+  .avatar-upload-wrapper:hover {
+    transform: scale(1.02);
+    box-shadow: 0 8px 24px rgba(200,30,30,0.15);
+  }
+
+  .avatar-preview {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .avatar-initials {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: #c81e1e;
+    letter-spacing: 0.05em;
+  }
+
+  .avatar-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s;
+    color: #fff;
+  }
+
+  .avatar-upload-wrapper:hover .avatar-overlay {
+    opacity: 1;
+  }
+
+  .avatar-overlay .material-symbols-outlined {
+    font-size: 24px;
+    margin-bottom: 2px;
+  }
+  
+  .avatar-overlay span {
+    font-size: 0.7rem;
+    font-weight: 700;
+  }
+
+  /* Grid de Categorias */
+  .categories-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+    max-height: 230px;
+    overflow-y: auto;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 10px;
+    background: #fafafa;
+    scrollbar-width: thin;
+    margin-bottom: 0.5rem;
+  }
+
+  .category-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #4b5563;
+    cursor: pointer;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1.5px solid #e5e7eb;
+    transition: all 0.15s;
+    background: #fff;
+    user-select: none;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  .category-checkbox-label:hover {
+    border-color: #c81e1e;
+    background: #fff8f8;
+  }
+
+  .category-checkbox-label.is-checked {
+    background: #fff8f8;
+    border-color: #c81e1e;
+    color: #c81e1e;
+    box-shadow: 0 2px 6px rgba(200, 30, 30, 0.05);
+  }
+
+  .category-checkbox-label input {
+    display: none;
+  }
+  
+  .category-limit-msg {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-top: 0.25rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .category-limit-msg.is-danger {
+    color: #c81e1e;
+    font-weight: 700;
+  }
+
+  /* Ações */
+  .btn-cadastrar {
+    background-color: #c81e1e !important;
+    color: #fff !important;
+    border: none !important;
+    border-radius: 8px !important;
+    font-size: 0.95rem !important;
+    letter-spacing: 0.01em;
+    padding-top: 0.65rem !important;
+    padding-bottom: 0.65rem !important;
+    height: auto !important;
+    transition: background 0.2s, transform 0.1s, box-shadow 0.2s !important;
+  }
+
+  .btn-cadastrar:hover {
+    background-color: #a81818 !important;
+    box-shadow: 0 4px 14px rgba(200, 30, 30, 0.3) !important;
+    color: #fff !important;
+  }
+
+  .btn-cadastrar:active {
+    transform: scale(0.98);
+  }
+
+  .btn-voltar {
+    background: transparent !important;
+    color: #4b5563 !important;
+    border: 1.5px solid #d1d5db !important;
+    border-radius: 8px !important;
+    font-size: 0.95rem !important;
+    padding-top: 0.6rem !important;
+    padding-bottom: 0.6rem !important;
+    height: auto !important;
+    transition: border-color 0.2s, background 0.2s, color 0.2s !important;
+  }
+
+  .btn-voltar:hover {
+    border-color: #4b5563 !important;
+    background-color: #f3f4f6 !important;
+    color: #1f2937 !important;
+  }
+
+  @media (max-width: 768px) {
+    .register-right {
+      padding: 1.5rem 1rem;
+      max-height: none;
+    }
+    .categories-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="columns register-split">
+  <div class="column is-5 register-left is-hidden-mobile">
+    <div class="is-flex is-flex-direction-column is-justify-content-space-between" style="height:100%;">
+      <a href="{{ url_for('main.index') }}" class="is-flex is-align-items-center">
+        <span class="icon logo-icon mr-2">
+          <span class="material-symbols-outlined" style="color:#fff; font-size:17px;">distance</span>
+        </span>
+        <span class="has-text-white has-text-weight-bold is-size-6">Tô Dentro</span>
+      </a>
+      <div class="my-auto py-6">
+        <div class="hero-accent mb-4"></div>
+        <h1 class="title has-text-white hero-title mb-3">
+          Sua próxima experiência
+          <span class="has-text-danger">inesquecível</span> começa aqui.
+        </h1>
+        <p class="is-size-6 has-text-grey hero-subtitle">
+          Cadastre-se gratuitamente para explorar ou publicar eventos incríveis na sua cidade.
+        </p>
+      </div>
+      <p class="is-size-7 has-text-grey">
+        Já possui uma conta?
+        <a href="{{ url_for('main.login') }}" class="has-text-danger has-text-weight-semibold">Entrar agora</a>
+      </p>
+    </div>
+  </div>
+
+  <div class="column is-flex is-align-items-center is-justify-content-center register-right">
+    <div class="register-form-wrapper py-5">
+      <div class="mb-4">
+        <h2 class="title is-3 has-text-weight-bold mb-1">Só mais um passo!</h2>
+        <p class="is-size-6 has-text-grey mb-3">Personalize o seu perfil e categorias preferidas</p>
+      </div>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+      {% for category, message in messages %}
+      <div class="notification {{ category }} is-light py-3 px-4 mb-4">
+        <button class="delete"></button>
+        {{ message }}
+      </div>
+      {% endfor %}
+      {% endif %}
+      {% endwith %}
+
+      <form method="POST" enctype="multipart/form-data" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <!-- Foto de Perfil -->
+        <div class="avatar-upload-container">
+          <label class="avatar-upload-wrapper" title="Clique para escolher uma foto">
+            <div class="avatar-initials" id="avatarInitials">{{ initials }}</div>
+            <img src="" alt="Preview" class="avatar-preview" id="avatarPreviewImg" style="display: none;" />
+            <div class="avatar-overlay">
+              <span class="material-symbols-outlined">photo_camera</span>
+              <span>Adicionar</span>
+            </div>
+            <input type="file" name="photo" id="photoInput" accept="image/png, image/jpeg, image/jpg" style="display: none;" />
+          </label>
+          <span class="has-text-grey is-size-7 mt-2">Escolha uma foto de perfil</span>
+        </div>
+
+        <!-- Categorias Favoritas -->
+        <div class="field mb-1">
+          <label class="label is-small">Categorias Favoritas</label>
+          <p style="font-size: 0.8rem; color: #6b7280; margin-bottom: 0.75rem;">
+            Selecione as categorias de eventos que você mais gosta. Usaremos isso para sugerir as melhores experiências!
+          </p>
+
+          <div class="categories-grid">
+            {% for cat in categories %}
+            <label class="category-checkbox-label" id="catLabel-{{ cat.id }}">
+              <input type="checkbox" name="categories" value="{{ cat.id }}" class="cat-checkbox" />
+              {{ cat.type.value }}
+            </label>
+            {% endfor %}
+          </div>
+          
+          <div class="category-limit-msg" id="catLimitMsg">
+            Você selecionou <span id="catCount">0</span> de 10 categorias possíveis.
+          </div>
+        </div>
+
+        <div class="columns is-mobile mt-4" style="gap: 0.75rem;">
+          <div class="column px-0">
+            <a href="{{ url_for('main.register') }}" class="button is-fullwidth btn-voltar">
+              Voltar
+            </a>
+          </div>
+          <div class="column is-7 px-0">
+            <button type="submit" class="button is-fullwidth has-text-weight-bold btn-cadastrar">
+              Finalizar Cadastro
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // ---- Preview de Foto ----
+    const photoInput = document.getElementById('photoInput');
+    const avatarPreviewImg = document.getElementById('avatarPreviewImg');
+    const avatarInitials = document.getElementById('avatarInitials');
+
+    photoInput.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files[0]) {
+        const file = e.target.files[0];
+        
+        // Verifica tamanho básico (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+          alert("A imagem é muito grande. O tamanho máximo permitido é 5MB.");
+          photoInput.value = "";
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          avatarPreviewImg.src = event.target.result;
+          avatarPreviewImg.style.display = 'block';
+          if (avatarInitials) avatarInitials.style.display = 'none';
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // ---- Lógica de Limite de Categorias (Máx 10) ----
+    const checkboxes = document.querySelectorAll('.cat-checkbox');
+    const catCountSpan = document.getElementById('catCount');
+    const catLimitMsg = document.getElementById('catLimitMsg');
+    const maxCategories = 10;
+
+    function updateCategoryState() {
+      let checkedCount = 0;
+      checkboxes.forEach(cb => {
+        if (cb.checked) checkedCount++;
+        const label = document.getElementById('catLabel-' + cb.value);
+        if (label) {
+          label.classList.toggle('is-checked', cb.checked);
+        }
+      });
+      
+      catCountSpan.textContent = checkedCount;
+
+      if (checkedCount >= maxCategories) {
+        catLimitMsg.classList.add('is-danger');
+        catLimitMsg.innerHTML = `Você atingiu o limite máximo de <strong>${maxCategories} categorias</strong>.`;
+        checkboxes.forEach(cb => {
+          if (!cb.checked) cb.disabled = true;
+        });
+      } else {
+        catLimitMsg.classList.remove('is-danger');
+        catLimitMsg.innerHTML = `Você selecionou <span id="catCount">${checkedCount}</span> de ${maxCategories} categorias possíveis.`;
+        checkboxes.forEach(cb => {
+          cb.disabled = false;
+        });
+      }
+    }
+
+    checkboxes.forEach(cb => {
+      cb.addEventListener('change', updateCategoryState);
+    });
+
+    // Inicializar estado
+    updateCategoryState();
+
+    // Notificações - botão fechar
+    const deleteButtons = document.querySelectorAll('.notification .delete');
+    deleteButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        btn.parentElement.remove();
+      });
+    });
+  });
+</script>
+{% endblock %}
