@@ -1,5 +1,5 @@
-from typing import List, TYPE_CHECKING
-from sqlalchemy import String, Integer
+from typing import List, TYPE_CHECKING, Optional
+from sqlalchemy import String, Integer, Float
 from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 from to_dentro.ext.db import db
 
@@ -19,6 +19,8 @@ class Address(db.Model):
     state: Mapped[str] = mapped_column(String(50))
     cep: Mapped[str] = mapped_column(String(8))
     country: Mapped[str] = mapped_column(String(50))
+    latitude: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    longitude: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
 
     user_addresses: Mapped[List["UserAddress"]] = relationship(
         "UserAddress", back_populates="address", cascade="all, delete-orphan"

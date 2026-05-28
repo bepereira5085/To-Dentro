@@ -15,6 +15,7 @@ from to_dentro.models.organization_user import OrganizationUser
 from to_dentro.models.user import User
 from to_dentro.models.user_address import UserAddress
 from to_dentro.models.user_category import UserCategory
+from to_dentro.models.hangout_poll import HangoutPoll, HangoutPollOption, HangoutPollVote
 
 __all__ = [
     "User",
@@ -34,6 +35,9 @@ __all__ = [
     "UserCategory",
     "EventCategories",
     "Notification",
+    "HangoutPoll",
+    "HangoutPollOption",
+    "HangoutPollVote",
 ]
 
 

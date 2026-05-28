@@ -19,3 +19,5 @@ instance/
 .idea/
 *.db
 db_test.py
+*.egg-info/
+to_dentro.egg-info/

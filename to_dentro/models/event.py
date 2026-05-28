@@ -1,6 +1,6 @@
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, List, Optional
 
-from sqlalchemy import Boolean, ForeignKey, Integer, String
+from sqlalchemy import Boolean, ForeignKey, Integer, String, Numeric
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from to_dentro.ext.db import db
@@ -25,6 +25,7 @@ class Event(db.Model):
     name: Mapped[str] = mapped_column(String(200))
     description: Mapped[str] = mapped_column(String(2000))
     is_recurrent: Mapped[bool] = mapped_column(Boolean, default=False)
+    price: Mapped[Optional[float]] = mapped_column(Numeric(10, 2), nullable=True, default=0.0)
 
     organization: Mapped["Organization"] = relationship(
         "Organization", back_populates="events"

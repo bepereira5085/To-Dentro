@@ -35,12 +35,14 @@ from to_dentro.models.organization_user import OrganizationUser
 from to_dentro.models.user import User, UserType
 from to_dentro.models.user_address import UserAddress
 from to_dentro.models.user_category import UserCategory
+from to_dentro.models.hangout_poll import HangoutPoll, HangoutPollOption, HangoutPollVote
 from to_dentro.services.cep_service import (
     buscar_endereco_por_cep,
     calcular_proximidade_cep,
     obter_cep_usuario,
 )
 from to_dentro.services.image_service import upload_image, delete_image_by_url
+from to_dentro.services import geocoding_service
 
 main_bp = Blueprint("main", __name__)
 
@@ -131,6 +133,9 @@ def _serializar_evento(event, occurrence, address, image_url=None, interest_coun
         "cep": address.cep if address else "",
         "interested_count": interest_count,
         "occurrence_id": occurrence.id if occurrence else None,
+        "price": float(event.price) if event.price is not None else 0.0,
+        "latitude": address.latitude if address else None,
+        "longitude": address.longitude if address else None,
     }
 
 
@@ -179,6 +184,9 @@ def _serializar_evento_unico(event, image_url=None):
         "state": endereco.state if endereco else "",
         "organization_name": event.organization.name if event.organization else "Organização",
         "organization_id": event.organization_id,
+        "price": float(event.price) if event.price is not None else 0.0,
+        "latitude": endereco.latitude if endereco else None,
+        "longitude": endereco.longitude if endereco else None,
     }
 
 
@@ -189,6 +197,8 @@ def _query_eventos_com_endereco(
     estado: str | None = None,
     data_inicio: str | None = None,
     data_fim: str | None = None,
+    min_price: float | None = None,
+    max_price: float | None = None,
 ):
     """
     Monta a query base de eventos com JOIN em ocorrência e endereço.
@@ -235,6 +245,12 @@ def _query_eventos_com_endereco(
             query = query.filter(EventOccurrence.start_date <= dt_fim)
         except ValueError:
             pass
+
+    if min_price is not None:
+        query = query.filter(Event.price >= min_price)
+
+    if max_price is not None:
+        query = query.filter(Event.price <= max_price)
 
     query = query.order_by(EventOccurrence.start_date.asc())
 
@@ -628,8 +644,24 @@ def api_buscar_eventos():
     estado = request.args.get("estado", "").strip() or None
     data_inicio = request.args.get("data_inicio", "").strip() or None
     data_fim = request.args.get("data_fim", "").strip() or None
+    min_price_str = request.args.get("min_price", "").strip()
+    max_price_str = request.args.get("max_price", "").strip()
     page = int(request.args.get("page", 1))
     page_size = 15
+
+    min_price = None
+    if min_price_str:
+        try:
+            min_price = float(min_price_str)
+        except ValueError:
+            pass
+
+    max_price = None
+    if max_price_str:
+        try:
+            max_price = float(max_price_str)
+        except ValueError:
+            pass
 
     category_ids = []
     if category_ids_str:
@@ -648,6 +680,8 @@ def api_buscar_eventos():
         estado=estado,
         data_inicio=data_inicio,
         data_fim=data_fim,
+        min_price=min_price,
+        max_price=max_price,
     )
 
     cep_usuario = obter_cep_usuario(current_user)
@@ -1038,6 +1072,11 @@ def api_notificacoes():
                 evento_nome = n.event_occurrence.event.name
                 evento_id = n.event_occurrence.event.id
             mensagem = f"{actor_name} tá dentro desse rolê: {evento_nome or 'Evento desconhecido'}"
+        elif n.type == NotificationType.EVENT_RECOMMENDATION:
+            if n.event_occurrence and n.event_occurrence.event:
+                evento_nome = n.event_occurrence.event.name
+                evento_id = n.event_occurrence.event.id
+            mensagem = f"{actor_name} te recomendou este rolê: {evento_nome or 'Evento desconhecido'}"
         else:
             continue
 
@@ -1192,6 +1231,7 @@ def create_event():
         description = request.form.get("description", "").strip()
         org_id = request.form.get("organization_id")
         is_recurrent = request.form.get("is_recurrent") in ("true", "on", "1")
+        price_str = request.form.get("price", "").strip()
 
         cat_ids = request.form.getlist("categories")
 
@@ -1240,6 +1280,9 @@ def create_event():
                 except ValueError:
                     pass
 
+            price = float(price_str) if price_str else 0.0
+
+            lat, lon = geocoding_service.obter_coordenadas(street, number, city, state, cep)
             address = Address(
                 street=street,
                 number=number,
@@ -1247,6 +1290,8 @@ def create_event():
                 state=state,
                 cep=cep,
                 country=country,
+                latitude=lat,
+                longitude=lon,
             )
             db.session.add(address)
             db.session.flush()
@@ -1256,6 +1301,7 @@ def create_event():
                 name=name,
                 description=description,
                 is_recurrent=is_recurrent,
+                price=price,
             )
             db.session.add(event)
             db.session.flush()
@@ -1407,6 +1453,7 @@ def edit_event(event_id):
         description = request.form.get("description", "").strip()
         org_id = request.form.get("organization_id")
         is_recurrent = request.form.get("is_recurrent") in ("true", "on", "1")
+        price_str = request.form.get("price", "").strip()
 
         cat_ids = request.form.getlist("categories")
 
@@ -1477,6 +1524,7 @@ def edit_event(event_id):
                 if url:
                     db.session.add(EventImage(event_id=event.id, url=url))
 
+            lat, lon = geocoding_service.obter_coordenadas(street, number, city, state, cep)
             if address:
                 address.cep = cep
                 address.street = street
@@ -1484,6 +1532,8 @@ def edit_event(event_id):
                 address.city = city
                 address.state = state
                 address.country = country
+                address.latitude = lat
+                address.longitude = lon
             else:
                 address = Address(
                     street=street,
@@ -1492,6 +1542,8 @@ def edit_event(event_id):
                     state=state,
                     cep=cep,
                     country=country,
+                    latitude=lat,
+                    longitude=lon,
                 )
                 db.session.add(address)
                 db.session.flush()
@@ -1553,10 +1605,12 @@ def edit_event(event_id):
                 elif old_weekdays != new_weekdays_set:
                     date_or_recurrence_changed = True
 
+            price = float(price_str) if price_str else 0.0
             event.organization_id = int(org_id)
             event.name = name
             event.description = description
             event.is_recurrent = is_recurrent
+            event.price = price
 
             today = date.today()
             from datetime import timedelta
@@ -2122,6 +2176,319 @@ def delete_organization(org_id):
         flash(f"Erro ao excluir organização: {e}", "is-danger")
 
     return redirect(url_for("main.my_organizations"))
+
+
+@main_bp.route("/api/evento/<int:event_id>/tempo-viagem")
+@login_required
+def api_evento_tempo_viagem(event_id):
+    event = Event.query.get_or_404(event_id)
+
+    ocorrencia = (
+        EventOccurrence.query.filter_by(event_id=event.id)
+        .filter(EventOccurrence.start_date >= date.today())
+        .order_by(EventOccurrence.start_date.asc())
+        .first()
+    )
+    if not ocorrencia:
+        ocorrencia = (
+            EventOccurrence.query.filter_by(event_id=event.id)
+            .order_by(EventOccurrence.start_date.desc())
+            .first()
+        )
+
+    address = ocorrencia.addresses[0].address if ocorrencia and ocorrencia.addresses else None
+
+    if not address or address.latitude is None or address.longitude is None:
+        return jsonify({"error": "Endereço do evento não geolocalizado."}), 404
+
+    event_lat = address.latitude
+    event_lng = address.longitude
+
+    user_lat_str = request.args.get("lat")
+    user_lng_str = request.args.get("lng")
+
+    user_lat = None
+    user_lng = None
+
+    if user_lat_str and user_lng_str:
+        try:
+            user_lat = float(user_lat_str)
+            user_lng = float(user_lng_str)
+        except ValueError:
+            pass
+
+    if user_lat is None or user_lng is None:
+        # Tenta obter do CEP do usuário logado
+        user_address_obj = current_user.addresses[0].address if current_user.addresses else None
+        if user_address_obj:
+            if user_address_obj.latitude is None or user_address_obj.longitude is None:
+                lat, lon = geocoding_service.obter_coordenadas(
+                    user_address_obj.street,
+                    user_address_obj.number,
+                    user_address_obj.city,
+                    user_address_obj.state,
+                    user_address_obj.cep
+                )
+                if lat and lon:
+                    user_address_obj.latitude = lat
+                    user_address_obj.longitude = lon
+                    db.session.commit()
+            user_lat = user_address_obj.latitude
+            user_lng = user_address_obj.longitude
+
+    if user_lat is None or user_lng is None:
+        return jsonify({"error": "Localização do usuário não encontrada."}), 400
+
+    # Tempo de carro via OSRM
+    car_time = geocoding_service.obter_tempo_viagem_carro(user_lat, user_lng, event_lat, event_lng)
+
+    if car_time is None:
+        # Fallback estimativa de linha reta (Haversine simples aproximada)
+        import math
+        dist = math.sqrt((user_lat - event_lat) ** 2 + (user_lng - event_lng) ** 2) * 111.0 * 1.3
+        car_time = max(5, int((dist / 50.0) * 60.0))
+
+    # Uber: carro + 5 min
+    uber_time = car_time + 5
+
+    # Transporte público: carro * 1.5 + 10 min
+    transit_time = int(car_time * 1.5) + 10
+
+    # Links profundos
+    uber_link = f"https://m.uber.com/ul/?action=setPickup&pickup=my_location&dropoff[latitude]={event_lat}&dropoff[longitude]={event_lng}&dropoff[nickname]={event.name}"
+    transit_link = f"https://www.google.com/maps/dir/?api=1&origin={user_lat},{user_lng}&destination={event_lat},{event_lng}&travelmode=transit"
+    car_link = f"https://www.google.com/maps/dir/?api=1&origin={user_lat},{user_lng}&destination={event_lat},{event_lng}&travelmode=driving"
+
+    return jsonify({
+        "car_time": car_time,
+        "uber_time": uber_time,
+        "transit_time": transit_time,
+        "uber_link": uber_link,
+        "transit_link": transit_link,
+        "car_link": car_link,
+        "event_coords": {"lat": event_lat, "lng": event_lng},
+        "user_coords": {"lat": user_lat, "lng": user_lng}
+    })
+
+
+@main_bp.route("/api/evento/<int:event_id>/compartilhar", methods=["POST"])
+@login_required
+def api_evento_compartilhar(event_id):
+    event = Event.query.get_or_404(event_id)
+
+    ocorrencia = (
+        EventOccurrence.query.filter_by(event_id=event.id)
+        .filter(EventOccurrence.start_date >= date.today())
+        .order_by(EventOccurrence.start_date.asc())
+        .first()
+    )
+    if not ocorrencia:
+        ocorrencia = (
+            EventOccurrence.query.filter_by(event_id=event.id)
+            .order_by(EventOccurrence.start_date.desc())
+            .first()
+        )
+
+    data = request.get_json() or {}
+    friend_ids = data.get("friend_ids", [])
+
+    if not friend_ids:
+        return jsonify({"error": "Nenhum amigo selecionado."}), 400
+
+    notifications_created = 0
+    for fid in friend_ids:
+        try:
+            fid = int(fid)
+        except (ValueError, TypeError):
+            continue
+
+        friend = User.query.get(fid)
+        if friend and fid != current_user.id:
+            exists = Notification.query.filter_by(
+                actor_user_id=current_user.id,
+                recipient_user_id=fid,
+                event_occurrence_id=ocorrencia.id if ocorrencia else None,
+                type=NotificationType.EVENT_RECOMMENDATION
+            ).first()
+
+            if not exists:
+                notif = Notification(
+                    actor_user_id=current_user.id,
+                    recipient_user_id=fid,
+                    event_occurrence_id=ocorrencia.id if ocorrencia else None,
+                    type=NotificationType.EVENT_RECOMMENDATION
+                )
+                db.session.add(notif)
+                notifications_created += 1
+
+    db.session.commit()
+    return jsonify({"status": "ok", "sent_count": notifications_created})
+
+
+@main_bp.route("/enquetes/criar", methods=["GET", "POST"])
+@login_required
+def create_poll():
+    if request.method == "POST":
+        title = request.form.get("title", "").strip()
+        description = request.form.get("description", "").strip() or None
+        event_ids = request.form.getlist("events")
+        custom_titles = request.form.getlist("custom_options")
+
+        try:
+            if not title:
+                raise ValueError("O título da enquete é obrigatório.")
+            
+            # Filtra IDs vazios
+            event_ids = [int(eid) for eid in event_ids if eid.strip().isdigit()]
+            custom_titles = [ct.strip() for ct in custom_titles if ct.strip()]
+
+            if len(event_ids) + len(custom_titles) < 2:
+                raise ValueError("A enquete precisa ter pelo menos 2 opções.")
+
+            poll = HangoutPoll(
+                title=title,
+                description=description,
+                creator_id=current_user.id
+            )
+            db.session.add(poll)
+            db.session.flush()
+
+            for eid in event_ids:
+                opt = HangoutPollOption(poll_id=poll.id, event_id=eid)
+                db.session.add(opt)
+
+            for ct in custom_titles:
+                opt = HangoutPollOption(poll_id=poll.id, custom_title=ct)
+                db.session.add(opt)
+
+            db.session.commit()
+            flash("Enquete de Rolê criada com sucesso!", "is-success")
+            return redirect(url_for("main.view_poll", poll_uuid=poll.uuid))
+
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Erro ao criar enquete: {e}", "is-danger")
+
+    # Busca eventos futuros ativos para exibir no form de criação
+    future_events = (
+        db.session.query(Event)
+        .join(EventOccurrence)
+        .filter(EventOccurrence.start_date >= date.today())
+        .order_by(EventOccurrence.start_date.asc())
+        .distinct()
+        .all()
+    )
+
+    return render_template("main/create_poll.html", events=future_events)
+
+
+@main_bp.route("/enquete/<string:poll_uuid>")
+@login_required
+def view_poll(poll_uuid):
+    poll = HangoutPoll.query.filter_by(uuid=poll_uuid).first_or_404()
+
+    # Verifica se o usuário logado já votou
+    voto_usuario = (
+        db.session.query(HangoutPollVote)
+        .join(HangoutPollOption)
+        .filter(
+            HangoutPollOption.poll_id == poll.id,
+            HangoutPollVote.user_id == current_user.id
+        )
+        .first()
+    )
+
+    # Calcula resultados e totais
+    total_votos = sum(len(opt.votes) for opt in poll.options)
+    options_data = []
+    for opt in poll.options:
+        votos_opt = len(opt.votes)
+        pct = (votos_opt / total_votos * 100) if total_votos > 0 else 0
+        options_data.append({
+            "id": opt.id,
+            "title": opt.title,
+            "event_id": opt.event_id,
+            "votes_count": votos_opt,
+            "percentage": round(pct, 1),
+            "is_event": opt.event_id is not None
+        })
+
+    # Verifica se o criador é o logado para permitir exibir gerenciador ou link de cópia
+    is_creator = poll.creator_id == current_user.id
+
+    return render_template(
+        "main/poll_details.html",
+        poll=poll,
+        options_data=options_data,
+        total_votos=total_votos,
+        has_voted=voto_usuario is not None,
+        user_vote=voto_usuario,
+        is_creator=is_creator
+    )
+
+
+@main_bp.route("/api/enquete/<string:poll_uuid>/votar", methods=["POST"])
+@login_required
+def api_vote_poll(poll_uuid):
+    poll = HangoutPoll.query.filter_by(uuid=poll_uuid).first_or_404()
+    
+    option_id_str = request.form.get("option_id")
+    voter_name = request.form.get("voter_name", "").strip()
+
+    try:
+        if not option_id_str or not option_id_str.isdigit():
+            raise ValueError("Opção de voto inválida.")
+        
+        option_id = int(option_id_str)
+        option = HangoutPollOption.query.get_or_404(option_id)
+
+        if option.poll_id != poll.id:
+            raise ValueError("Opção não pertence a esta enquete.")
+
+        # Verifica se já votou
+        ja_votou = (
+            db.session.query(HangoutPollVote)
+            .join(HangoutPollOption)
+            .filter(
+                HangoutPollOption.poll_id == poll.id,
+                HangoutPollVote.user_id == current_user.id
+            )
+            .first()
+        )
+
+        if ja_votou:
+            # Substitui o voto anterior
+            db.session.delete(ja_votou)
+
+        voto = HangoutPollVote(
+            poll_option_id=option_id,
+            user_id=current_user.id,
+            voter_name=voter_name or current_user.name
+        )
+        db.session.add(voto)
+        db.session.commit()
+
+        # Recalcula resultados
+        total_votos = sum(len(opt.votes) for opt in poll.options)
+        results = []
+        for opt in poll.options:
+            votos_opt = len(opt.votes)
+            pct = (votos_opt / total_votos * 100) if total_votos > 0 else 0
+            results.append({
+                "option_id": opt.id,
+                "votes_count": votos_opt,
+                "percentage": round(pct, 1)
+            })
+
+        return jsonify({
+            "status": "ok",
+            "total_votos": total_votos,
+            "results": results
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 400
 
 
 @main_bp.app_context_processor

@@ -53,15 +53,16 @@ def init_app(app):
             db.session.commit()
 
             addresses = [
-                Address(street="Av. Beira Mar", number="1000", city="Vitória", state="ES", cep="29050000", country="Brasil"),
-                Address(street="Rua das Acácias", number="15", city="Vila Velha", state="ES", cep="29100100", country="Brasil"),
-                Address(street="Rodovia do Sol", number="3500", city="Guarapari", state="ES", cep="29200000", country="Brasil"),
-                Address(street="Praça do Papa", number="S/N", city="Vitória", state="ES", cep="29050100", country="Brasil"),
-                Address(street="Centro de Convenções", number="50", city="Serra", state="ES", cep="29160000", country="Brasil"),
-                Address(street="Rua do Lazer", number="110", city="Domingos Martins", state="ES", cep="29260000", country="Brasil")
+                Address(street="Av. Beira Mar", number="1000", city="Vitória", state="ES", cep="29050000", country="Brasil", latitude=-20.3201, longitude=-40.3012),
+                Address(street="Rua das Acácias", number="15", city="Vila Velha", state="ES", cep="29100100", country="Brasil", latitude=-20.3323, longitude=-40.2884),
+                Address(street="Rodovia do Sol", number="3500", city="Guarapari", state="ES", cep="29200000", country="Brasil", latitude=-20.6720, longitude=-40.5011),
+                Address(street="Praça do Papa", number="S/N", city="Vitória", state="ES", cep="29050100", country="Brasil", latitude=-20.3242, longitude=-40.2869),
+                Address(street="Centro de Convenções", number="50", city="Serra", state="ES", cep="29160000", country="Brasil", latitude=-20.1264, longitude=-40.3078),
+                Address(street="Rua do Lazer", number="110", city="Domingos Martins", state="ES", cep="29260000", country="Brasil", latitude=-20.3639, longitude=-40.6631)
             ]
             db.session.add_all(addresses)
             db.session.commit()
+
 
             users_seed = [
                 ("Alice Souza", "alice@email.com", "11111111111", "27999990001", UserType.REGULAR, date(1995, 3, 15)),
