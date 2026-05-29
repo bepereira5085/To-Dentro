@@ -1,0 +1,890 @@
+{% extends "main/base.html" %}
+
+{% block title %}Enquete de Rolê: {{ poll.title }} — Tô Dentro{% endblock %}
+
+{% block extra_head %}
+<style>
+  .poll-details-page {
+    background: #f7f7f8;
+    min-height: 100vh;
+    padding: 3rem 1.5rem 5rem;
+  }
+
+  .poll-container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+    border: 1px solid #ebebeb;
+    overflow: hidden;
+  }
+
+  .poll-header {
+    background: linear-gradient(135deg, #c81e1e 0%, #8c1010 100%);
+    padding: 2.2rem;
+    color: #fff;
+    position: relative;
+  }
+
+  .poll-header h1 {
+    font-size: 1.8rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+
+  .poll-meta {
+    font-size: 0.88rem;
+    opacity: 0.9;
+    font-weight: 500;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: center;
+  }
+
+  .poll-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .poll-meta-item .material-symbols-outlined {
+    font-size: 18px;
+  }
+
+  .poll-body {
+    padding: 2.2rem;
+  }
+
+  .poll-description {
+    background: #f9fafb;
+    border-left: 4px solid #c81e1e;
+    padding: 1.2rem;
+    border-radius: 4px 12px 12px 4px;
+    font-size: 0.92rem;
+    color: #374151;
+    line-height: 1.6;
+    margin-bottom: 2rem;
+  }
+
+  .poll-section-title {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #111827;
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .poll-section-title .material-symbols-outlined {
+    color: #c81e1e;
+  }
+
+  /* Form & Interactive voting options */
+  .voting-options-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 1.5rem;
+  }
+
+  .voting-option-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 20px;
+    border-radius: 12px;
+    border: 2px solid #e5e7eb;
+    background: #fff;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    user-select: none;
+  }
+
+  .voting-option-card:hover {
+    border-color: #c81e1e;
+    background: #fffbfb;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(200, 30, 30, 0.05);
+  }
+
+  .voting-option-card.is-selected {
+    border-color: #c81e1e;
+    background: #fff5f5;
+  }
+
+  .option-radio-input {
+    accent-color: #c81e1e;
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .option-card-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .option-card-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #1a1a1a;
+  }
+
+  .option-card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: 0.8rem;
+    color: #6b7280;
+    align-items: center;
+  }
+
+  .option-card-meta span {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .option-card-meta .meta-price {
+    font-weight: 600;
+    color: #10b981;
+  }
+
+  .option-card-meta .meta-price.is-free {
+    color: #2563eb;
+  }
+
+  .event-link-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #c81e1e;
+    text-decoration: none;
+    margin-top: 2px;
+    transition: color 0.15s;
+    align-self: flex-start;
+  }
+
+  .event-link-btn:hover {
+    color: #8c1010;
+    text-decoration: underline;
+  }
+
+  .event-link-btn .material-symbols-outlined {
+    font-size: 14px;
+  }
+
+  /* Results styling */
+  .results-list {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    margin-bottom: 2rem;
+  }
+
+  .result-item {
+    background: #fff;
+    border: 1px solid #ebebeb;
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    position: relative;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+  }
+
+  .result-item.my-vote {
+    border-color: rgba(200, 30, 30, 0.4);
+    background: #fffcfc;
+  }
+
+  .result-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+
+  .result-title-container {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .result-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #1a1a1a;
+  }
+
+  .result-badges {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .badge-vote-tag {
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 99px;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+  }
+
+  .badge-vote-tag.my-choice {
+    background: #c81e1e;
+    color: #fff;
+  }
+
+  .badge-vote-tag.winner {
+    background: #fef3c7;
+    color: #d97706;
+    border: 1px solid #fcd34d;
+  }
+
+  .result-stats {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #4b5563;
+    flex-shrink: 0;
+  }
+
+  .progress-bar-container {
+    height: 14px;
+    background: #e5e7eb;
+    border-radius: 99px;
+    overflow: hidden;
+    position: relative;
+    width: 100%;
+    margin-top: 6px;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: linear-gradient(90deg, #c81e1e 0%, #ef4444 100%);
+    width: 0%; /* Initial state for animation */
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .result-item.my-vote .progress-bar-fill {
+    background: linear-gradient(90deg, #c81e1e 0%, #ec4899 100%);
+  }
+
+  /* Actions wrapper */
+  .actions-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 1.5rem;
+  }
+
+  .action-input-row {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .btn-submit-vote {
+    height: 48px;
+    background: #c81e1e;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: background 0.2s, box-shadow 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 4px 14px rgba(200, 30, 30, 0.2);
+    width: 100%;
+  }
+
+  .btn-submit-vote:hover {
+    background: #a81818;
+    box-shadow: 0 6px 20px rgba(200, 30, 30, 0.3);
+  }
+
+  .btn-submit-vote:disabled {
+    background: #d1d5db;
+    color: #9ca3af;
+    box-shadow: none;
+    cursor: not-allowed;
+  }
+
+  .btn-change-vote {
+    height: 44px;
+    background: transparent;
+    color: #4b5563;
+    border: 1.5px solid #d1d5db;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.88rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+  }
+
+  .btn-change-vote:hover {
+    border-color: #4b5563;
+    background: #f3f4f6;
+  }
+
+  /* Share Section Box */
+  .share-box {
+    margin-top: 3rem;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 1.5rem;
+  }
+
+  .share-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #374151;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .share-title .material-symbols-outlined {
+    font-size: 20px;
+    color: #c81e1e;
+  }
+
+  .share-link-input-group {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .share-input {
+    flex: 1;
+    height: 40px;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 0 12px;
+    font-size: 0.85rem;
+    background: #fff;
+    color: #4b5563;
+    outline: none;
+    font-family: inherit;
+    text-overflow: ellipsis;
+  }
+
+  .btn-copy {
+    height: 40px;
+    background: #1f2937;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 0 16px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .btn-copy:hover {
+    background: #111827;
+  }
+
+  .social-share-buttons {
+    display: flex;
+    gap: 8px;
+  }
+
+  .btn-social {
+    height: 38px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-decoration: none;
+    padding: 0 16px;
+    transition: opacity 0.15s;
+    color: #fff;
+    flex: 1;
+  }
+
+  .btn-social:hover {
+    opacity: 0.9;
+    color: #fff;
+  }
+
+  .btn-whatsapp {
+    background-color: #25d366;
+  }
+
+  .btn-telegram {
+    background-color: #0088cc;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="poll-details-page">
+  <div class="poll-container">
+    
+    <!-- Poll Header -->
+    <div class="poll-header">
+      <h1>{{ poll.title }}</h1>
+      <div class="poll-meta">
+        <div class="poll-meta-item">
+          <span class="material-symbols-outlined">person</span>
+          <span>Por <strong style="color: white;">{{ poll.creator.name }}</strong></span>
+        </div>
+        <div class="poll-meta-item">
+          <span class="material-symbols-outlined">calendar_today</span>
+          <span>Criada em {{ poll.created_at.strftime('%d/%m/%Y às %H:%M') }}</span>
+        </div>
+        <div class="poll-meta-item">
+          <span class="material-symbols-outlined">ballot</span>
+          <span id="headerTotalVotes"><strong style="color: white;">{{ total_votos }}</strong> {{ 'voto' if total_votos == 1 else 'votos' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Poll Body -->
+    <div class="poll-body">
+      
+      {% if poll.description %}
+      <div class="poll-description">
+        {{ poll.description }}
+      </div>
+      {% endif %}
+
+      <!-- 1. Votacao Section (hidden if user already voted and is not editing) -->
+      <div id="votingSection" style="display: {{ 'none' if has_voted else 'block' }};">
+        <h2 class="poll-section-title">
+          <span class="material-symbols-outlined">how_to_vote</span>
+          Escolha o seu Rolê favorito:
+        </h2>
+
+        <form id="voteForm">
+          <div class="voting-options-list">
+            {% for opt_data in options_data %}
+              {% set opt = (poll.options | selectattr("id", "equalto", opt_data.id) | first) %}
+              <label class="voting-option-card {% if user_vote and user_vote.poll_option_id == opt_data.id %}is-selected{% endif %}" id="card-opt-{{ opt_data.id }}">
+                <input type="radio" name="option_id" value="{{ opt_data.id }}" class="option-radio-input" 
+                       {% if user_vote and user_vote.poll_option_id == opt_data.id %}checked{% endif %}
+                       onchange="selectVotingCard(this)">
+                
+                <div class="option-card-content">
+                  <span class="option-card-title">{{ opt_data.title }}</span>
+                  
+                  {% if opt.event %}
+                    <div class="option-card-meta">
+                      {% if opt.event.occurrences %}
+                        <span>
+                          <span class="material-symbols-outlined" style="font-size: 15px;">calendar_today</span>
+                          {{ opt.event.occurrences[0].start_date.strftime('%d/%m/%Y') }}
+                        </span>
+                        {% if opt.event.occurrences[0].addresses %}
+                          <span>
+                            <span class="material-symbols-outlined" style="font-size: 15px;">location_on</span>
+                            {{ opt.event.occurrences[0].addresses[0].address.city }}
+                          </span>
+                        {% endif %}
+                      {% endif %}
+                      <span>
+                        <span class="material-symbols-outlined" style="font-size: 15px;">payments</span>
+                        {% if opt.event.price and opt.event.price > 0 %}
+                          <span class="meta-price">R$ {{ "%.2f"|format(opt.event.price)|replace('.', ',') }}</span>
+                        {% else %}
+                          <span class="meta-price is-free">Gratuito</span>
+                        {% endif %}
+                      </span>
+                    </div>
+                    <a href="{{ url_for('main.event_details', event_id=opt.event.id) }}" target="_blank" class="event-link-btn" onclick="event.stopPropagation();">
+                      Ver detalhes do evento
+                      <span class="material-symbols-outlined">open_in_new</span>
+                    </a>
+                  {% else %}
+                    <div class="option-card-meta">
+                      <span>
+                        <span class="material-symbols-outlined" style="font-size: 15px;">edit_note</span>
+                        Opção personalizada
+                      </span>
+                    </div>
+                  {% endif %}
+                </div>
+              </label>
+            {% endfor %}
+          </div>
+
+          <!-- Voter name (default populated by backend as current_user.name, but editable) -->
+          <div class="action-input-row">
+            <label for="voterName" class="label" style="font-size: 0.82rem; font-weight: 700; color: #4b5563; margin-bottom: 2px;">
+              Votar como (seu nome público no painel):
+            </label>
+            <input type="text" name="voter_name" id="voterName" class="input" style="height: 40px; border-radius: 8px; border: 1.5px solid #e5e7eb; font-size: 0.88rem;"
+                   placeholder="Ex: {{ current_user.name }}" value="{{ user_vote.voter_name if user_vote else current_user.name }}">
+          </div>
+
+          <div class="actions-wrapper">
+            <button type="submit" class="btn-submit-vote" id="btnSubmitVote">
+              <span class="material-symbols-outlined">check</span>
+              Confirmar Voto
+            </button>
+            
+            {% if has_voted %}
+              <button type="button" class="btn-change-vote" onclick="showResultsView()">
+                Cancelar e Ver Resultados
+              </button>
+            {% endif %}
+          </div>
+        </form>
+      </div>
+
+      <!-- 2. Resultados Section (shown if user already voted) -->
+      <div id="resultsSection" style="display: {{ 'block' if has_voted else 'none' }};">
+        <h2 class="poll-section-title">
+          <span class="material-symbols-outlined">bar_chart</span>
+          Parcial dos Votos:
+        </h2>
+
+        <div class="results-list" id="resultsListContainer">
+          {% set max_votes = namespace(value=0) %}
+          {% for opt_data in options_data %}
+            {% if opt_data.votes_count > max_votes.value %}
+              {% set max_votes.value = opt_data.votes_count %}
+            {% endif %}
+          {% endfor %}
+
+          {% for opt_data in options_data %}
+            {% set is_user_choice = (user_vote and user_vote.poll_option_id == opt_data.id) %}
+            {% set is_winner = (total_votos > 0 and opt_data.votes_count == max_votes.value) %}
+            <div class="result-item {% if is_user_choice %}my-vote{% endif %}" id="result-opt-{{ opt_data.id }}">
+              <div class="result-header">
+                <div class="result-title-container">
+                  <div class="result-title">
+                    {{ opt_data.title }}
+                  </div>
+                  {% if opt_data.is_event %}
+                    <a href="{{ url_for('main.event_details', event_id=opt_data.event_id) }}" target="_blank" class="event-link-btn">
+                      Ver página do evento
+                      <span class="material-symbols-outlined">open_in_new</span>
+                    </a>
+                  {% endif %}
+                </div>
+                
+                <div class="result-badges">
+                  {% if is_winner %}
+                    <span class="badge-vote-tag winner" title="Opção líder" id="winner-badge-{{ opt_data.id }}">
+                      <span class="material-symbols-outlined" style="font-size: 13px;">crown</span>
+                      Líder
+                    </span>
+                  {% endif %}
+                  {% if is_user_choice %}
+                    <span class="badge-vote-tag my-choice" id="mychoice-badge-{{ opt_data.id }}">
+                      <span class="material-symbols-outlined" style="font-size: 13px;">check_circle</span>
+                      Seu Voto
+                    </span>
+                  {% endif %}
+                  <div class="result-stats" id="stats-opt-{{ opt_data.id }}">
+                    {{ opt_data.votes_count }} {{ 'voto' if opt_data.votes_count == 1 else 'votos' }} ({{ opt_data.percentage }}%)
+                  </div>
+                </div>
+              </div>
+
+              <div class="progress-bar-container">
+                <div class="progress-bar-fill" id="bar-opt-{{ opt_data.id }}" style="width: 0%;"></div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+
+        <div class="actions-wrapper">
+          <button class="btn-change-vote" onclick="showVotingForm()">
+            <span class="material-symbols-outlined">edit</span>
+            Mudar meu Voto
+          </button>
+        </div>
+      </div>
+
+      <!-- 3. Compartilhamento Box -->
+      <div class="share-box">
+        <h3 class="share-title">
+          <span class="material-symbols-outlined">share</span>
+          Decida com os amigos!
+        </h3>
+        <p style="font-size: 0.85rem; color: #6b7280; margin-bottom: 12px;">
+          Copie o link abaixo para compartilhar no seu grupo e decidir a programação ideal.
+        </p>
+        <div class="share-link-input-group">
+          <input type="text" id="shareUrlInput" class="share-input" readonly value="">
+          <button class="btn-copy" id="btnCopyLink" onclick="copyPollUrl()">
+            <span class="material-symbols-outlined" id="copyIcon">content_copy</span>
+            <span id="copyText">Copiar Link</span>
+          </button>
+        </div>
+
+        <div class="social-share-buttons">
+          <a href="#" id="shareWhatsapp" target="_blank" class="btn-social btn-whatsapp">
+            <svg style="width: 18px; height: 18px; fill: currentColor;" viewBox="0 0 24 24">
+              <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.724-1.455L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.825 1.451 5.436 0 9.86-4.37 9.864-9.799.002-2.63-1.023-5.101-2.885-6.97C16.579 2.022 14.12 1.001 11.5 1c-5.45 0-9.876 4.385-9.879 9.81-.001 1.734.464 3.426 1.346 4.937l-.98 3.578 3.67-.962zm12.502-5.464c-.34-.17-2.01-1.002-2.321-1.116-.312-.113-.538-.17-.765.17-.226.34-.878 1.116-1.077 1.344-.198.226-.397.254-.737.085-.34-.17-1.436-.537-2.735-1.706-1.01-.908-1.693-2.03-1.892-2.37-.198-.34-.022-.524.148-.693.153-.152.34-.397.51-.595.17-.198.227-.34.34-.567.113-.227.056-.425-.028-.595-.085-.17-.765-1.848-1.049-2.541-.277-.667-.558-.578-.765-.588l-.652-.01c-.227 0-.595.085-.907.425-.312.34-1.19 1.166-1.19 2.846 0 1.68 1.22 3.303 1.39 3.53.17.227 2.4 3.69 5.812 5.173.81.353 1.443.564 1.936.721.814.26 1.556.223 2.142.135.652-.1 2.01-.828 2.293-1.587.283-.76.283-1.412.198-1.556-.085-.142-.312-.227-.652-.397z"/>
+            </svg>
+            WhatsApp
+          </a>
+          <a href="#" id="shareTelegram" target="_blank" class="btn-social btn-telegram">
+            <svg style="width: 16px; height: 16px; fill: currentColor;" viewBox="0 0 24 24">
+              <path d="M23.91 1.702c-.116-.484-.526-.84-.962-.879C20.655.617 11.23.08 4.793 4.316 2.016 6.14.73 8.877.967 12.493c.112 1.7.996 3.23 2.42 4.195l1.97 1.332c.324.22.753.197 1.05-.054.298-.25.408-.667.27-1.03l-.7-1.854c-.116-.312-.047-.66.177-.9l7.085-7.556c.245-.262.134-.69-.214-.795-.347-.105-.72.09-.817.433l-5.322 5.674c-.218.233-.54.342-.857.29-.317-.052-.596-.237-.743-.518L8.687 9.8c-.287-.546.068-1.203.687-1.294 3.655-.542 9.77-.384 12.658 2.012l.142.118c.346.287.854.238 1.134-.11.28-.348.232-.862-.11-1.144L23 9.4c-2.4-2.033-6.68-2.613-10.457-2.668.3-.32.617-.63.953-.93a1 1 0 0 1 1.385.025l2.42 2.42a1 1 0 0 0 1.414-1.414l-2.42-2.42c1.23-1.026 2.59-1.9 4.04-2.583a1 1 0 0 0 .5-1.3l.001-.001-.426-1.827zM2.87 13.91l4.89 3.3c.31.21.72.2 1.01-.03l13.11-10.57c.36-.29.41-.81.12-1.17-.29-.36-.81-.41-1.17-.12L7.73 15.89l-4.14-2.8a.75.75 0 0 0-1.11.41c-.2.53-.08 1.12.39 1.41z" />
+            </svg>
+            Telegram
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  // Set share URLs on page load
+  document.addEventListener('DOMContentLoaded', () => {
+    const currentUrl = window.location.href;
+    document.getElementById('shareUrlInput').value = currentUrl;
+    
+    // Configure WhatsApp and Telegram share links
+    const pollTitle = encodeURIComponent("{{ poll.title }}");
+    const shareText = encodeURIComponent(`Qual é o melhor rolê? Vote na nossa enquete "De Rolê": `);
+    
+    document.getElementById('shareWhatsapp').href = `https://api.whatsapp.com/send?text=${shareText}${pollTitle}%20-%20${encodeURIComponent(currentUrl)}`;
+    document.getElementById('shareTelegram').href = `https://t.me/share/url?url=${encodeURIComponent(currentUrl)}&text=${shareText}${pollTitle}`;
+
+    // Animate progress bars for the first time
+    animateProgressBars();
+  });
+
+  // Highlight selected option card
+  function selectVotingCard(radioInput) {
+    // Unselect all other cards
+    document.querySelectorAll('.voting-option-card').forEach(card => {
+      card.classList.remove('is-selected');
+    });
+    // Highlight the parent card
+    const cardId = 'card-opt-' + radioInput.value;
+    const selectedCard = document.getElementById(cardId);
+    if (selectedCard) {
+      selectedCard.classList.add('is-selected');
+    }
+  }
+
+  // Toggle between voting form and results
+  function showVotingForm() {
+    document.getElementById('resultsSection').style.display = 'none';
+    document.getElementById('votingSection').style.display = 'block';
+  }
+
+  function showResultsView() {
+    document.getElementById('votingSection').style.display = 'none';
+    document.getElementById('resultsSection').style.display = 'block';
+    animateProgressBars();
+  }
+
+  // Animate progress bars to their percentage value
+  function animateProgressBars() {
+    const data = [
+      {% for opt_data in options_data %}
+        { id: {{ opt_data.id }}, percentage: {{ opt_data.percentage }} },
+      {% endfor %}
+    ];
+
+    setTimeout(() => {
+      data.forEach(item => {
+        const bar = document.getElementById('bar-opt-' + item.id);
+        if (bar) {
+          bar.style.width = item.percentage + '%';
+        }
+      });
+    }, 150);
+  }
+
+  // Form AJAX submission
+  document.getElementById('voteForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const selectedOption = document.querySelector('input[name="option_id"]:checked');
+    if (!selectedOption) {
+      alert('Por favor, selecione uma opção para votar.');
+      return;
+    }
+
+    const submitBtn = document.getElementById('btnSubmitVote');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="material-symbols-outlined animate-spin" style="font-size: 20px;">sync</span> Enviando voto...';
+
+    const formData = new FormData(this);
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+
+    try {
+      const response = await fetch("{{ url_for('main.api_vote_poll', poll_uuid=poll.uuid) }}", {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': csrfToken
+        },
+        body: formData
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.status === 'ok') {
+        // Update header total votes count
+        const totalVotos = data.total_votos;
+        const totalVotosStr = totalVotos + ' ' + (totalVotos === 1 ? 'voto' : 'votos');
+        document.getElementById('headerTotalVotes').innerHTML = `<strong>${totalVotos}</strong> ${totalVotos === 1 ? 'voto' : 'votos'}`;
+
+        // Find winner option max votes count to update leader crowns
+        let maxVotes = 0;
+        data.results.forEach(res => {
+          if (res.votes_count > maxVotes) {
+            maxVotes = res.votes_count;
+          }
+        });
+
+        // Update each option in the DOM
+        data.results.forEach(res => {
+          const optionId = res.option_id;
+          const votesCount = res.votes_count;
+          const percentage = res.percentage;
+
+          // Update vote labels & statistics
+          const statsLabel = document.getElementById('stats-opt-' + optionId);
+          if (statsLabel) {
+            statsLabel.textContent = `${votesCount} ${votesCount === 1 ? 'voto' : 'votos'} (${percentage}%)`;
+          }
+
+          // Update progress bar
+          const bar = document.getElementById('bar-opt-' + optionId);
+          if (bar) {
+            bar.style.width = percentage + '%';
+          }
+
+          // Update winner badge (Leader)
+          const resultItem = document.getElementById('result-opt-' + optionId);
+          let winnerBadge = document.getElementById('winner-badge-' + optionId);
+          
+          if (totalVotos > 0 && votesCount === maxVotes) {
+            if (!winnerBadge && resultItem) {
+              const badgesContainer = resultItem.querySelector('.result-badges');
+              winnerBadge = document.createElement('span');
+              winnerBadge.id = 'winner-badge-' + optionId;
+              winnerBadge.className = 'badge-vote-tag winner';
+              winnerBadge.title = 'Opção líder';
+              winnerBadge.innerHTML = '<span class="material-symbols-outlined" style="font-size: 13px;">crown</span> Líder';
+              badgesContainer.insertBefore(winnerBadge, badgesContainer.firstChild);
+            }
+          } else {
+            if (winnerBadge) {
+              winnerBadge.remove();
+            }
+          }
+
+          // Update user choice badge
+          const isSelected = (parseInt(selectedOption.value) === optionId);
+          let myChoiceBadge = document.getElementById('mychoice-badge-' + optionId);
+          if (resultItem) {
+            if (isSelected) {
+              resultItem.classList.add('my-vote');
+              if (!myChoiceBadge) {
+                const badgesContainer = resultItem.querySelector('.result-badges');
+                myChoiceBadge = document.createElement('span');
+                myChoiceBadge.id = 'mychoice-badge-' + optionId;
+                myChoiceBadge.className = 'badge-vote-tag my-choice';
+                myChoiceBadge.innerHTML = '<span class="material-symbols-outlined" style="font-size: 13px;">check_circle</span> Seu Voto';
+                // Insert after leader badge or at the beginning
+                const leaderBadge = document.getElementById('winner-badge-' + optionId);
+                if (leaderBadge) {
+                  leaderBadge.after(myChoiceBadge);
+                } else {
+                  badgesContainer.insertBefore(myChoiceBadge, badgesContainer.firstChild);
+                }
+              }
+            } else {
+              resultItem.classList.remove('my-vote');
+              if (myChoiceBadge) {
+                myChoiceBadge.remove();
+              }
+            }
+          }
+        });
+
+        // Hide voting section, show results section
+        document.getElementById('votingSection').style.display = 'none';
+        document.getElementById('resultsSection').style.display = 'block';
+
+        // Add back 'Cancel and see results' button to voting if it wasn't there
+        let changeBtn = document.querySelector('.btn-change-vote[onclick="showResultsView()"]');
+        if (!changeBtn) {
+          const cancelBtn = document.createElement('button');
+          cancelBtn.type = 'button';
+          cancelBtn.className = 'btn-change-vote';
+          cancelBtn.setAttribute('onclick', 'showResultsView()');
+          cancelBtn.textContent = 'Cancelar e Ver Resultados';
+          document.getElementById('voteForm').querySelector('.actions-wrapper').appendChild(cancelBtn);
+        }
+
+      } else {
+        alert('Erro ao computar voto: ' + (data.error || 'Erro desconhecido.'));
+      }
+    } catch(err) {
+      alert('Erro de conexão ao enviar voto.');
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<span class="material-symbols-outlined">check</span> Confirmar Voto';
+    }
+  });
+
+  // Clipboard share copy
+  function copyPollUrl() {
+    const input = document.getElementById('shareUrlInput');
+    input.select();
+    input.setSelectionRange(0, 99999); // For mobile devices
+
+    navigator.clipboard.writeText(input.value).then(() => {
+      const copyText = document.getElementById('copyText');
+      const copyIcon = document.getElementById('copyIcon');
+      
+      copyText.textContent = 'Copiado!';
+      copyIcon.textContent = 'done';
+      
+      setTimeout(() => {
+        copyText.textContent = 'Copiar Link';
+        copyIcon.textContent = 'content_copy';
+      }, 2000);
+    }).catch(err => {
+      alert('Não foi possível copiar o link automaticamente.');
+    });
+  }
+</script>
+{% endblock %}

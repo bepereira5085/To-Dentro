@@ -3,6 +3,11 @@
 {% block title %}Explorar Eventos — Tô Dentro{% endblock %}
 
 {% block extra_head %}
+<!-- Leaflet Map CSS and JS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<!-- Leaflet Heatmap Plugin -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js"></script>
 <style>
   .home-page {
     background: #f7f7f8;
@@ -660,7 +665,27 @@
         <span class="material-symbols-outlined" style="font-size:16px;">date_range</span>
         Data
       </button>
+
+      <button class="date-filter-toggle" id="priceFilterToggle" type="button" title="Filtrar por preço">
+        <span class="material-symbols-outlined" style="font-size:16px;">payments</span>
+        Preço
+      </button>
+
+      <div class="view-toggle-wrap" style="display: flex; border: 1.5px solid #e5e7eb; border-radius: 8px; overflow: hidden; height: 36px; background: #fff; margin-left: 0.25rem;">
+        <button id="viewListBtn" class="carousel-btn" type="button" style="border: none; border-radius: 0; width: 36px; height: 100%; display: flex; align-items: center; justify-content: center; background: #fff5f5; color: #c81e1e; cursor: pointer;" title="Visualização em Lista">
+          <span class="material-symbols-outlined" style="font-size:18px;">format_list_bulleted</span>
+        </button>
+        <button id="viewMapBtn" class="carousel-btn" type="button" style="border: none; border-radius: 0; width: 36px; height: 100%; display: flex; align-items: center; justify-content: center; background: #fff; color: #6b7280; cursor: pointer;" title="Visualização no Mapa">
+          <span class="material-symbols-outlined" style="font-size:18px;">map</span>
+        </button>
+      </div>
+
+      <a href="{{ url_for('main.create_poll') }}" class="button is-small btn-primary-td" style="height: 36px; margin-left: 0.5rem; display: inline-flex; align-items: center; gap: 6px; font-size: 0.82rem; font-weight: 700; border-radius: 8px;" title="Criar Enquete de Rolê">
+        <span class="material-symbols-outlined" style="font-size: 16px;">ballot</span>
+        Criar Enquete
+      </a>
     </div>
+
 
     <div class="date-filter-row" id="dateFilterRow">
       <label for="dateFrom">De:</label>
@@ -669,6 +694,16 @@
       <input type="date" id="dateTo" class="date-input" aria-label="Data final" />
       <button class="cat-tag" id="clearDateBtn" type="button" style="font-size:0.78rem; padding:0 12px; height:32px;">
         Limpar datas
+      </button>
+    </div>
+
+    <div class="date-filter-row" id="priceFilterRow" style="display: none; gap: 0.5rem; align-items: center; padding: 0 1.5rem 0.75rem; max-width: 1200px; margin: 0 auto;">
+      <label for="priceFrom">Preço Min (R$):</label>
+      <input type="number" id="priceFrom" class="date-input" style="width: 80px;" min="0" placeholder="0" aria-label="Preço mínimo" />
+      <label for="priceTo">Preço Max (R$):</label>
+      <input type="number" id="priceTo" class="date-input" style="width: 80px;" min="0" placeholder="Sem limite" aria-label="Preço máximo" />
+      <button class="cat-tag" id="clearPriceBtn" type="button" style="font-size:0.78rem; padding:0 12px; height:32px;">
+        Limpar preço
       </button>
     </div>
 
@@ -687,6 +722,11 @@
       </button>
       </div>
     </div>
+  </div>
+
+  <!-- Map View Container -->
+  <div id="mapSection" style="display: none; height: calc(100vh - 170px); min-height: 450px; width: 100%; position: relative;">
+    <div id="homeMap" style="height: 100%; width: 100%; z-index: 10;"></div>
   </div>
 
   <div id="defaultSections">
@@ -858,31 +898,48 @@
     let searchQuery = '';
     let stateFilter = '';
     let cityFilter = '';
-  let dateFrom = '';
-  let dateTo = '';
-  let isSearchActive = false;
+    let dateFrom = '';
+    let dateTo = '';
+    let priceFrom = '';
+    let priceTo = '';
+    let isSearchActive = false;
+    let currentView = 'list'; // 'list' ou 'map'
+    let mapInstance = null;
+    let markersLayer = null;
+    let heatLayer = null;
 
-  const carousels = {};
+    const carousels = {};
 
-  const $clearFiltersBtn = document.getElementById('clearFiltersBtn');
+    const $clearFiltersBtn = document.getElementById('clearFiltersBtn');
 
-  const $searchInput = document.getElementById('searchInput');
-  const $stateInput = document.getElementById('stateInput');
-  const $stateValue = document.getElementById('stateValue');
-  const $stateDropdown = document.getElementById('stateDropdown');
-  const $cityInput = document.getElementById('cityInput');
-  const $cityValue = document.getElementById('cityValue');
-  const $cityDropdown = document.getElementById('cityDropdown');
-  const $dateFilterToggle = document.getElementById('dateFilterToggle');
-  const $dateFilterRow = document.getElementById('dateFilterRow');
-  const $dateFrom = document.getElementById('dateFrom');
-  const $dateTo = document.getElementById('dateTo');
-  const $clearDateBtn = document.getElementById('clearDateBtn');
-  const $defaultSections = document.getElementById('defaultSections');
-  const $resultsSection = document.getElementById('resultsSection');
-  const $resultsGrid = document.getElementById('resultsGrid');
-  const $resultsHeader = document.getElementById('resultsHeader');
-  const $catAll = document.getElementById('catAll');
+    const $searchInput = document.getElementById('searchInput');
+    const $stateInput = document.getElementById('stateInput');
+    const $stateValue = document.getElementById('stateValue');
+    const $stateDropdown = document.getElementById('stateDropdown');
+    const $cityInput = document.getElementById('cityInput');
+    const $cityValue = document.getElementById('cityValue');
+    const $cityDropdown = document.getElementById('cityDropdown');
+    const $dateFilterToggle = document.getElementById('dateFilterToggle');
+    const $dateFilterRow = document.getElementById('dateFilterRow');
+    const $dateFrom = document.getElementById('dateFrom');
+    const $dateTo = document.getElementById('dateTo');
+    const $clearDateBtn = document.getElementById('clearDateBtn');
+
+    const $priceFilterToggle = document.getElementById('priceFilterToggle');
+    const $priceFilterRow = document.getElementById('priceFilterRow');
+    const $priceFrom = document.getElementById('priceFrom');
+    const $priceTo = document.getElementById('priceTo');
+    const $clearPriceBtn = document.getElementById('clearPriceBtn');
+
+    const $viewListBtn = document.getElementById('viewListBtn');
+    const $viewMapBtn = document.getElementById('viewMapBtn');
+    const $mapSection = document.getElementById('mapSection');
+
+    const $defaultSections = document.getElementById('defaultSections');
+    const $resultsSection = document.getElementById('resultsSection');
+    const $resultsGrid = document.getElementById('resultsGrid');
+    const $resultsHeader = document.getElementById('resultsHeader');
+    const $catAll = document.getElementById('catAll');
 
   function debounce(fn, ms) {
     let t;
@@ -1129,6 +1186,167 @@
   $dateFrom.addEventListener('change', () => { dateFrom = $dateFrom.value; updateClearFiltersVisibility(); triggerSearch(); });
   $dateTo.addEventListener('change', () => { dateTo = $dateTo.value; updateClearFiltersVisibility(); triggerSearch(); });
 
+  // Price Filter Listeners
+  $priceFilterToggle.addEventListener('click', () => {
+    const isVisible = $priceFilterRow.style.display === 'flex';
+    $priceFilterRow.style.display = isVisible ? 'none' : 'flex';
+    $priceFilterToggle.classList.toggle('is-active', !isVisible);
+  });
+
+  $clearPriceBtn.addEventListener('click', () => {
+    $priceFrom.value = '';
+    $priceTo.value = '';
+    priceFrom = '';
+    priceTo = '';
+    updateClearFiltersVisibility();
+    triggerSearch();
+  });
+
+  $priceFrom.addEventListener('input', debounce(() => {
+    priceFrom = $priceFrom.value;
+    updateClearFiltersVisibility();
+    triggerSearch();
+  }, 350));
+
+  $priceTo.addEventListener('input', debounce(() => {
+    priceTo = $priceTo.value;
+    updateClearFiltersVisibility();
+    triggerSearch();
+  }, 350));
+
+  // View Toggle Listeners
+  $viewListBtn.addEventListener('click', () => {
+    setView('list');
+  });
+
+  $viewMapBtn.addEventListener('click', () => {
+    setView('map');
+  });
+
+  function setView(view) {
+    currentView = view;
+    if (view === 'list') {
+      $viewListBtn.style.background = '#fff5f5';
+      $viewListBtn.style.color = '#c81e1e';
+      $viewMapBtn.style.background = '#fff';
+      $viewMapBtn.style.color = '#6b7280';
+      $mapSection.style.display = 'none';
+      if (isFilterActive()) {
+        showResultsSection();
+      } else {
+        showDefaultSections();
+      }
+    } else {
+      $viewMapBtn.style.background = '#fff5f5';
+      $viewMapBtn.style.color = '#c81e1e';
+      $viewListBtn.style.background = '#fff';
+      $viewListBtn.style.color = '#6b7280';
+      $defaultSections.style.display = 'none';
+      $resultsSection.classList.remove('is-visible');
+      $mapSection.style.display = 'block';
+      initOrUpdateMap();
+    }
+  }
+
+  function initOrUpdateMap() {
+    if (!mapInstance) {
+      mapInstance = L.map('homeMap').setView([-15.78, -47.93], 4);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(mapInstance);
+      
+      markersLayer = L.layerGroup().addTo(mapInstance);
+    }
+    
+    setTimeout(() => {
+      mapInstance.invalidateSize();
+    }, 100);
+    
+    fetchAndRenderMapEvents();
+  }
+
+  async function fetchAndRenderMapEvents() {
+    const params = new URLSearchParams();
+    if (searchQuery) params.set('q', searchQuery);
+    if (activeCategories.size) params.set('categorias', Array.from(activeCategories).join(','));
+    if (stateFilter) params.set('estado', stateFilter);
+    if (cityFilter) params.set('cidade', cityFilter);
+    if (dateFrom) params.set('data_inicio', dateFrom);
+    if (dateTo) params.set('data_fim', dateTo);
+    if (priceFrom) params.set('min_price', priceFrom);
+    if (priceTo) params.set('max_price', priceTo);
+    params.set('page_size', 200);
+
+    try {
+      const resp = await fetch('/api/eventos/buscar?' + params.toString());
+      if (resp.ok) {
+        const data = await resp.json();
+        renderEventsOnMap(data.eventos);
+      }
+    } catch (e) {
+      console.error("Erro ao carregar mapa:", e);
+    }
+  }
+
+  function renderEventsOnMap(eventos) {
+    if (!mapInstance) return;
+    
+    markersLayer.clearLayers();
+    if (heatLayer) {
+      mapInstance.removeLayer(heatLayer);
+      heatLayer = null;
+    }
+    
+    const heatPoints = [];
+    const bounds = [];
+    
+    eventos.forEach(ev => {
+      if (ev.latitude !== null && ev.longitude !== null) {
+        const lat = parseFloat(ev.latitude);
+        const lng = parseFloat(ev.longitude);
+        heatPoints.push([lat, lng, 1.0]);
+        bounds.push([lat, lng]);
+        
+        const marker = L.marker([lat, lng]);
+        const imgHtml = ev.image_url 
+          ? `<img src="${ev.image_url}" style="width:100%; height:90px; object-fit:cover; border-radius:8px; margin-bottom:6px;" />` 
+          : '';
+        
+        const priceLabel = ev.price > 0 ? `R$ ${ev.price.toFixed(2).replace('.', ',')}` : 'Gratuito';
+        const popupContent = `
+          <div style="font-family:'Inter', sans-serif; min-width:180px; max-width:220px; font-size:13px; line-height:1.4;">
+            ${imgHtml}
+            <div style="font-weight:700; font-size:13px; color:#1a1a1a; margin-bottom:4px; line-height:1.2;">${escHtml(ev.name)}</div>
+            <div style="color:#6b7280; margin-bottom:4px; display:flex; align-items:center; gap:4px;">
+              <span class="material-symbols-outlined" style="font-size:14px;">calendar_today</span>
+              <span>${escHtml(ev.start_date_fmt)}${ev.start_time ? ' • ' + escHtml(ev.start_time) : ''}</span>
+            </div>
+            <div style="color:#c81e1e; font-weight:700; margin-bottom:6px; display:flex; align-items:center; gap:4px;">
+              <span class="material-symbols-outlined" style="font-size:14px;">payments</span>
+              <span>${priceLabel}</span>
+            </div>
+            <a href="/evento/${ev.id}" style="display:block; text-align:center; background:#c81e1e; color:#fff; padding:6px 10px; border-radius:6px; font-weight:700; text-decoration:none; margin-top:4px;">Ver detalhes</a>
+          </div>
+        `;
+        marker.bindPopup(popupContent);
+        markersLayer.addLayer(marker);
+      }
+    });
+    
+    if (heatPoints.length > 0) {
+      heatLayer = L.heatLayer(heatPoints, {
+        radius: 35,
+        blur: 15,
+        maxZoom: 17,
+        gradient: {0.4: 'blue', 0.65: 'lime', 1: 'red'}
+      }).addTo(mapInstance);
+      
+      mapInstance.fitBounds(bounds, {padding: [50, 50]});
+    } else {
+      mapInstance.setView([-15.78, -47.93], 4);
+    }
+  }
+
   function syncTagDismiss(btn) {
     const existing = btn.querySelector('.cat-tag-dismiss');
     if (existing) existing.remove();
@@ -1192,7 +1410,7 @@
   $clearFiltersBtn.addEventListener('click', clearAllFilters);
 
   function updateClearFiltersVisibility() {
-    const hasFilter = searchQuery || (activeCategories.size > 0) || stateFilter || cityFilter || dateFrom || dateTo;
+    const hasFilter = searchQuery || (activeCategories.size > 0) || stateFilter || cityFilter || dateFrom || dateTo || priceFrom || priceTo;
     $clearFiltersBtn.classList.toggle('is-visible', Boolean(hasFilter));
   }
 
@@ -1217,11 +1435,22 @@
     $dateFilterRow.classList.remove('is-visible');
     $dateFilterToggle.classList.remove('is-active');
 
+    priceFrom = '';
+    priceTo = '';
+    $priceFrom.value = '';
+    $priceTo.value = '';
+    $priceFilterRow.style.display = 'none';
+    $priceFilterToggle.classList.remove('is-active');
+
     toggleCategory('', $catAll);
 
     $clearFiltersBtn.classList.remove('is-visible');
 
-    showDefaultSections();
+    if (currentView === 'map') {
+      fetchAndRenderMapEvents();
+    } else {
+      showDefaultSections();
+    }
   }
 
 
@@ -1232,10 +1461,14 @@
   }, 350));
 
   function isFilterActive() {
-    return !!(searchQuery || (activeCategories.size > 0) || stateFilter || cityFilter || dateFrom || dateTo);
+    return !!(searchQuery || (activeCategories.size > 0) || stateFilter || cityFilter || dateFrom || dateTo || priceFrom || priceTo);
   }
 
   async function triggerSearch() {
+    if (currentView === 'map') {
+      fetchAndRenderMapEvents();
+      return;
+    }
     if (!isFilterActive()) {
       showDefaultSections();
       return;
@@ -1246,6 +1479,7 @@
 
   function showDefaultSections() {
     isSearchActive = false;
+    $mapSection.style.display = 'none';
     $defaultSections.style.display = '';
     $resultsSection.classList.remove('is-visible');
 
@@ -1260,6 +1494,7 @@
 
   function showResultsSection() {
     isSearchActive = true;
+    $mapSection.style.display = 'none';
     $defaultSections.style.display = 'none';
     $resultsSection.classList.add('is-visible');
   }
@@ -1274,6 +1509,8 @@
     if (cityFilter) params.set('cidade', cityFilter);
     if (dateFrom) params.set('data_inicio', dateFrom);
     if (dateTo) params.set('data_fim', dateTo);
+    if (priceFrom) params.set('min_price', priceFrom);
+    if (priceTo) params.set('max_price', priceTo);
     params.set('page', page);
 
     try {

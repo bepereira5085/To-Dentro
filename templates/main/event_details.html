@@ -422,6 +422,21 @@
         </div>
       </div>
       {% endif %}
+
+      <div class="evento-info-row">
+        <div class="evento-info-icon">
+          <span class="material-symbols-outlined">payments</span>
+        </div>
+        <div>
+          <div class="evento-info-label">
+            {% if event.price and event.price > 0 %}
+              R$ {{ "%.2f"|format(event.price)|replace('.', ',') }}
+            {% else %}
+              Gratuito
+            {% endif %}
+          </div>
+        </div>
+      </div>
     </div>
 
     {% if event.description %}
@@ -454,7 +469,55 @@
     </div>
     {% endif %}
 
-    <div class="evento-action-section">
+    <!-- Como Chegar Section -->
+    <div class="evento-desc-card" id="comoChegarCard" style="display: none; border-left: 5px solid #c81e1e;">
+      <h2 style="display: flex; align-items: center; gap: 8px;">
+        <span class="material-symbols-outlined" style="color: #c81e1e;">navigation</span>
+        Como chegar ao evento
+      </h2>
+      <p style="font-size: 0.82rem; color: #6b7280; margin-bottom: 1rem;">Calculando rotas em tempo real a partir da sua localização atual.</p>
+      
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+        
+        <!-- Carro Particular -->
+        <div style="background: #fafafa; border: 1.5px solid #e5e7eb; border-radius: 12px; padding: 1.25rem 1rem; display: flex; flex-direction: column; justify-content: space-between; align-items: center; text-align: center;">
+          <span class="material-symbols-outlined" style="font-size: 32px; color: #c81e1e; margin-bottom: 0.5rem;">directions_car</span>
+          <div>
+            <div style="font-size: 0.8rem; font-weight: 700; color: #4b5563;">Carro Particular</div>
+            <div id="carTimeVal" style="font-size: 1.35rem; font-weight: 800; color: #1a1a1a; margin: 0.25rem 0;">-- min</div>
+          </div>
+          <a id="carRouteLink" href="#" target="_blank" style="font-size: 0.78rem; font-weight: 700; color: #c81e1e; text-decoration: none; margin-top: 0.5rem; display: inline-flex; align-items: center; gap: 4px;">
+            Ver Rota <span class="material-symbols-outlined" style="font-size: 14px;">open_in_new</span>
+          </a>
+        </div>
+        
+        <!-- Uber -->
+        <div style="background: #fafafa; border: 1.5px solid #e5e7eb; border-radius: 12px; padding: 1.25rem 1rem; display: flex; flex-direction: column; justify-content: space-between; align-items: center; text-align: center;">
+          <span class="material-symbols-outlined" style="font-size: 32px; color: #1a1a1a; margin-bottom: 0.5rem;">local_taxi</span>
+          <div>
+            <div style="font-size: 0.8rem; font-weight: 700; color: #4b5563;">Uber</div>
+            <div id="uberTimeVal" style="font-size: 1.35rem; font-weight: 800; color: #1a1a1a; margin: 0.25rem 0;">-- min</div>
+          </div>
+          <a id="uberRouteLink" href="#" target="_blank" style="font-size: 0.78rem; font-weight: 700; color: #c81e1e; text-decoration: none; margin-top: 0.5rem; display: inline-flex; align-items: center; gap: 4px;">
+            Pedir Uber <span class="material-symbols-outlined" style="font-size: 14px;">open_in_new</span>
+          </a>
+        </div>
+        
+        <!-- Transporte Público -->
+        <div style="background: #fafafa; border: 1.5px solid #e5e7eb; border-radius: 12px; padding: 1.25rem 1rem; display: flex; flex-direction: column; justify-content: space-between; align-items: center; text-align: center;">
+          <span class="material-symbols-outlined" style="font-size: 32px; color: #2563eb; margin-bottom: 0.5rem;">directions_bus</span>
+          <div>
+            <div style="font-size: 0.8rem; font-weight: 700; color: #4b5563;">Transporte Público</div>
+            <div id="transitTimeVal" style="font-size: 1.35rem; font-weight: 800; color: #1a1a1a; margin: 0.25rem 0;">-- min</div>
+          </div>
+          <a id="transitRouteLink" href="#" target="_blank" style="font-size: 0.78rem; font-weight: 700; color: #c81e1e; text-decoration: none; margin-top: 0.5rem; display: inline-flex; align-items: center; gap: 4px;">
+            Ver Rotas <span class="material-symbols-outlined" style="font-size: 14px;">open_in_new</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="evento-action-section" style="gap: 1rem; display: flex; align-items: center; justify-content: center; flex-wrap: wrap;">
       <button id="btn-to-dentro"
               class="button is-large btn-to-dentro-style {% if usuario_interessado %}active{% endif %}"
               onclick="toggleInterest()">
@@ -465,6 +528,45 @@
           {% if usuario_interessado %}Você está dentro!{% else %}Tô Dentro!{% endif %}
         </span>
       </button>
+
+      <button class="button is-large btn-to-dentro-style" style="background-color: #4b5563 !important; box-shadow: 0 6px 20px rgba(75, 85, 99, 0.25) !important;" onclick="openShareModal()">
+        <span class="material-symbols-outlined">share</span>
+        Compartilhar
+      </button>
+    </div>
+
+    <!-- Share Modal -->
+    <div class="modal" id="shareModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center;">
+      <div style="background: #fff; border-radius: 18px; width: 90%; max-width: 450px; padding: 2rem; box-shadow: 0 10px 35px rgba(0,0,0,0.3); border: 1px solid #ebebeb; position: relative;">
+        <button onclick="closeShareModal()" style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #9ca3af; padding: 4px;">✕</button>
+        
+        <h2 style="font-size: 1.3rem; font-weight: 800; color: #1a1a1a; margin-bottom: 1.5rem; letter-spacing: -0.02em; display: flex; align-items: center; gap: 6px;">
+          <span class="material-symbols-outlined" style="color: #c81e1e;">share</span>
+          Compartilhar Rolê
+        </h2>
+        
+        <!-- Copy Link Option -->
+        <div style="margin-bottom: 1.5rem; text-align: left;">
+          <label style="font-size: 0.8rem; font-weight: 700; color: #4b5563; display: block; margin-bottom: 0.4rem;">Copiar Link do Evento</label>
+          <div style="display: flex; gap: 8px;">
+            <input type="text" id="shareLinkInput" readonly value="" style="flex: 1; height: 42px; border: 1.5px solid #e5e7eb; border-radius: 8px; padding: 0 12px; font-size: 0.85rem; outline: none; background: #f9fafb; font-family:'Inter', sans-serif;" />
+            <button onclick="copyShareLink()" class="button" style="background: #c81e1e; color: #fff; border: none; border-radius: 8px; padding: 0 18px; font-weight: 700; font-size: 0.88rem; cursor: pointer; height: 42px;">Copiar</button>
+          </div>
+          <div id="copySuccessMsg" style="font-size: 0.78rem; color: #10b981; margin-top: 0.25rem; display: none; font-weight: 600;">Link copiado com sucesso!</div>
+        </div>
+
+        <!-- Share with followers option -->
+        <div style="text-align: left;">
+          <label style="font-size: 0.8rem; font-weight: 700; color: #4b5563; display: block; margin-bottom: 0.4rem;">Enviar recomendação para amigos no Tô Dentro!</label>
+          <div id="shareFriendsList" style="max-height: 180px; overflow-y: auto; border: 1.5px solid #e5e7eb; border-radius: 8px; padding: 10px; background: #f9fafb; display: flex; flex-direction: column; gap: 8px;">
+            <div style="font-size: 0.85rem; color: #9ca3af; text-align: center; padding: 10px;">Carregando amigos...</div>
+          </div>
+          <button id="btnShareFriends" onclick="shareWithFriends()" class="button" style="width: 100%; height: 44px; background: #c81e1e; color: #fff; border: none; border-radius: 8px; font-weight: 700; font-size: 0.88rem; cursor: pointer; margin-top: 1rem; display: flex; align-items: center; justify-content: center; gap: 6px;" disabled>
+            <span class="material-symbols-outlined" style="font-size: 18px;">send</span>
+            Enviar Recomendação
+          </button>
+        </div>
+      </div>
     </div>
 
   </div>
@@ -542,6 +644,181 @@
       isToggling = false;
     }
   }
+
+  // Geolocation and travel time estimation
+  async function loadTravelTimes() {
+    if (!navigator.geolocation) {
+      loadTravelTimesFallback();
+      return;
+    }
+    
+    navigator.geolocation.getCurrentPosition(async (position) => {
+      const lat = position.coords.latitude;
+      const lng = position.coords.longitude;
+      
+      try {
+        const response = await fetch(`/api/evento/{{ event.id }}/tempo-viagem?lat=${lat}&lng=${lng}`);
+        if (response.ok) {
+          const data = await response.json();
+          document.getElementById('carTimeVal').textContent = `${data.car_time} min`;
+          document.getElementById('carRouteLink').href = data.car_link;
+          
+          document.getElementById('uberTimeVal').textContent = `${data.uber_time} min`;
+          document.getElementById('uberRouteLink').href = data.uber_link;
+          
+          document.getElementById('transitTimeVal').textContent = `${data.transit_time} min`;
+          document.getElementById('transitRouteLink').href = data.transit_link;
+          
+          document.getElementById('comoChegarCard').style.display = 'block';
+        }
+      } catch (e) {
+        console.error("Erro ao obter tempos de viagem:", e);
+      }
+    }, (error) => {
+      console.warn("Geolocalização não autorizada. Tentando usar o endereço padrão...");
+      loadTravelTimesFallback();
+    });
+  }
+
+  async function loadTravelTimesFallback() {
+    try {
+      const response = await fetch(`/api/evento/{{ event.id }}/tempo-viagem`);
+      if (response.ok) {
+        const data = await response.json();
+        document.getElementById('carTimeVal').textContent = `${data.car_time} min`;
+        document.getElementById('carRouteLink').href = data.car_link;
+        
+        document.getElementById('uberTimeVal').textContent = `${data.uber_time} min`;
+        document.getElementById('uberRouteLink').href = data.uber_link;
+        
+        document.getElementById('transitTimeVal').textContent = `${data.transit_time} min`;
+        document.getElementById('transitRouteLink').href = data.transit_link;
+        
+        document.getElementById('comoChegarCard').style.display = 'block';
+      }
+    } catch (e) {
+      console.error("Erro no fallback de tempos de viagem:", e);
+    }
+  }
+
+  // Share Modal Logic
+  let selectedFriends = new Set();
+
+  function openShareModal() {
+    const modal = document.getElementById('shareModal');
+    modal.style.display = 'flex';
+    document.getElementById('shareLinkInput').value = window.location.href;
+    
+    selectedFriends.clear();
+    document.getElementById('btnShareFriends').disabled = true;
+    
+    fetchFriendsToShare();
+  }
+
+  function closeShareModal() {
+    document.getElementById('shareModal').style.display = 'none';
+    document.getElementById('copySuccessMsg').style.display = 'none';
+  }
+
+  function copyShareLink() {
+    const input = document.getElementById('shareLinkInput');
+    input.select();
+    document.execCommand('copy');
+    
+    const msg = document.getElementById('copySuccessMsg');
+    msg.style.display = 'block';
+    setTimeout(() => {
+      msg.style.display = 'none';
+    }, 2500);
+  }
+
+  async function fetchFriendsToShare() {
+    const container = document.getElementById('shareFriendsList');
+    container.innerHTML = '<div style="font-size:0.85rem; color:#9ca3af; text-align:center; padding:10px;">Carregando amigos...</div>';
+    
+    try {
+      const response = await fetch('/api/amigos/buscar');
+      if (response.ok) {
+        const friends = await response.json();
+        if (friends.length === 0) {
+          container.innerHTML = '<div style="font-size:0.85rem; color:#9ca3af; text-align:center; padding:10px;">Você ainda não segue ninguém. Siga amigos para compartilhar eventos!</div>';
+          return;
+        }
+        
+        container.innerHTML = friends.map(friend => {
+          const avatar = friend.photo_url 
+            ? `<img src="${friend.photo_url}" style="width:28px; height:28px; border-radius:50%; object-fit:cover;" />` 
+            : `<div style="width:28px; height:28px; border-radius:50%; background:#c81e1e; color:#fff; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700;">${friend.initials}</div>`;
+            
+          return `
+            <label style="display:flex; align-items:center; gap:10px; font-size:0.85rem; font-weight:600; color:#374151; cursor:pointer; padding:6px 8px; border-radius:6px; background:#fff; border:1.5px solid #e5e7eb; transition: all 0.15s;">
+              <input type="checkbox" value="${friend.id}" onchange="toggleFriendSelect(this)" style="accent-color:#c81e1e;" />
+              ${avatar}
+              <span>${friend.name}</span>
+            </label>
+          `;
+        }).join('');
+      } else {
+        container.innerHTML = '<div style="font-size:0.85rem; color:#d1d5db; text-align:center; padding:10px;">Erro ao carregar lista de amigos.</div>';
+      }
+    } catch (e) {
+      container.innerHTML = '<div style="font-size:0.85rem; color:#d1d5db; text-align:center; padding:10px;">Erro ao carregar lista de amigos.</div>';
+    }
+  }
+
+  window.toggleFriendSelect = function(checkbox) {
+    const friendId = checkbox.value;
+    const label = checkbox.parentElement;
+    
+    if (checkbox.checked) {
+      selectedFriends.add(friendId);
+      label.style.borderColor = '#c81e1e';
+      label.style.background = '#fff5f5';
+    } else {
+      selectedFriends.delete(friendId);
+      label.style.borderColor = '#e5e7eb';
+      label.style.background = '#fff';
+    }
+    
+    document.getElementById('btnShareFriends').disabled = (selectedFriends.size === 0);
+  }
+
+  async function shareWithFriends() {
+    if (selectedFriends.size === 0) return;
+    
+    const btn = document.getElementById('btnShareFriends');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner" style="border-top-color:#fff;"></span> Enviando...';
+    
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    
+    try {
+      const response = await fetch(`/api/evento/{{ event.id }}/compartilhar`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrfToken
+        },
+        body: JSON.stringify({ friend_ids: Array.from(selectedFriends) })
+      });
+      
+      if (response.ok) {
+        alert("Evento compartilhado com sucesso!");
+        closeShareModal();
+      } else {
+        alert("Erro ao compartilhar o evento.");
+      }
+    } catch (e) {
+      alert("Erro ao conectar ao servidor.");
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<span class="material-symbols-outlined" style="font-size: 18px;">send</span> Enviar Recomendação';
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    loadTravelTimes();
+  });
 </script>
 
 {% endblock %}

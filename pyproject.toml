@@ -3,16 +3,16 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "Tô Dentro"
+name = "to-dentro"
 version = "0.1.0"
 description = "Tô Dentro! - Plataforma de democratização da divulgação de acesso a eventos locais"
 readme = "README.md"
 requires-python = ">=3.9"
 license = {text = "MIT"}
 authors = [
-    {name = "Arthur", email = "bernardopcandido@gmail.com"},
-    {name = "Bernardo", email = ""},
-    {name = "Carlos", email = ""}
+    {name = "Arthur", email = "arthur.alves@gmail.com"},
+    {name = "Bernardo"},
+    {name = "Carlos"}
 ]
 
 dependencies = [

@@ -317,6 +317,14 @@
                 Amigos
               </a>
             </div>
+            <div class="navbar-item">
+              <a href="{{ url_for('main.create_poll') }}"
+                 class="button is-small {% if request.endpoint == 'main.create_poll' %}btn-primary-td{% else %}btn-ghost-td{% endif %}"
+                 style="border-radius:20px; padding:6px 20px; font-size:0.85rem; font-weight:600;">
+                Criar Enquete
+              </a>
+            </div>
+
             {% if current_user.type == UserType.ORGANIZER %}
             <div class="navbar-item">
               <a href="{{ url_for('main.my_events') }}"

@@ -1,0 +1,413 @@
+{% extends "main/base.html" %}
+
+{% block title %}Criar Enquete de Rolê — Tô Dentro{% endblock %}
+
+{% block extra_head %}
+<style>
+  .create-poll-page {
+    background: #f7f7f8;
+    min-height: 100vh;
+    padding: 3rem 1.5rem 5rem;
+  }
+
+  .form-container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+    border: 1px solid #ebebeb;
+    overflow: hidden;
+  }
+
+  .form-header {
+    background: linear-gradient(135deg, #c81e1e 0%, #8c1010 100%);
+    padding: 2.2rem;
+    color: #fff;
+  }
+
+  .form-header h1 {
+    font-size: 1.6rem;
+    font-weight: 800;
+    margin-bottom: 0.4rem;
+    letter-spacing: -0.02em;
+  }
+
+  .form-header p {
+    font-size: 0.88rem;
+    opacity: 0.9;
+    font-weight: 500;
+  }
+
+  .form-section {
+    padding: 2.2rem;
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  .form-section:last-child {
+    border-bottom: none;
+  }
+
+  .section-title {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #1a1a1a;
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    letter-spacing: -0.01em;
+  }
+
+  .section-title .material-symbols-outlined {
+    color: #c81e1e;
+    font-size: 22px;
+  }
+
+  .input-label {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #4b5563;
+    margin-bottom: 0.4rem;
+    display: block;
+  }
+
+  .input-field {
+    width: 100%;
+    height: 44px;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 0 14px;
+    font-size: 0.88rem;
+    font-family: 'Inter', sans-serif;
+    color: #1a1a1a;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    background: #fafafa;
+  }
+
+  .input-field:focus {
+    border-color: #c81e1e;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(200, 30, 30, 0.06);
+  }
+
+  .textarea-field {
+    width: 100%;
+    min-height: 100px;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 0.88rem;
+    font-family: 'Inter', sans-serif;
+    color: #1a1a1a;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    background: #fafafa;
+    resize: vertical;
+  }
+
+  .textarea-field:focus {
+    border-color: #c81e1e;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(200, 30, 30, 0.06);
+  }
+
+  /* List of events selection */
+  .events-poll-list {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 10px;
+    background: #fafafa;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .event-poll-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1.5px solid #e5e7eb;
+    background: #fff;
+    cursor: pointer;
+    transition: all 0.15s;
+    user-select: none;
+  }
+
+  .event-poll-item:hover {
+    border-color: #c81e1e;
+    background: #fffcfc;
+  }
+
+  .event-poll-item.is-checked {
+    border-color: #c81e1e;
+    background: #fff5f5;
+  }
+
+  .event-poll-item input {
+    accent-color: #c81e1e;
+    width: 18px;
+    height: 18px;
+  }
+
+  .event-item-info {
+    flex: 1;
+    text-align: left;
+  }
+
+  .event-item-name {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #1a1a1a;
+  }
+
+  .event-item-meta {
+    font-size: 0.78rem;
+    color: #6b7280;
+    margin-top: 2px;
+  }
+
+  /* Custom options */
+  .custom-options-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .custom-option-row {
+    display: flex;
+    gap: 8px;
+  }
+
+  .btn-add-option {
+    height: 44px;
+    background: #fff;
+    color: #c81e1e;
+    border: 1.5px dashed #c81e1e;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.2s;
+    margin-top: 8px;
+  }
+
+  .btn-add-option:hover {
+    background: #fff5f5;
+  }
+
+  .btn-remove-option {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    border: 1.5px solid #fecaca;
+    background: #fff;
+    color: #dc2626;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-remove-option:hover {
+    background: #fef2f2;
+    border-color: #dc2626;
+  }
+
+  .form-actions {
+    padding: 2.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 1rem;
+    background: #fafafa;
+  }
+
+  .submit-btn {
+    height: 48px;
+    background: #c81e1e;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 0 2rem;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.2s, box-shadow 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 4px 14px rgba(200, 30, 30, 0.2);
+  }
+
+  .submit-btn:hover {
+    background: #a81818;
+    box-shadow: 0 6px 20px rgba(200, 30, 30, 0.3);
+  }
+
+  .cancel-btn {
+    height: 48px;
+    background: transparent;
+    color: #4b5563;
+    border: 1.5px solid #d1d5db;
+    border-radius: 10px;
+    padding: 0 1.5rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .cancel-btn:hover {
+    border-color: #4b5563;
+    background: #f3f4f6;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="create-poll-page">
+  <div class="form-container">
+    <div class="form-header">
+      <h1>Criar Enquete de Rolê</h1>
+      <p>Crie uma enquete com opções de eventos e compartilhe o link para decidir o próximo rolê com a galera!</p>
+    </div>
+
+    <form method="POST" id="createPollForm">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <section class="form-section">
+        <h2 class="section-title">
+          <span class="material-symbols-outlined">notes</span>
+          1. Informações Básicas
+        </h2>
+        <div class="columns is-multiline">
+          <div class="column is-12 pb-3">
+            <label class="input-label" for="pollTitle">Título da Enquete</label>
+            <input type="text" name="title" id="pollTitle" class="input-field" placeholder="Ex: Rolê do Final de Semana" required />
+          </div>
+
+          <div class="column is-12 pb-3">
+            <label class="input-label" for="pollDesc">Descrição (opcional)</label>
+            <textarea name="description" id="pollDesc" class="textarea-field" placeholder="Ex: Escolham as opções que preferirem para sairmos no sábado à noite!"></textarea>
+          </div>
+        </div>
+      </section>
+
+      <section class="form-section">
+        <h2 class="section-title">
+          <span class="material-symbols-outlined">event</span>
+          2. Selecionar Rolês Cadastrados
+        </h2>
+        <div class="events-poll-list">
+          {% if events %}
+            {% for ev in events %}
+            <label class="event-poll-item" id="evLabel-{{ ev.id }}">
+              <input type="checkbox" name="events" value="{{ ev.id }}" onchange="toggleEventSelect(this)" />
+              <div class="event-item-info">
+                <div class="event-item-name">{{ ev.name }}</div>
+                <div class="event-item-meta">
+                  {% if ev.occurrences %}
+                    {{ ev.occurrences[0].start_date.strftime('%d/%m/%Y') }}
+                    {% if ev.occurrences[0].addresses %}
+                      • {{ ev.occurrences[0].addresses[0].address.city }}
+                    {% endif %}
+                  {% endif %}
+                </div>
+              </div>
+            </label>
+            {% endfor %}
+          {% else %}
+            <div style="font-size: 0.88rem; color: #9ca3af; text-align: center; padding: 2rem;">
+              Nenhum evento ativo cadastrado no momento. Você pode propor opções personalizadas abaixo!
+            </div>
+          {% endif %}
+        </div>
+      </section>
+
+      <section class="form-section">
+        <h2 class="section-title">
+          <span class="material-symbols-outlined">edit_note</span>
+          3. Outras Opções Personalizadas (opcional)
+        </h2>
+        <div class="custom-options-container" id="customOptionsContainer">
+          <div class="custom-option-row">
+            <input type="text" name="custom_options" class="input-field" placeholder="Ex: Ficar em casa vendo filme" />
+            <button type="button" class="btn-remove-option" onclick="removeCustomOption(this)">✕</button>
+          </div>
+        </div>
+        <button type="button" class="btn-add-option" onclick="addCustomOption()" style="width:100%;">
+          <span class="material-symbols-outlined">add</span>
+          Adicionar Opção Personalizada
+        </button>
+      </section>
+
+      <div class="form-actions">
+        <a href="{{ url_for('main.home') }}" class="cancel-btn">Cancelar</a>
+        <button type="submit" class="submit-btn">
+          <span class="material-symbols-outlined">poll</span>
+          Criar Enquete
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function toggleEventSelect(checkbox) {
+    const label = document.getElementById('evLabel-' + checkbox.value);
+    if (label) {
+      label.classList.toggle('is-checked', checkbox.checked);
+    }
+  }
+
+  function addCustomOption() {
+    const container = document.getElementById('customOptionsContainer');
+    const row = document.createElement('div');
+    row.className = 'custom-option-row';
+    row.style.marginTop = '10px';
+    
+    row.innerHTML = `
+      <input type="text" name="custom_options" class="input-field" placeholder="Escreva a opção..." />
+      <button type="button" class="btn-remove-option" onclick="removeCustomOption(this)">✕</button>
+    `;
+    
+    container.appendChild(row);
+  }
+
+  function removeCustomOption(button) {
+    const row = button.parentElement;
+    const container = document.getElementById('customOptionsContainer');
+    if (container.children.length > 1 || row.querySelector('input').value !== '') {
+      row.remove();
+    } else {
+      row.querySelector('input').value = '';
+    }
+  }
+
+  document.getElementById('createPollForm').addEventListener('submit', function(e) {
+    const checkedEvents = document.querySelectorAll('input[name="events"]:checked').length;
+    const customOptions = Array.from(document.querySelectorAll('input[name="custom_options"]'))
+      .map(input => input.value.trim())
+      .filter(val => val.length > 0).length;
+
+    if (checkedEvents + customOptions < 2) {
+      e.preventDefault();
+      alert('Por favor, selecione ou insira pelo menos 2 opções de rolê para criar a enquete.');
+    }
+  });
+</script>
+{% endblock %}
