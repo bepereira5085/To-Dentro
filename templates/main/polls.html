@@ -1,0 +1,351 @@
+{% extends "main/base.html" %}
+
+{% block title %}Painel de Enquetes — Tô Dentro{% endblock %}
+
+{% block extra_head %}
+<style>
+  .polls-dashboard-page {
+    background: #f7f7f8;
+    min-height: 100vh;
+    padding: 3rem 1.5rem 5rem;
+  }
+
+  .dashboard-container {
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+
+  .dashboard-header {
+    background: linear-gradient(135deg, #c81e1e 0%, #8c1010 100%);
+    padding: 2.5rem;
+    color: #fff;
+    border-radius: 20px;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.08);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+  }
+
+  .header-content h1 {
+    font-size: 1.8rem;
+    font-weight: 800;
+    margin-bottom: 0.4rem;
+    letter-spacing: -0.02em;
+  }
+
+  .header-content p {
+    font-size: 0.9rem;
+    opacity: 0.9;
+    font-weight: 500;
+  }
+
+  .btn-new-poll {
+    background-color: #fff !important;
+    color: #c81e1e !important;
+    border: none !important;
+    border-radius: 12px !important;
+    font-weight: 700 !important;
+    padding: 0.8rem 1.6rem !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1) !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    font-size: 0.92rem !important;
+    cursor: pointer !important;
+    height: auto !important;
+  }
+
+  .btn-new-poll:hover {
+    background-color: #f7f7f8 !important;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15) !important;
+  }
+
+  .btn-new-poll:active {
+    transform: translateY(0);
+  }
+
+  .dashboard-section {
+    margin-bottom: 3rem;
+  }
+
+  .section-title {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: #111827;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section-title .material-symbols-outlined {
+    color: #c81e1e;
+    font-size: 24px;
+  }
+
+  .polls-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .poll-card {
+    background: #fff;
+    border: 1px solid #ebebeb;
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.02);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+  }
+
+  .poll-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+    border-color: rgba(200, 30, 30, 0.15);
+  }
+
+  .poll-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+
+  .poll-card-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    line-height: 1.3;
+    flex: 1;
+  }
+
+  .poll-badge {
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 99px;
+    background: #f3f4f6;
+    color: #4b5563;
+    white-space: nowrap;
+  }
+
+  .poll-badge.owner {
+    background: #fff0f0;
+    color: #c81e1e;
+  }
+
+  .poll-card-description {
+    font-size: 0.85rem;
+    color: #6b7280;
+    line-height: 1.5;
+    margin-bottom: 1.25rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-height: 2.55rem;
+  }
+
+  .poll-card-meta {
+    border-top: 1px solid #f3f4f6;
+    padding-top: 1rem;
+    margin-bottom: 1.25rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .meta-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    color: #4b5563;
+  }
+
+  .meta-item .material-symbols-outlined {
+    font-size: 16px;
+    color: #9ca3af;
+  }
+
+  .btn-access-poll {
+    width: 100%;
+    height: 40px;
+    background: #fafafa;
+    color: #1a1a1a;
+    border: 1.5px solid #d1d5db;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    text-decoration: none;
+  }
+
+  .btn-access-poll:hover {
+    border-color: #c81e1e;
+    background: #fff5f5;
+    color: #c81e1e;
+  }
+
+  .empty-state {
+    background: #fff;
+    border: 1.5px dashed #d1d5db;
+    border-radius: 16px;
+    padding: 3rem 2rem;
+    text-align: center;
+    color: #6b7280;
+  }
+
+  .empty-state .material-symbols-outlined {
+    font-size: 48px;
+    color: #9ca3af;
+    margin-bottom: 12px;
+  }
+
+  .empty-state p {
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="polls-dashboard-page">
+  <div class="dashboard-container">
+    
+    <!-- Dashboard Header -->
+    <div class="dashboard-header">
+      <div class="header-content">
+        <h1>Painel de Enquetes de Rolê</h1>
+        <p>Acompanhe, vote e decida as melhores programações com a galera!</p>
+      </div>
+      <div>
+        <a href="{{ url_for('main.create_poll') }}" class="btn-new-poll">
+          <span class="material-symbols-outlined">add_circle</span>
+          Criar Nova Enquete
+        </a>
+      </div>
+    </div>
+
+    <!-- 1. Minhas Enquetes Section -->
+    <div class="dashboard-section">
+      <h2 class="section-title">
+        <span class="material-symbols-outlined">ballot</span>
+        Enquetes Criadas por Mim
+      </h2>
+
+      {% if created_polls %}
+        <div class="polls-grid">
+          {% for poll in created_polls %}
+            <div class="poll-card">
+              <div>
+                <div class="poll-card-header">
+                  <span class="poll-card-title">{{ poll.title }}</span>
+                  <span class="poll-badge owner">Criador</span>
+                </div>
+                
+                <p class="poll-card-description">
+                  {{ poll.description or "Sem descrição fornecida." }}
+                </p>
+              </div>
+
+              <div>
+                <div class="poll-card-meta">
+                  <div class="meta-item">
+                    <span class="material-symbols-outlined">calendar_today</span>
+                    <span>{{ poll.created_at.strftime('%d/%m/%Y') }}</span>
+                  </div>
+                  <div class="meta-item">
+                    <span class="material-symbols-outlined">format_list_bulleted</span>
+                    <span>{{ poll.options|length }} opções</span>
+                  </div>
+                </div>
+
+                <a href="{{ url_for('main.view_poll', poll_uuid=poll.uuid) }}" class="btn-access-poll">
+                  Acessar Enquete
+                  <span class="material-symbols-outlined" style="font-size: 16px;">arrow_forward</span>
+                </a>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <span class="material-symbols-outlined">ballot</span>
+          <p>Você ainda não criou nenhuma enquete de rolê.</p>
+          <a href="{{ url_for('main.create_poll') }}" class="button is-small btn-primary-td" style="border-radius:8px;">
+            Criar Minha Primeira Enquete
+          </a>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- 2. Enquetes que Participo Section -->
+    <div class="dashboard-section" style="margin-top: 4rem;">
+      <h2 class="section-title">
+        <span class="material-symbols-outlined">group</span>
+        Enquetes que Participo
+      </h2>
+
+      {% if participating_polls %}
+        <div class="polls-grid">
+          {% for poll in participating_polls %}
+            <div class="poll-card">
+              <div>
+                <div class="poll-card-header">
+                  <span class="poll-card-title">{{ poll.title }}</span>
+                  <span class="poll-badge">Participante</span>
+                </div>
+                
+                <p class="poll-card-description">
+                  {{ poll.description or "Sem descrição fornecida." }}
+                </p>
+              </div>
+
+              <div>
+                <div class="poll-card-meta">
+                  <div class="meta-item" title="Criador da enquete">
+                    <span class="material-symbols-outlined">person</span>
+                    <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ poll.creator.name }}</span>
+                  </div>
+                  <div class="meta-item">
+                    <span class="material-symbols-outlined">format_list_bulleted</span>
+                    <span>{{ poll.options|length }} opções</span>
+                  </div>
+                </div>
+
+                <a href="{{ url_for('main.view_poll', poll_uuid=poll.uuid) }}" class="btn-access-poll">
+                  Votar / Ver Resultados
+                  <span class="material-symbols-outlined" style="font-size: 16px;">arrow_forward</span>
+                </a>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <span class="material-symbols-outlined">celebration</span>
+          <p>Nenhuma enquete de amigos disponível ou participando no momento.</p>
+        </div>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+{% endblock %}

@@ -663,9 +663,38 @@
             Telegram
           </a>
         </div>
+        <button class="button is-small btn-primary-td mt-3" style="width: 100%; height: 40px; display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 8px;" onclick="openInviteModal()">
+          <span class="material-symbols-outlined">group_add</span>
+          Convidar amigos no Tô Dentro!
+        </button>
+      </div>
       </div>
 
     </div>
+    
+    <!-- Invite Modal -->
+    <div class="modal" id="inviteModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center;">
+      <div style="background: #fff; border-radius: 18px; width: 90%; max-width: 450px; padding: 2rem; box-shadow: 0 10px 35px rgba(0,0,0,0.3); border: 1px solid #ebebeb; position: relative;">
+        <button onclick="closeInviteModal()" style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #9ca3af; padding: 4px;">✕</button>
+        
+        <h2 style="font-size: 1.3rem; font-weight: 800; color: #1a1a1a; margin-bottom: 1.5rem; letter-spacing: -0.02em; display: flex; align-items: center; gap: 6px;">
+          <span class="material-symbols-outlined" style="color: #c81e1e;">group_add</span>
+          Convidar Amigos para a Enquete
+        </h2>
+        
+        <div style="text-align: left;">
+          <label style="font-size: 0.8rem; font-weight: 700; color: #4b5563; display: block; margin-bottom: 0.4rem;">Selecione os amigos que você deseja convidar:</label>
+          <div id="inviteFriendsList" style="max-height: 200px; overflow-y: auto; border: 1.5px solid #e5e7eb; border-radius: 8px; padding: 10px; background: #f9fafb; display: flex; flex-direction: column; gap: 8px;">
+            <div style="font-size: 0.85rem; color: #9ca3af; text-align: center; padding: 10px;">Carregando amigos...</div>
+          </div>
+          <button id="btnSendInvite" onclick="sendPollInvites()" class="button" style="width: 100%; height: 44px; background: #c81e1e; color: #fff; border: none; border-radius: 8px; font-weight: 700; font-size: 0.88rem; cursor: pointer; margin-top: 1rem; display: flex; align-items: center; justify-content: center; gap: 6px;" disabled>
+            <span class="material-symbols-outlined" style="font-size: 18px;">send</span>
+            Enviar Convites
+          </button>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -885,6 +914,104 @@
     }).catch(err => {
       alert('Não foi possível copiar o link automaticamente.');
     });
+  }
+
+  let selectedInvitees = new Set();
+
+  function openInviteModal() {
+    const modal = document.getElementById('inviteModal');
+    modal.style.display = 'flex';
+    selectedInvitees.clear();
+    document.getElementById('btnSendInvite').disabled = true;
+    fetchFriendsToInvite();
+  }
+
+  function closeInviteModal() {
+    document.getElementById('inviteModal').style.display = 'none';
+  }
+
+  async function fetchFriendsToInvite() {
+    const container = document.getElementById('inviteFriendsList');
+    container.innerHTML = '<div style="font-size:0.85rem; color:#9ca3af; text-align:center; padding:10px;">Carregando amigos...</div>';
+    
+    try {
+      const response = await fetch('/api/amigos/buscar');
+      if (response.ok) {
+        const friends = await response.json();
+        if (friends.length === 0) {
+          container.innerHTML = '<div style="font-size:0.85rem; color:#9ca3af; text-align:center; padding:10px;">Você ainda não segue ninguém. Siga amigos para convidá-los!</div>';
+          return;
+        }
+        
+        container.innerHTML = friends.map(friend => {
+          const avatar = friend.photo_url 
+            ? `<img src="${friend.photo_url}" style="width:28px; height:28px; border-radius:50%; object-fit:cover;" />` 
+            : `<div style="width:28px; height:28px; border-radius:50%; background:#c81e1e; color:#fff; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700;">${friend.initials}</div>`;
+            
+          return `
+            <label style="display:flex; align-items:center; gap:10px; font-size:0.85rem; font-weight:600; color:#374151; cursor:pointer; padding:6px 8px; border-radius:6px; background:#fff; border:1.5px solid #e5e7eb; transition: all 0.15s;">
+              <input type="checkbox" value="${friend.id}" onchange="toggleInviteeSelect(this)" style="accent-color:#c81e1e;" />
+              ${avatar}
+              <span>${friend.name}</span>
+            </label>
+          `;
+        }).join('');
+      } else {
+        container.innerHTML = '<div style="font-size:0.85rem; color:#d1d5db; text-align:center; padding:10px;">Erro ao carregar lista de amigos.</div>';
+      }
+    } catch (e) {
+      container.innerHTML = '<div style="font-size:0.85rem; color:#d1d5db; text-align:center; padding:10px;">Erro ao carregar lista de amigos.</div>';
+    }
+  }
+
+  window.toggleInviteeSelect = function(checkbox) {
+    const friendId = checkbox.value;
+    const label = checkbox.parentElement;
+    
+    if (checkbox.checked) {
+      selectedInvitees.add(friendId);
+      label.style.borderColor = '#c81e1e';
+      label.style.background = '#fff5f5';
+    } else {
+      selectedInvitees.delete(friendId);
+      label.style.borderColor = '#e5e7eb';
+      label.style.background = '#fff';
+    }
+    
+    document.getElementById('btnSendInvite').disabled = (selectedInvitees.size === 0);
+  }
+
+  async function sendPollInvites() {
+    if (selectedInvitees.size === 0) return;
+    
+    const btn = document.getElementById('btnSendInvite');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner" style="border-top-color:#fff;"></span> Enviando...';
+    
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    
+    try {
+      const response = await fetch(`/api/enquete/{{ poll.uuid }}/convidar`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrfToken
+        },
+        body: JSON.stringify({ friend_ids: Array.from(selectedInvitees) })
+      });
+      
+      if (response.ok) {
+        alert("Convites enviados com sucesso!");
+        closeInviteModal();
+      } else {
+        alert("Erro ao enviar os convites.");
+      }
+    } catch (e) {
+      alert("Erro ao conectar ao servidor.");
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<span class="material-symbols-outlined" style="font-size: 18px;">send</span> Enviar Convites';
+    }
   }
 </script>
 {% endblock %}

@@ -8,6 +8,7 @@ from to_dentro.ext.db import db
 if TYPE_CHECKING:
     from .user import User
     from .event_occurrence import EventOccurrence
+    from .hangout_poll import HangoutPoll
 
 class NotificationType(enum.Enum):
     FOLLOW = 'follow'
@@ -29,6 +30,7 @@ class NotificationType(enum.Enum):
     EVENT_REJECTED = 'event_rejected'
     EVENT_IMAGE_ADDED = 'event_image_added'
     EVENT_RECOMMENDATION = 'event_recommendation'
+    POLL_INVITATION = 'poll_invitation'
     SYSTEM = 'system'
 
 class Notification(db.Model):
@@ -59,6 +61,12 @@ class Notification(db.Model):
     )
     event_occurrence: Mapped[Optional["EventOccurrence"]] = relationship(
         "EventOccurrence"
+    )
+    poll_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("hangout_polls.id", ondelete="CASCADE"), nullable=True
+    )
+    poll: Mapped[Optional["HangoutPoll"]] = relationship(
+        "HangoutPoll"
     )
 
     @validates('type')

@@ -1075,6 +1075,9 @@ def api_notificacoes():
                 evento_nome = n.event_occurrence.event.name
                 evento_id = n.event_occurrence.event.id
             mensagem = f"{actor_name} te recomendou este rolê: {evento_nome or 'Evento desconhecido'}"
+        elif n.type == NotificationType.POLL_INVITATION:
+            poll_title = n.poll.title if n.poll else "Enquete de Rolê"
+            mensagem = f"{actor_name} te convidou para votar na enquete: {poll_title}"
         else:
             continue
 
@@ -1084,6 +1087,7 @@ def api_notificacoes():
             "mensagem": mensagem,
             "evento_nome": evento_nome,
             "evento_id": evento_id,
+            "poll_uuid": n.poll.uuid if n.poll else None,
             "actor_id": n.actor_user_id,
             "actor_name": actor_name,
             "created_at": n.created_at.isoformat() if n.created_at else None,
@@ -2487,6 +2491,90 @@ def api_vote_poll(poll_uuid):
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 400
+
+
+@main_bp.route("/enquetes")
+@login_required
+def list_polls():
+    created_polls = HangoutPoll.query.filter_by(creator_id=current_user.id).order_by(HangoutPoll.created_at.desc()).all()
+
+    voted_ids = [
+        r[0] for r in db.session.query(HangoutPollOption.poll_id)
+        .join(HangoutPollVote)
+        .filter(HangoutPollVote.user_id == current_user.id)
+        .distinct()
+        .all()
+    ]
+
+    invited_ids = [
+        r[0] for r in db.session.query(Notification.poll_id)
+        .filter(
+            Notification.recipient_user_id == current_user.id,
+            Notification.type == NotificationType.POLL_INVITATION,
+            Notification.poll_id.isnot(None)
+        )
+        .distinct()
+        .all()
+    ]
+
+    participating_ids = list(set(voted_ids + invited_ids))
+
+    participating_polls = []
+    if participating_ids:
+        participating_polls = (
+            HangoutPoll.query.filter(
+                HangoutPoll.id.in_(participating_ids),
+                HangoutPoll.creator_id != current_user.id
+            )
+            .order_by(HangoutPoll.created_at.desc())
+            .all()
+        )
+
+    return render_template(
+        "main/polls.html",
+        created_polls=created_polls,
+        participating_polls=participating_polls
+    )
+
+
+@main_bp.route("/api/enquete/<string:poll_uuid>/convidar", methods=["POST"])
+@login_required
+def api_poll_invite(poll_uuid):
+    poll = HangoutPoll.query.filter_by(uuid=poll_uuid).first_or_404()
+    data = request.get_json() or {}
+    friend_ids = data.get("friend_ids", [])
+
+    if not friend_ids:
+        return jsonify({"error": "Nenhum amigo selecionado."}), 400
+
+    notifications_created = 0
+    for fid in friend_ids:
+        try:
+            fid = int(fid)
+        except (ValueError, TypeError):
+            continue
+
+        friend = db.session.get(User, fid)
+        if friend and fid != current_user.id:
+            exists = Notification.query.filter_by(
+                actor_user_id=current_user.id,
+                recipient_user_id=fid,
+                poll_id=poll.id,
+                type=NotificationType.POLL_INVITATION
+            ).first()
+
+            if not exists:
+                notif = Notification(
+                    actor_user_id=current_user.id,
+                    recipient_user_id=fid,
+                    poll_id=poll.id,
+                    type=NotificationType.POLL_INVITATION
+                )
+                db.session.add(notif)
+                notifications_created += 1
+
+    db.session.commit()
+    return jsonify({"status": "ok", "sent_count": notifications_created})
 
 
 @main_bp.app_context_processor
