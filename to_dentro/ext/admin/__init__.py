@@ -79,7 +79,7 @@ admin = Admin(
 def init_app(app):
     admin.init_app(app)
 
-    admin.add_view(UserAdminView(User, db, name="Usuários", category="Entidades Principais"))
+    admin.add_view(UserAdminView(User, db, name="Usuários", category="Entidades Principais", endpoint="admin_user"))
     admin.add_view(SecureModelView(Organization, db, name="Organizações", category="Entidades Principais"))
     admin.add_view(SecureModelView(Event, db, name="Eventos", category="Entidades Principais"))
     admin.add_view(SecureModelView(Category, db, name="Categorias", category="Entidades Principais"))

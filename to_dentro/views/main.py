@@ -388,8 +388,6 @@ def register():
         step1_data = session.get("register_step1_data")
         if step1_data:
             form_dict = dict(step1_data)
-            if form_dict.get("birth_date"):
-                form_dict["birth_date"] = date.fromisoformat(form_dict["birth_date"])
             form = RegisterForm(formdata=MultiDict(form_dict))
         else:
             form = RegisterForm()
