@@ -198,6 +198,7 @@
       }
       .notif-icon.follow   { background: #fff0f0; color: #c81e1e; }
       .notif-icon.event    { background: #f0f4ff; color: #3b5bdb; }
+      .notif-icon.poll     { background: #fef3c7; color: #d97706; }
       .notif-text {
         flex: 1;
         min-width: 0;
@@ -318,10 +319,10 @@
               </a>
             </div>
             <div class="navbar-item">
-              <a href="{{ url_for('main.create_poll') }}"
-                 class="button is-small {% if request.endpoint == 'main.create_poll' %}btn-primary-td{% else %}btn-ghost-td{% endif %}"
+              <a href="{{ url_for('main.list_polls') }}"
+                 class="button is-small {% if request.endpoint == 'main.list_polls' or request.endpoint == 'main.create_poll' or request.endpoint == 'main.view_poll' %}btn-primary-td{% else %}btn-ghost-td{% endif %}"
                  style="border-radius:20px; padding:6px 20px; font-size:0.85rem; font-weight:600;">
-                Criar Enquete
+                Enquetes
               </a>
             </div>
 
@@ -456,11 +457,13 @@
         function iconFor(tipo) {
           if (tipo === 'follow')           return '<span class="material-symbols-outlined">person_add</span>';
           if (tipo === 'event_interested' || tipo === 'friend_joined_event') return '<span class="material-symbols-outlined">celebration</span>';
+          if (tipo === 'poll_invitation')  return '<span class="material-symbols-outlined">ballot</span>';
           return '<span class="material-symbols-outlined">notifications</span>';
         }
         function cssClass(tipo) {
           if (tipo === 'follow')           return 'follow';
           if (tipo === 'event_interested' || tipo === 'friend_joined_event') return 'event';
+          if (tipo === 'poll_invitation')  return 'poll';
           return '';
         }
 
@@ -479,18 +482,26 @@
           badge.textContent = total > 99 ? '99+' : total;
           countLabel.textContent = `${total} não ${total === 1 ? 'lida' : 'lidas'}`;
 
-          list.innerHTML = notifData.map(n => `
-            <div class="notif-item" data-id="${n.id}" ${n.evento_id ? `style="cursor:pointer;" onclick="window.location.href='/evento/${n.evento_id}'"` : ''}>
-              <div class="notif-icon ${cssClass(n.tipo)}">${iconFor(n.tipo)}</div>
-              <div class="notif-text">
-                <p>${n.mensagem}</p>
-                <span class="notif-time">${timeAgo(n.created_at)}</span>
+          list.innerHTML = notifData.map(n => {
+            let clickAction = '';
+            if (n.evento_id) {
+              clickAction = `style="cursor:pointer;" onclick="window.location.href='/evento/${n.evento_id}'"`;
+            } else if (n.poll_uuid) {
+              clickAction = `style="cursor:pointer;" onclick="window.location.href='/enquete/${n.poll_uuid}'"`;
+            }
+            return `
+              <div class="notif-item" data-id="${n.id}" ${clickAction}>
+                <div class="notif-icon ${cssClass(n.tipo)}">${iconFor(n.tipo)}</div>
+                <div class="notif-text">
+                  <p>${n.mensagem}</p>
+                  <span class="notif-time">${timeAgo(n.created_at)}</span>
+                </div>
+                <button class="notif-read-btn" data-id="${n.id}" title="Marcar como lida" aria-label="Marcar como lida">
+                  <span class="material-symbols-outlined">check_circle</span>
+                </button>
               </div>
-              <button class="notif-read-btn" data-id="${n.id}" title="Marcar como lida" aria-label="Marcar como lida">
-                <span class="material-symbols-outlined">check_circle</span>
-              </button>
-            </div>
-          `).join('');
+            `;
+          }).join('');
 
           list.querySelectorAll('.notif-read-btn').forEach(btn => {
             btn.addEventListener('click', async (e) => {
