@@ -455,12 +455,12 @@
 
         function iconFor(tipo) {
           if (tipo === 'follow')           return '<span class="material-symbols-outlined">person_add</span>';
-          if (tipo === 'event_interested') return '<span class="material-symbols-outlined">celebration</span>';
+          if (tipo === 'event_interested' || tipo === 'friend_joined_event') return '<span class="material-symbols-outlined">celebration</span>';
           return '<span class="material-symbols-outlined">notifications</span>';
         }
         function cssClass(tipo) {
           if (tipo === 'follow')           return 'follow';
-          if (tipo === 'event_interested') return 'event';
+          if (tipo === 'event_interested' || tipo === 'friend_joined_event') return 'event';
           return '';
         }
 
