@@ -1,6 +1,9 @@
-from flask_debugtoolbar import DebugToolbarExtension
+try:
+    from flask_debugtoolbar import DebugToolbarExtension
+    toolbar = DebugToolbarExtension()
+except ImportError:
+    toolbar = None
 
-toolbar = DebugToolbarExtension()
-
-def init_app (app):
-    toolbar.init_app(app)
+def init_app(app):
+    if toolbar is not None:
+        toolbar.init_app(app)
